@@ -63,6 +63,16 @@ Implemented features:
 
 ---
 
+## ✅ RBAC Authorization
+
+### Features
+- Roles decorator
+- RolesGuard
+- OWNER/MEMBER permissions
+- Protected admin routes
+
+---
+
 ## 🔑 Current Features
 
 ### ✅ Completed
