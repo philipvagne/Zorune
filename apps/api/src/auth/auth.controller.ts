@@ -1,6 +1,8 @@
 import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from './roles.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -24,5 +26,14 @@ export class AuthController {
   @Get('me')
   me(@Req() req: any) {
     return this.authService.me(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('OWNER')
+  @Get('admin')
+  admin() {
+    return {
+      message: 'You are an OWNER',
+    };
   }
 }
