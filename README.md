@@ -1,110 +1,144 @@
 # 🚀 OpsFlow API
 
-A backend API built with **NestJS + PostgreSQL + Prisma** implementing a SaaS-ready authentication system with multi-tenant organization structure.
+A SaaS-ready backend API built with **NestJS**, **PostgreSQL**, and **Prisma** implementing authentication, RBAC authorization, and secure multi-tenant organization architecture.
 
 ---
 
-## 🧠 Overview
+# 🧠 Overview
 
-OpsFlow is a backend system designed as a foundation for SaaS applications.  
-It includes authentication, organization management, and role-based membership structure from the start.
+OpsFlow is a backend system designed as the foundation for a scalable SaaS platform.
 
-This project follows real-world backend architecture patterns used in modern SaaS products.
+The project focuses on implementing real-world backend architecture patterns used in production applications, including:
 
----
+- JWT authentication
+- Role-based access control (RBAC)
+- Multi-tenant organization structure
+- Tenant-isolated API access
+- Modular domain architecture
 
-## ⚙️ Tech Stack
-
-- **Backend Framework:** NestJS
-- **Database:** PostgreSQL
-- **ORM:** Prisma
-- **Authentication:** JWT (JSON Web Tokens)
-- **Password Hashing:** bcrypt
-- **Language:** TypeScript
+The goal is to build a portfolio-grade backend demonstrating how modern SaaS systems are structured internally.
 
 ---
 
-## 🏗️ Architecture (Current Phase)
+# ⚙️ Tech Stack
 
-The system is built around a multi-tenant SaaS model:
-
-### Core Entities
-
-- **User**
-- **Organization**
-- **Membership**
-
-### Relationship Model
-
-- A User can belong to multiple Organizations
-- Each Membership defines a role (OWNER, MEMBER)
-- Each Organization is isolated (multi-tenancy ready)
+| Technology | Purpose |
+|---|---|
+| NestJS | Backend framework |
+| TypeScript | Application language |
+| PostgreSQL | Relational database |
+| Prisma ORM | Database ORM + migrations |
+| JWT | Authentication |
+| bcrypt | Password hashing |
+| Docker | Local database container |
 
 ---
 
-## 🔐 Authentication System
+# 🏗️ Current Architecture
 
-Implemented features:
+The system currently follows a multi-tenant SaaS structure.
 
-### Auth Endpoints
+## Core Entities
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me` (protected)
+### User
+Represents authenticated platform users.
 
-### Features
+### Organization
+Represents isolated workspaces/tenants.
 
-- User registration with automatic:
-  - Organization creation
-  - Membership assignment (OWNER role)
-- Secure password hashing (bcrypt)
-- JWT-based authentication
-- Protected routes via JWT Guard
+### Membership
+Join table connecting users to organizations with roles.
 
 ---
 
-## ✅ RBAC Authorization
+# 🔗 Entity Relationships
 
-### Features
-- Roles decorator
-- RolesGuard
-- OWNER/MEMBER permissions
-- Protected admin routes
-
----
-
-## 🔑 Current Features
-
-### ✅ Completed
-- NestJS project setup
-- PostgreSQL database integration
-- Prisma ORM setup + migrations
-- User / Organization / Membership schema
-- Authentication system (register + login)
-- JWT token generation & validation
-- Protected `/auth/me` endpoint
-- Git versioning with milestone commits
+```text
+User
+ └── Membership
+       └── Organization
 
 ---
 
-```bash
-git add README.md
-git commit -m "docs: update project status with completed auth system"
-git push
+# 📁 Current Project Structure
+
+src/
+├── auth/
+│   ├── auth.controller.ts
+│   ├── auth.service.ts
+│   ├── auth.module.ts
+│   ├── jwt-auth.guard.ts
+│   ├── roles.decorator.ts
+│   └── roles.guard.ts
+│
+├── organizations/
+│   ├── organizations.controller.ts
+│   ├── organizations.service.ts
+│   └── organizations.module.ts
+│
+├── prisma/
+│   └── schema.prisma
 
 ---
 
-## Roadmap
+# 🧭 Architectural Principles
 
-- RBAC permissions
-- Project management domain
-- Task workflows
-- Realtime collaboration
-- Frontend dashboard
-- Audit logging
+The project is intentionally structured around:
+
+- modular backend domains
+- service/controller separation
+- scalable SaaS architecture
+- secure tenant isolation
+- incremental feature development
 
 ---
 
-## Vision
+# 🚀 Roadmap
+Next Planned Features
 
-OpsFlow aims to become a full-stack SaaS operations platform for managing teams, workflows, and organization-level collaboration.
+# Projects Domain
+- organization projects
+- project ownership
+- project membership
+
+# Tasks System
+- task assignment
+- task status
+- due dates
+- comments
+
+# Advanced Authorization
+- organization-level permissions
+- project-level permissions
+- granular RBAC
+
+# Backend Improvements
+- DTO validation
+- centralized error handling
+- Prisma service abstraction
+- refresh tokens
+- testing strategy
+
+# Frontend
+- Next.js frontend
+- dashboard UI
+- authentication pages
+- organization switching
+
+---
+
+# 📌 Project Purpose
+
+OpsFlow is being built as a portfolio-grade backend engineering project focused on:
+
+SaaS backend architecture
+authentication & authorization
+multi-tenant systems
+scalable NestJS structure
+production-style backend patterns
+
+---
+
+# 👨‍💻 Author
+
+Built as a learning and portfolio project focused on real-world backend engineering and scalable SaaS architecture.
