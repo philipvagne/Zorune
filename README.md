@@ -1,93 +1,100 @@
-# OpsFlow
+# 🚀 OpsFlow API
 
-A scalable SaaS-style backend system built with modern backend engineering practices.  
-This project focuses on real-world architecture: multi-tenancy, authentication design, and modular backend structure.
-
----
-
-## 🚀 Tech Stack
-
-- Backend: NestJS (TypeScript)
-- Database: PostgreSQL
-- ORM: Prisma
-- Infrastructure: Docker
-- Architecture: Monorepo
+A backend API built with **NestJS + PostgreSQL + Prisma** implementing a SaaS-ready authentication system with multi-tenant organization structure.
 
 ---
 
-## 🧱 Project Structure
-opsflow/
-├── apps/
-│ └── api/ # NestJS backend application
-├── prisma/ # Prisma schema and migrations
-├── docker-compose.yml # PostgreSQL container setup
-├── package.json
-└── README.md
+## 🧠 Overview
 
+OpsFlow is a backend system designed as a foundation for SaaS applications.  
+It includes authentication, organization management, and role-based membership structure from the start.
+
+This project follows real-world backend architecture patterns used in modern SaaS products.
 
 ---
 
-## ⚙️ Features Implemented
+## ⚙️ Tech Stack
 
-### Backend Infrastructure
-- NestJS application initialized
-- Modular backend structure
-- TypeScript configuration
-- Development environment with hot reload
-
-### Database Layer
-- PostgreSQL running via Docker
-- Prisma ORM configured
-- Migration system enabled
-- Schema-driven database design
-
-### Core Domain Models (Foundation)
-- User
-- Organization
-- Membership (multi-tenant relationship + RBAC structure)
-
-### Developer Tools
-- Prisma Studio (database UI)
-- Prisma Migrations
-- Docker-based local environment
+- **Backend Framework:** NestJS
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Authentication:** JWT (JSON Web Tokens)
+- **Password Hashing:** bcrypt
+- **Language:** TypeScript
 
 ---
 
-## 🧠 Architecture Overview
+## 🏗️ Architecture (Current Phase)
 
-This project is designed to simulate a real SaaS backend system.
+The system is built around a multi-tenant SaaS model:
 
-### Core Principles:
-- Multi-tenant architecture (Organizations)
-- Role-based access control (RBAC)
-- Separation of concerns (modules/services)
-- Scalable backend structure
-- Infrastructure-as-code (Docker)
+### Core Entities
 
----
+- **User**
+- **Organization**
+- **Membership**
 
-## 🗄️ Database Design (Core Models)
+### Relationship Model
 
-### User
-Represents an application user with authentication credentials.
-
-### Organization
-Represents a workspace or tenant in the system.
-
-### Membership
-Links users to organizations with roles:
-- OWNER
-- ADMIN
-- MEMBER
-- VIEWER
-
-This enables multi-tenant SaaS behavior.
+- A User can belong to multiple Organizations
+- Each Membership defines a role (OWNER, MEMBER)
+- Each Organization is isolated (multi-tenancy ready)
 
 ---
 
-## 📦 Setup Instructions
+## 🔐 Authentication System
 
-### 1. Start Database (Docker)
+Implemented features:
+
+### Auth Endpoints
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (protected)
+
+### Features
+
+- User registration with automatic:
+  - Organization creation
+  - Membership assignment (OWNER role)
+- Secure password hashing (bcrypt)
+- JWT-based authentication
+- Protected routes via JWT Guard
+
+---
+
+## 🔑 Current Features
+
+### ✅ Completed
+- NestJS project setup
+- PostgreSQL database integration
+- Prisma ORM setup + migrations
+- User / Organization / Membership schema
+- Authentication system (register + login)
+- JWT token generation & validation
+- Protected `/auth/me` endpoint
+- Git versioning with milestone commits
+
+---
 
 ```bash
-docker compose up -d
+git add README.md
+git commit -m "docs: update project status with completed auth system"
+git push
+
+---
+
+## Roadmap
+
+- RBAC permissions
+- Project management domain
+- Task workflows
+- Realtime collaboration
+- Frontend dashboard
+- Audit logging
+
+---
+
+## Vision
+
+OpsFlow aims to become a full-stack SaaS operations platform for managing teams, workflows, and organization-level collaboration.
