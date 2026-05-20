@@ -1,28 +1,41 @@
-# OpsFlow Backend
+# OpsFlow
 
-A scalable SaaS-style task management backend built with NestJS, Prisma, PostgreSQL, and JWT authentication.
+OpsFlow is a full-stack realtime project management and operations platform built with modern web technologies.
 
-This project implements:
+The platform includes:
 
-* multi-tenant organizations
-* project management
-* task workflows
-* activity feeds
-* notifications
-* assignment system
-* pagination & filtering
-* secure role-based architecture foundations
+* JWT Authentication
+* Project management
+* Task management
+* Realtime Kanban board
+* WebSocket notifications
+* Live task assignment updates
+* Activity logging
+* PostgreSQL database integration
+* Prisma ORM
+* React frontend
+* NestJS backend
 
 ---
 
 # Tech Stack
 
+## Frontend
+
+* React
+* Axios
+* Socket.IO Client
+
+## Backend
+
 * NestJS
 * Prisma ORM
-* PostgreSQL
+* Socket.IO
 * JWT Authentication
-* TypeScript
-* class-validator
+
+## Database
+
+* PostgreSQL
 
 ---
 
@@ -30,259 +43,136 @@ This project implements:
 
 ## Authentication
 
-* JWT login system
-* Protected routes with guards
-* User authentication middleware
-
----
-
-## Organizations
-
-* Multi-tenant organization structure
-* Membership-based access control
-* Organization project isolation
-
----
+* User registration
+* User login
+* JWT protected routes
 
 ## Projects
 
 * Create projects
-* Organization-linked projects
-* Secure membership validation
-
----
+* Organize tasks by project
 
 ## Tasks
 
 * Create tasks
-* Update tasks
-* Delete tasks
 * Assign tasks to users
-* Fetch user-specific tasks
-* Pagination support
-* Filtering support
+* Update task statuses
+* Task descriptions
+* Task activity tracking
 
----
+## Kanban Board
 
-## Task Workflow Engine
+* TODO column
+* IN_PROGRESS column
+* DONE column
+* Live realtime updates
 
-Supported workflow:
+## Notifications
 
-```txt
-TODO → IN_PROGRESS → DONE
-```
+* Realtime task assignment notifications
+* Unread notification counter
+* Mark notifications as read
+* Live notification dropdown
 
-Invalid transitions are blocked automatically.
+## Realtime Sync
 
----
-
-## Activity Feed System
-
-Tracks:
-
-* task status changes
-* previous values
-* new values
-* actor/user attribution
-* timestamps
-
-Supports:
-
-* pagination
-* relational user data
-* project-level audit history
-
----
-
-## Notification System
-
-Notifications are automatically created when:
-
-* a task is assigned
-* a task status changes
-
-Includes:
-
-* notification feed endpoint
-* unread/read support foundation
+* WebSocket powered updates
+* Instant Kanban synchronization
+* Live task assignment updates
+* Realtime modal updates
 
 ---
 
 # Architecture
 
+OpsFlow uses a monorepo structure:
+
 ```txt
-Controller
-   ↓
-Service Layer
-   ↓
-Prisma ORM
-   ↓
-PostgreSQL
-```
-
-The application follows a layered architecture with separation of concerns between:
-
-* controllers
-* services
-* database layer
-
----
-
-# API Overview
-
-## Auth
-
-### Register
-
-```http
-POST /auth/register
-```
-
-### Login
-
-```http
-POST /auth/login
-```
-
----
-
-# Organizations
-
-### Create Organization
-
-```http
-POST /organizations
-```
-
----
-
-# Projects
-
-### Create Project
-
-```http
-POST /organizations/:orgId/projects
-```
-
-### Get Projects
-
-```http
-GET /organizations/:orgId/projects
-```
-
----
-
-# Tasks
-
-### Create Task
-
-```http
-POST /organizations/:orgId/projects/:projectId/tasks
-```
-
-### Get Project Tasks
-
-```http
-GET /projects/:projectId/tasks
-```
-
-### Update Task
-
-```http
-PATCH /tasks/:taskId
-```
-
-### Delete Task
-
-```http
-DELETE /tasks/:taskId
-```
-
-### Assign Task
-
-```http
-PATCH /tasks/:taskId/assign
-```
-
-### Get My Tasks
-
-```http
-GET /tasks/my
-```
-
-Supports:
-
-* pagination
-* filtering by status
-* filtering by projectId
-
-Example:
-
-```http
-GET /tasks/my?status=TODO&page=1&limit=10
-```
-
----
-
-# Activity Feed
-
-### Get Task Activity
-
-```http
-GET /tasks/:taskId/activity
-```
-
-Returns:
-
-* status changes
-* user info
-* timestamps
-* audit history
-
----
-
-# Notifications
-
-### Get Notifications
-
-```http
-GET /tasks/notifications
-```
-
-### Mark Notification As Read
-
-```http
-PATCH /notifications/:id/read
+opsflow/
+├── apps/
+│   ├── api/        # NestJS backend
+│   └── web/        # React frontend
+├── prisma/
+├── package.json
+└── README.md
 ```
 
 ---
 
 # Environment Variables
 
-Create a `.env` file:
+## Backend (.env)
+
+Create:
+
+```txt
+apps/api/.env
+```
+
+Add:
 
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/opsflow"
-JWT_SECRET="your_secret"
+DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/opsflow"
+JWT_SECRET="your_jwt_secret"
+PORT=3000
 ```
 
 ---
 
-# Prisma Setup
+## Frontend (.env)
 
-Run migrations:
+Create:
+
+```txt
+apps/web/.env
+```
+
+Add:
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+# Installation
+
+## 1. Clone Repository
+
+```bash
+git clone <your-repository-url>
+cd opsflow
+```
+
+---
+
+## 2. Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+# Database Setup
+
+## Run Prisma Migrations
 
 ```bash
 npx prisma migrate dev
 ```
 
-Generate Prisma client:
+---
+
+## Generate Prisma Client
 
 ```bash
 npx prisma generate
 ```
 
-Open Prisma Studio:
+---
+
+## Open Prisma Studio
 
 ```bash
 npx prisma studio
@@ -290,33 +180,187 @@ npx prisma studio
 
 ---
 
-# Start Development Server
+# Running The Application
+
+## Start Backend
 
 ```bash
-npm install
+cd apps/api
 npm run start:dev
 ```
+
+Backend runs on:
+
+```txt
+http://localhost:3000
+```
+
+---
+
+## Start Frontend
+
+```bash
+cd apps/web
+npm run dev
+```
+
+Frontend runs on:
+
+```txt
+http://localhost:5173
+```
+
+---
+
+# Prisma Commands
+
+## Run Migrations
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+## Generate Prisma Client
+
+```bash
+npx prisma generate
+```
+
+---
+
+## Open Prisma Studio
+
+```bash
+npx prisma studio
+```
+
+---
+
+## Reset Database
+
+```bash
+npx prisma migrate reset
+```
+
+---
+
+# Realtime System
+
+OpsFlow uses Socket.IO for realtime communication.
+
+Current realtime functionality includes:
+
+| Feature                   | Status |
+| ------------------------- | ------ |
+| Realtime notifications    | ✅      |
+| Live Kanban updates       | ✅      |
+| Task assignment sync      | ✅      |
+| Realtime modal sync       | ✅      |
+| Notification unread count | ✅      |
+
+---
+
+# Current Application Features
+
+## Fully Working
+
+* JWT Authentication
+* Protected routes
+* Task CRUD
+* Project structure
+* Realtime notifications
+* Realtime Kanban board
+* Task assignment
+* Prisma/PostgreSQL integration
+* Socket.IO synchronization
 
 ---
 
 # Future Improvements
 
-Planned upgrades:
+Planned future features:
 
-* role-based permissions
-* unread notification counters
-* mark-all-as-read
-* websocket real-time notifications
-* email notifications
-* event-driven architecture
-* Prisma transactions
-* Redis caching
-* rate limiting
-* Docker deployment
-* CI/CD pipeline
+* Drag & drop Kanban
+* User avatars
+* Team management
+* File uploads
+* Comments system
+* Role permissions
+* Search & filtering
+* Mobile responsiveness
+* Email notifications
+* Analytics dashboard
+* Dark mode
+
+---
+
+# Development Notes
+
+## Backend
+
+The backend follows a modular NestJS architecture.
+
+Main modules:
+
+* Auth
+* Users
+* Projects
+* Tasks
+* Notifications
+* WebSocket Gateway
+
+---
+
+## Frontend
+
+The frontend uses React functional components and hooks.
+
+Main systems:
+
+* Dashboard
+* Kanban Board
+* Notification System
+* Task Modal
+* Socket Synchronization
+
+---
+
+# Realtime Architecture
+
+The backend emits a unified:
+
+```txt
+notification
+```
+
+WebSocket event.
+
+The frontend branches behavior using:
+
+```txt
+notification.type
+```
+
+Example:
+
+```txt
+TASK_ASSIGNED
+```
+
+This architecture keeps realtime logic centralized and scalable.
 
 ---
 
 # Author
 
-Built as a scalable SaaS backend architecture learning project using modern backend engineering practices.
+Built using:
+
+* React
+* NestJS
+* Prisma
+* PostgreSQL
+* Socket.IO
+
+by Philip Agné.
