@@ -14,36 +14,102 @@ enum Role {
   VIEWER
 }
 
-model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  username     String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
 
-  memberships  Membership[]
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  username     String
+  passwordHash String
+
+  memberships   Membership[]
+  tasks         Task[]
+  activityLogs  ActivityLog[]
+  notifications Notification[]
 }
 
 model Organization {
-  id        String        @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  slug      String        @unique
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   memberships Membership[]
+  projects    Project[]
 }
 
 model Membership {
-  id             String        @id @default(cuid())
+  id             String   @id @default(cuid())
   userId         String
   organizationId String
-  role           Role          @default(MEMBER)
-  createdAt      DateTime      @default(now())
+  role           Role     @default(MEMBER)
+  createdAt      DateTime @default(now())
 
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
+}
+
+model Project {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  assigneeId String?
+  assignee   User?   @relation(fields: [assigneeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activityLogs ActivityLog[]
+}
+
+model ActivityLog {
+  id       String  @id @default(cuid())
+  action   String
+  oldValue String?
+  newValue String?
+
+  userId String
+  taskId String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  task Task @relation(fields: [taskId], references: [id])
+}
+
+model Notification {
+  id      String  @id @default(cuid())
+  type    String
+  message String
+  isRead  Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  taskId    String?
+  createdAt DateTime @default(now())
 }

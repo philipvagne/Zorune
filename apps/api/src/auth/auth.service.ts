@@ -2,17 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
 
-const prisma = new PrismaClient();
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+  private jwtService: JwtService,
+  private prisma: PrismaService,
+) {}
 
   async register(email: string, username: string, password: string) {
     const hashed = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email,
         username,
@@ -20,14 +23,14 @@ export class AuthService {
       },
     });
 
-    const org = await prisma.organization.create({
+    const org = await this.prisma.organization.create({
       data: {
         name: `${username}'s Org`,
         slug: `${username}-org`,
       },
     });
 
-    await prisma.membership.create({
+    await this.prisma.membership.create({
       data: {
         userId: user.id,
         organizationId: org.id,
@@ -39,7 +42,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       throw new Error('User not found');
@@ -64,7 +67,7 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    const user = await prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         memberships: {

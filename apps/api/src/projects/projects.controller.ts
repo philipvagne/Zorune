@@ -1,0 +1,60 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ProjectsService } from './projects.service';
+import { CreateProjectDto } from './dto/create-project.dto';
+
+@Controller()
+export class ProjectsController {
+  constructor(private projectsService: ProjectsService) {}
+
+  // 🟢 CREATE PROJECT
+  @UseGuards(JwtAuthGuard)
+  @Post('organizations/:orgId/projects')
+  createProject(
+    @Param('orgId') orgId: string,
+    @Req() req: any,
+    @Body() body: CreateProjectDto,
+  ) {
+    return this.projectsService.createProject(
+      orgId,
+      req.user.sub,
+      body.name,
+      body.description,
+    );
+  }
+
+  // 🔵 GET ALL PROJECTS
+  @UseGuards(JwtAuthGuard)
+  @Get('organizations/:orgId/projects')
+  getProjects(
+    @Param('orgId') orgId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.getProjects(
+      orgId,
+      req.user.sub,
+    );
+  }
+
+  // 🟣 GET SINGLE PROJECT
+  @UseGuards(JwtAuthGuard)
+  @Get('projects/:projectId')
+  getProjectById(
+    @Param('projectId') projectId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.getProjectById(
+      projectId,
+      req.user.sub,
+    );
+  }
+}
