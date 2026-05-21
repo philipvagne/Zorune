@@ -11,12 +11,13 @@ export class TasksService {
   private notificationsGateway: NotificationsGateway,
 ) {}
 
- async createTask(
+async createTask(
   orgId: string,
   projectId: string,
   userId: string,
   title: string,
   description?: string,
+  dueDate?: string,
 ) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -42,6 +43,9 @@ export class TasksService {
         title,
         description,
         projectId,
+        createdById: userId,
+
+        dueDate: dueDate ? new Date(dueDate) : null,
       },
     });
   }
@@ -112,14 +116,27 @@ async updateTask(userId: string, taskId: string, data: UpdateTaskDto) {
   const updatedTask = await this.prisma.task.update({
     where: { id: taskId },
     data,
+    include: {
+      assignments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
   });
 
-  this.notificationsGateway.emitTaskUpdated({
-    taskId: updatedTask.id,
-    status: updatedTask.status,
-    assigneeId: updatedTask.assigneeId,
-    title: updatedTask.title,
-  });
+    this.notificationsGateway.emitTaskUpdated({
+      taskId: updatedTask.id,
+      status: updatedTask.status,
+      title: updatedTask.title,
+      assignments: updatedTask.assignments,
+    });
 
 
   if (data.status && data.status !== task.status) {
@@ -135,15 +152,21 @@ async updateTask(userId: string, taskId: string, data: UpdateTaskDto) {
   }
 
 
-if (task.assigneeId && data.status && data.status !== task.status) {
-  await this.prisma.notification.create({
-    data: {
-      type: 'TASK_STATUS_CHANGED',
-      message: `Task "${task.title}" moved from ${task.status} to ${data.status}`,
-      userId: task.assigneeId,
-      taskId: task.id,
-    },
-  });
+const assignees = await this.prisma.taskAssignment.findMany({
+  where: { taskId: task.id },
+});
+
+if (data.status && data.status !== task.status) {
+  for (const a of assignees) {
+    await this.prisma.notification.create({
+      data: {
+        type: 'TASK_STATUS_CHANGED',
+        message: `Task "${task.title}" moved from ${task.status} to ${data.status}`,
+        userId: a.userId,
+        taskId: task.id,
+      },
+    });
+  }
 }
 
   return updatedTask;
@@ -203,18 +226,24 @@ async assignTask(userId: string, taskId: string, assigneeId: string) {
   }
 
   try {
-    
- 
-    // 1. Update task
-    const updatedTask = await this.prisma.task.update({
-      where: { id: taskId },
-      data: {
-        assigneeId,
+    // 1. Check if already assigned
+    const existing = await this.prisma.taskAssignment.findFirst({
+      where: {
+        taskId,
+        userId: assigneeId,
       },
     });
 
+    if (!existing) {
+      await this.prisma.taskAssignment.create({
+        data: {
+          taskId,
+          userId: assigneeId,
+        },
+      });
+    }
 
-    // 2. Create DB notification
+    // 2. Create DB notification (popup system)
     const notification = await this.prisma.notification.create({
       data: {
         type: 'TASK_ASSIGNED',
@@ -231,25 +260,113 @@ async assignTask(userId: string, taskId: string, assigneeId: string) {
       notificationId: notification.id,
     });
 
+    // 3. Fetch updated task WITH assignments (source of truth)
+    const updatedTask = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        assignments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!updatedTask) {
+      throw new ForbiddenException('Task not found after update');
+    }
+
+    // 4. SINGLE Kanban sync event (IMPORTANT FIX)
+      this.notificationsGateway.emitTaskUpdated({
+        taskId: updatedTask.id,
+        status: updatedTask.status,
+        title: updatedTask.title,
+        assignments: updatedTask.assignments,
+      });
+
     return updatedTask;
+
   } catch (error) {
     console.log('ASSIGN TASK ERROR:', error);
     throw error;
   }
 }
 
-async getMyTasks(
+async removeAssignee(
   userId: string,
-  status?: string,
-  projectId?: string,
-  page: number = 1,
-  limit: number = 10,
+  taskId: string,
+  assigneeId: string,
 ) {
+  const task = await this.prisma.task.findUnique({
+    where: { id: taskId },
+    include: { project: true },
+  });
 
-const where: any = {
-  assigneeId: userId,
-};
+  if (!task) {
+    throw new ForbiddenException('Task not found');
+  }
 
+  const membership = await this.prisma.membership.findFirst({
+    where: {
+      userId,
+      organizationId: task.project.organizationId,
+    },
+  });
+
+  if (!membership) {
+    throw new ForbiddenException('Not allowed');
+  }
+
+  await this.prisma.taskAssignment.deleteMany({
+    where: {
+      taskId,
+      userId: assigneeId,
+    },
+  });
+
+  const updatedTask = await this.prisma.task.findUnique({
+    where: { id: taskId },
+    include: {
+      assignments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  this.notificationsGateway.emitTaskUpdated({
+    taskId: updatedTask?.id,
+    status: updatedTask?.status,
+    title: updatedTask?.title,
+    assignments: updatedTask?.assignments,
+  });
+
+  return updatedTask;
+}
+
+
+async getMyTasks(userId: string, status?: string, projectId?: string, page = 1, limit = 10) {
+
+  const where: any = {
+    assignments: {
+      some: {
+        userId,
+      },
+    },
+  };
 
   if (status) {
     where.status = status as TaskStatus;
@@ -261,19 +378,34 @@ const where: any = {
 
   const skip = (page - 1) * limit;
 
-const total = await this.prisma.task.count({
-  where,
-});
+  const total = await this.prisma.task.count({ where });
 
-const tasks = await this.prisma.task.findMany();
+  const tasks = await this.prisma.task.findMany({
+    where,
+    skip,
+    take: limit,
+    include: {
+      assignments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
-return {
-  data: tasks,
-  total,
-  page,
-  limit,
-  lastPage: Math.ceil(total / limit),
-};
+  return {
+    data: tasks,
+    total,
+    page,
+    limit,
+    lastPage: Math.ceil(total / limit),
+  };
 }
 
 async getTaskActivity(

@@ -52,6 +52,7 @@ sendNotification(userId: string, payload: any) {
 }
 
 emitTaskUpdated(payload: any) {
+  console.log("📡 task_updated EMIT:", payload);
   this.server.emit("task_updated", payload);
 }
 }

@@ -5,6 +5,7 @@ import KanbanColumn from "../components/kanban/KanbanColumn";
 import TaskModal from "../components/tasks/TaskModal";
 import api from "../api";
 import { createSocket } from "../socket";
+import toast from "react-hot-toast";
 
 export default function Dashboard({ token }) {
   const [notifications, setNotifications] = useState([]);
@@ -12,12 +13,13 @@ export default function Dashboard({ token }) {
   const [selectedTask, setSelectedTask] = useState(null);
   
   const {
-  todoTasks,
-  inProgressTasks,
-  doneTasks,
-  updateTaskStatus,
-  assignTask,
-} = useTasks(token);
+    todoTasks,
+    inProgressTasks,
+    doneTasks,
+    updateTaskStatus,
+    assignTask,
+    removeAssignee,
+  } = useTasks(token);
 
 useEffect(() => {
   fetchNotifications();
@@ -25,6 +27,8 @@ useEffect(() => {
   const socket = createSocket(token);
 
   socket.on("notification", (data) => {
+    toast.success(data.message);
+
     const normalized = {
       id: data.id || data.notificationId,
       message: data.message,
@@ -170,14 +174,13 @@ return (
       />
     </div>
 
-    {selectedTask && (
       <TaskModal
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
         updateTaskStatus={updateTaskStatus}
         assignTask={assignTask}
+        removeAssignee={removeAssignee}
       />
-    )}
   </div>
 );
 }

@@ -1,20 +1,133 @@
 # OpsFlow
 
-OpsFlow is a full-stack realtime project management and operations platform built with modern web technologies.
+A real-time collaborative project management platform inspired by tools like Linear, Jira, and ClickUp.
 
-The platform includes:
+Built with a modern full-stack architecture using:
 
+* React
+* NestJS
+* Prisma
+* PostgreSQL
+* Socket.IO
 * JWT Authentication
-* Project management
-* Task management
-* Realtime Kanban board
-* WebSocket notifications
-* Live task assignment updates
-* Activity logging
-* PostgreSQL database integration
-* Prisma ORM
-* React frontend
-* NestJS backend
+
+---
+
+# Features
+
+## Authentication
+
+* JWT-based authentication
+* Secure login system
+* Protected API routes
+* Socket authentication via JWT
+
+---
+
+# Organizations & Projects
+
+* Multi-organization architecture
+* Role-based memberships
+* Project management system
+* Organization scoped permissions
+
+---
+
+# Real-Time Collaborative Kanban
+
+## Task Management
+
+* Create tasks
+* Update task statuses
+* Delete tasks
+* Real-time task synchronization
+* Optimistic UI updates
+
+## Kanban Board
+
+* TODO / IN_PROGRESS / DONE workflow
+* Instant state updates without refresh
+* Live websocket synchronization
+* Realtime collaborative state management
+
+---
+
+# Multi-Assignee Collaboration System
+
+## Multi-Assignee Architecture
+
+* Assign multiple users to a task
+* Remove assignees instantly
+* Real-time collaborative updates
+* Normalized websocket event architecture
+
+## Collaborative UI
+
+* Assignee avatar stacks
+* Real-time assignee synchronization
+* Interactive task modal
+* Hover interactions
+* Dynamic collaborative task cards
+
+---
+
+# Notification System
+
+## Real-Time Notifications
+
+* Live websocket notifications
+* Instant task assignment alerts
+* Read/unread state handling
+* Notification dropdown system
+* Real-time frontend synchronization
+
+---
+
+# Activity Tracking
+
+* Task activity logs
+* Status transition tracking
+* Audit trail foundation
+* Pagination-ready activity architecture
+
+---
+
+# Due Date System
+
+* Optional task due dates
+* Backend due date support
+* Foundation for overdue engine
+
+---
+
+# Real-Time Architecture
+
+## Websocket Events
+
+The system uses normalized websocket architecture:
+
+### task_updated
+
+Used for:
+
+* status updates
+* assignment updates
+* future collaborative task mutations
+
+### notification
+
+Used for:
+
+* user alerts
+* popups
+* notification dropdown sync
+
+This architecture avoids:
+
+* duplicate realtime listeners
+* stale frontend state
+* unnecessary refetching
+* websocket event fragmentation
 
 ---
 
@@ -23,78 +136,119 @@ The platform includes:
 ## Frontend
 
 * React
-* Axios
 * Socket.IO Client
+* React Hot Toast
 
 ## Backend
 
 * NestJS
 * Prisma ORM
+* PostgreSQL
 * Socket.IO
 * JWT Authentication
 
-## Database
+---
 
-* PostgreSQL
+# Database Design
+
+## Core Models
+
+* User
+* Organization
+* Membership
+* Project
+* Task
+* TaskAssignment
+* ActivityLog
+* Notification
 
 ---
 
-# Features
+# Realtime Collaboration Features
 
-## Authentication
-
-* User registration
-* User login
-* JWT protected routes
-
-## Projects
-
-* Create projects
-* Organize tasks by project
-
-## Tasks
-
-* Create tasks
-* Assign tasks to users
-* Update task statuses
-* Task descriptions
-* Task activity tracking
-
-## Kanban Board
-
-* TODO column
-* IN_PROGRESS column
-* DONE column
-* Live realtime updates
-
-## Notifications
-
-* Realtime task assignment notifications
-* Unread notification counter
-* Mark notifications as read
-* Live notification dropdown
-
-## Realtime Sync
-
-* WebSocket powered updates
-* Instant Kanban synchronization
-* Live task assignment updates
-* Realtime modal updates
+* Multi-user Kanban synchronization
+* Real-time task updates
+* Real-time assignment system
+* Real-time notifications
+* Collaborative UI state management
+* Optimistic frontend architecture
 
 ---
 
-# Architecture
+# Current Development Status
 
-OpsFlow uses a monorepo structure:
+## Completed
 
-```txt
-opsflow/
-├── apps/
-│   ├── api/        # NestJS backend
-│   └── web/        # React frontend
-├── prisma/
-├── package.json
-└── README.md
+* Authentication system
+* Organization system
+* Project system
+* Realtime Kanban board
+* Multi-assignee system
+* Notification engine
+* Activity logging foundation
+* Realtime websocket architecture
+
+## In Progress
+
+* Due date visual system
+* Overdue task engine
+* Activity timeline UI
+* Drag & drop Kanban
+* User profile avatars
+
+---
+
+# Future Roadmap
+
+* Drag & drop Kanban
+* Presence system
+* Typing indicators
+* Comment threads
+* File attachments
+* Workspace permissions
+* Team analytics
+* Task filtering/search
+* Calendar views
+* AI workflow automation
+
+---
+
+# Architecture Highlights
+
+## Backend Patterns
+
+* Service-based architecture
+* DTO validation
+* JWT websocket authentication
+* Prisma relational modeling
+* Real-time event normalization
+
+## Frontend Patterns
+
+* Custom React hooks
+* Optimistic UI updates
+* Realtime state synchronization
+* Component-driven architecture
+
+---
+
+# Local Development
+
+## Backend
+
+```bash
+cd apps/api
+npm install
+npx prisma migrate dev
+npm run start:dev
+```
+
+## Frontend
+
+```bash
+cd apps/web
+npm install
+npm run dev
 ```
 
 ---
@@ -103,264 +257,13 @@ opsflow/
 
 ## Backend (.env)
 
-Create:
-
-```txt
-apps/api/.env
-```
-
-Add:
-
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/opsflow"
-JWT_SECRET="your_jwt_secret"
-PORT=3000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/opsflow
+JWT_SECRET=your_secret_here
 ```
-
----
-
-## Frontend (.env)
-
-Create:
-
-```txt
-apps/web/.env
-```
-
-Add:
-
-```env
-VITE_API_URL=http://localhost:3000
-```
-
----
-
-# Installation
-
-## 1. Clone Repository
-
-```bash
-git clone <your-repository-url>
-cd opsflow
-```
-
----
-
-## 2. Install Dependencies
-
-```bash
-npm install
-```
-
----
-
-# Database Setup
-
-## Run Prisma Migrations
-
-```bash
-npx prisma migrate dev
-```
-
----
-
-## Generate Prisma Client
-
-```bash
-npx prisma generate
-```
-
----
-
-## Open Prisma Studio
-
-```bash
-npx prisma studio
-```
-
----
-
-# Running The Application
-
-## Start Backend
-
-```bash
-cd apps/api
-npm run start:dev
-```
-
-Backend runs on:
-
-```txt
-http://localhost:3000
-```
-
----
-
-## Start Frontend
-
-```bash
-cd apps/web
-npm run dev
-```
-
-Frontend runs on:
-
-```txt
-http://localhost:5173
-```
-
----
-
-# Prisma Commands
-
-## Run Migrations
-
-```bash
-npx prisma migrate dev
-```
-
----
-
-## Generate Prisma Client
-
-```bash
-npx prisma generate
-```
-
----
-
-## Open Prisma Studio
-
-```bash
-npx prisma studio
-```
-
----
-
-## Reset Database
-
-```bash
-npx prisma migrate reset
-```
-
----
-
-# Realtime System
-
-OpsFlow uses Socket.IO for realtime communication.
-
-Current realtime functionality includes:
-
-| Feature                   | Status |
-| ------------------------- | ------ |
-| Realtime notifications    | ✅      |
-| Live Kanban updates       | ✅      |
-| Task assignment sync      | ✅      |
-| Realtime modal sync       | ✅      |
-| Notification unread count | ✅      |
-
----
-
-# Current Application Features
-
-## Fully Working
-
-* JWT Authentication
-* Protected routes
-* Task CRUD
-* Project structure
-* Realtime notifications
-* Realtime Kanban board
-* Task assignment
-* Prisma/PostgreSQL integration
-* Socket.IO synchronization
-
----
-
-# Future Improvements
-
-Planned future features:
-
-* Drag & drop Kanban
-* User avatars
-* Team management
-* File uploads
-* Comments system
-* Role permissions
-* Search & filtering
-* Mobile responsiveness
-* Email notifications
-* Analytics dashboard
-* Dark mode
-
----
-
-# Development Notes
-
-## Backend
-
-The backend follows a modular NestJS architecture.
-
-Main modules:
-
-* Auth
-* Users
-* Projects
-* Tasks
-* Notifications
-* WebSocket Gateway
-
----
-
-## Frontend
-
-The frontend uses React functional components and hooks.
-
-Main systems:
-
-* Dashboard
-* Kanban Board
-* Notification System
-* Task Modal
-* Socket Synchronization
-
----
-
-# Realtime Architecture
-
-The backend emits a unified:
-
-```txt
-notification
-```
-
-WebSocket event.
-
-The frontend branches behavior using:
-
-```txt
-notification.type
-```
-
-Example:
-
-```txt
-TASK_ASSIGNED
-```
-
-This architecture keeps realtime logic centralized and scalable.
 
 ---
 
 # Author
 
-Built using:
-
-* React
-* NestJS
-* Prisma
-* PostgreSQL
-* Socket.IO
-
-by Philip.
+Built by Philip Agné

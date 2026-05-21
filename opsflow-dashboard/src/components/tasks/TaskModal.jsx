@@ -3,6 +3,7 @@ export default function TaskModal({
   onClose,
   updateTaskStatus,
   assignTask,
+  removeAssignee,
 }) {
   if (!task) return null;
 
@@ -80,32 +81,110 @@ export default function TaskModal({
           </div>
         </div>
 
-        {/* ASSIGN */}
-        <div style={{ marginTop: "20px" }}>
-          <strong>Assign Task</strong>
+      {/* ASSIGN */}
+      <div style={{ marginTop: "20px" }}>
+        <strong>Assign Task</strong>
 
-          <input
-            type="text"
-            placeholder="Enter user ID"
-            defaultValue={task.assigneeId || ""}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                assignTask(task.id, e.target.value);
-              }
-            }}
+        {/* ASSIGNED USERS */}
+        <div style={{ marginBottom: "15px", marginTop: "10px" }}>
+          <div
             style={{
-              padding: "8px",
-              width: "100%",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              marginTop: "10px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
             }}
-          />
+          >
+            {task.assignments?.length ? (
+              task.assignments.map((assignment) => (
+          <div
+            key={assignment.id}
+            style={{
+              padding: "6px 10px",
+              background: "#f3f4f6",
+              borderRadius: "999px",
+              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <span>
+              {assignment.user?.fullName ||
+                assignment.user?.email ||
+                assignment.userId}
+            </span>
 
-          <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
-            Press Enter to assign
+            <button
+              onClick={() =>
+                removeAssignee(task.id, assignment.userId)
+              }
+
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#d1d5db";
+                }}
+
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "#e5e7eb";
+                }}
+
+                style={{
+                  border: "none",
+                  background: "#e5e7eb",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  color: "#444",
+                  borderRadius: "50%",
+                  width: "18px",
+                  height: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  fontSize: "12px",
+                  transition: "0.15s ease",
+                }}
+            >
+              ×
+            </button>
+          </div>
+              ))
+            ) : (
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#777",
+                }}
+              >
+                No assignees
+              </div>
+            )}
           </div>
         </div>
+
+        <input
+          type="text"
+          placeholder="Enter user ID"
+          defaultValue={
+            task.assignments?.[0]?.user?.id || ""
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              assignTask(task.id, e.target.value);
+            }
+          }}
+          style={{
+            padding: "8px",
+            width: "100%",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            marginTop: "10px",
+          }}
+        />
+
+        <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
+          Press Enter to assign
+        </div>
+      </div>
 
         {/* DESCRIPTION */}
         <div style={{ marginTop: "20px" }}>

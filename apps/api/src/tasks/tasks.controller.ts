@@ -68,6 +68,20 @@ assignTask(
 }
 
 @UseGuards(JwtAuthGuard)
+@Delete('tasks/:taskId/assign/:assigneeId')
+removeAssignee(
+  @Param('taskId') taskId: string,
+  @Param('assigneeId') assigneeId: string,
+  @Req() req: any,
+) {
+  return this.tasksService.removeAssignee(
+    req.user.sub,
+    taskId,
+    assigneeId,
+  );
+}
+
+@UseGuards(JwtAuthGuard)
 @Get('tasks/my')
 getMyTasks(
   @Req() req: any,
