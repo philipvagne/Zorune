@@ -242,12 +242,24 @@
   cursor: pointer;
   font: inherit;
   text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 .rail-nav button.active {
   color: #0f172a;
   background: #e2e8f0;
   font-weight: 700;
+}
+
+.rail-nav-icon {
+  width: 24px;
+  flex-shrink: 0;
+  color: #64748b;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
 }
 
 .workspace-header {
@@ -264,6 +276,102 @@
   align-items: flex-start;
   min-width: 720px;
   min-height: 100%;
+}
+
+.workspace-placeholder {
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.archive-card {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.archive-card-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.archive-card h4 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.archive-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.archive-meta span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.archive-restore-button {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #ffffff;
+  background: #0f766e;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+}
+
+.archive-restore-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.archive-assignees {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.archive-avatar {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #4f46e5;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.archive-error {
+  padding: 12px;
+  border-radius: 6px;
+  color: #991b1b;
+  background: #fee2e2;
+  font-size: 14px;
 }
 
 .dashboard-context-panel {

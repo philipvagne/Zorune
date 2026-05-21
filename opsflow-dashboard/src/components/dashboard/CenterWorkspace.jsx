@@ -1,10 +1,14 @@
-export default function CenterWorkspace({ children }) {
+export default function CenterWorkspace({
+  eyebrow = "Workspace",
+  title,
+  children,
+}) {
   return (
     <main className="dashboard-center-workspace">
       <div className="workspace-header">
         <div>
-          <div className="dashboard-eyebrow">Kanban</div>
-          <h3>Active Tasks</h3>
+          <div className="dashboard-eyebrow">{eyebrow}</div>
+          <h3>{title}</h3>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import LeftRail from "../components/dashboard/LeftRail";
 import CenterWorkspace from "../components/dashboard/CenterWorkspace";
 import RightRail from "../components/dashboard/RightRail";
 import ContextPanel from "../components/dashboard/ContextPanel";
+import ArchivedTasks from "../components/archive/ArchivedTasks";
 import api from "../api";
 import { createSocket } from "../socket";
 import toast from "react-hot-toast";
@@ -16,6 +17,7 @@ export default function Dashboard({ token, onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [openNotifications, setOpenNotifications] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [activeView, setActiveView] = useState("tasks");
   
   const {
     tasks,
@@ -33,8 +35,49 @@ export default function Dashboard({ token, onLogout }) {
     tasks.find((task) => task.id === selectedTaskId) || null;
 
   const selectTask = (task) => {
+    setActiveView("tasks");
     setSelectedTaskId(task.id);
   };
+
+  const changeView = (view) => {
+    setActiveView(view);
+    setSelectedTaskId(null);
+  };
+
+  const workspaceMeta = {
+    tasks: {
+      eyebrow: "Kanban",
+      title: "Active Tasks",
+    },
+    archive: {
+      eyebrow: "Archive",
+      title: "Archived Tasks",
+      placeholder: "Archived tasks will appear here",
+    },
+    projects: {
+      eyebrow: "Projects",
+      title: "Projects",
+      placeholder: "Projects workspace coming soon",
+    },
+    organizations: {
+      eyebrow: "Organizations",
+      title: "Organizations",
+      placeholder: "Organization management coming soon",
+    },
+    settings: {
+      eyebrow: "Settings",
+      title: "Settings",
+      placeholder: "Settings coming soon",
+    },
+    profile: {
+      eyebrow: "Profile",
+      title: "Profile",
+      placeholder: "Profile coming soon",
+    },
+  };
+
+  const currentWorkspace =
+    workspaceMeta[activeView] || workspaceMeta.tasks;
 
 useEffect(() => {
   fetchNotifications();
@@ -191,29 +234,43 @@ return (
     />
 
     <div className="dashboard-body">
-      <LeftRail />
+      <LeftRail
+        activeView={activeView}
+        onViewChange={changeView}
+      />
 
       <div className="dashboard-workspace-stack">
-        <CenterWorkspace>
-          <div className="kanban-board">
-            <KanbanColumn
-              title="TODO"
-              tasks={todoTasks}
-              setSelectedTask={selectTask}
-            />
+        <CenterWorkspace
+          eyebrow={currentWorkspace.eyebrow}
+          title={currentWorkspace.title}
+        >
+          {activeView === "tasks" ? (
+            <div className="kanban-board">
+              <KanbanColumn
+                title="TODO"
+                tasks={todoTasks}
+                setSelectedTask={selectTask}
+              />
 
-            <KanbanColumn
-              title="IN PROGRESS"
-              tasks={inProgressTasks}
-              setSelectedTask={selectTask}
-            />
+              <KanbanColumn
+                title="IN PROGRESS"
+                tasks={inProgressTasks}
+                setSelectedTask={selectTask}
+              />
 
-            <KanbanColumn
-              title="DONE"
-              tasks={doneTasks}
-              setSelectedTask={selectTask}
-            />
-          </div>
+              <KanbanColumn
+                title="DONE"
+                tasks={doneTasks}
+                setSelectedTask={selectTask}
+              />
+            </div>
+          ) : activeView === "archive" ? (
+            <ArchivedTasks token={token} />
+          ) : (
+            <div className="workspace-placeholder">
+              {currentWorkspace.placeholder}
+            </div>
+          )}
         </CenterWorkspace>
 
         <ContextPanel>
