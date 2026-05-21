@@ -363,4 +363,4 @@ Built using:
 * PostgreSQL
 * Socket.IO
 
-by Philip Agné.
+by Philip.
