@@ -1,8 +1,13 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class AddMemberDto {
-  @IsEmail()
-  email: string;
+  @IsOptional()
+  @IsString()
+  emailOrUsername?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
 
   @IsOptional()
   @IsString()

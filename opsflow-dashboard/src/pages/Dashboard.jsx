@@ -10,12 +10,15 @@ import NotificationBell from "../components/notifications/NotificationBell";
 import KanbanColumn from "../components/kanban/KanbanColumn";
 import TaskModal from "../components/tasks/TaskModal";
 import CreateTaskPanel from "../components/tasks/CreateTaskPanel";
+import TaskTable from "../components/tasks/TaskTable";
+import TaskCalendar from "../components/tasks/TaskCalendar";
 import TopBar from "../components/dashboard/TopBar";
 import LeftRail from "../components/dashboard/LeftRail";
 import CenterWorkspace from "../components/dashboard/CenterWorkspace";
 import RightRail from "../components/dashboard/RightRail";
 import ContextPanel from "../components/dashboard/ContextPanel";
 import ArchivedTasks from "../components/archive/ArchivedTasks";
+import OrganizationsWorkspace from "../components/organizations/OrganizationsWorkspace";
 import api from "../api";
 import { createSocket } from "../socket";
 import toast from "react-hot-toast";
@@ -25,6 +28,7 @@ export default function Dashboard({ token, onLogout }) {
   const [openNotifications, setOpenNotifications] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [activeView, setActiveView] = useState("tasks");
+  const [activeTaskLayout, setActiveTaskLayout] = useState("kanban");
   const [contextMode, setContextMode] = useState("empty");
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [taskViewersByTask, setTaskViewersByTask] = useState({});
@@ -143,6 +147,7 @@ export default function Dashboard({ token, onLogout }) {
 
   const currentWorkspace =
     workspaceMeta[activeView] || workspaceMeta.tasks;
+  const activeTasks = tasks.filter((task) => !task.archivedAt);
 
 useEffect(() => {
   fetchNotifications();
@@ -360,17 +365,48 @@ return (
           title={currentWorkspace.title}
           actions={
             activeView === "tasks" ? (
-              <button
-                type="button"
-                className="ui-button ui-button-primary"
-                onClick={openCreateTask}
-              >
-                + New Task
-              </button>
+              <>
+                <div className="view-toggle" aria-label="Task view">
+                  <button
+                    type="button"
+                    className={
+                      activeTaskLayout === "kanban" ? "active" : ""
+                    }
+                    onClick={() => setActiveTaskLayout("kanban")}
+                  >
+                    Kanban
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeTaskLayout === "table" ? "active" : ""
+                    }
+                    onClick={() => setActiveTaskLayout("table")}
+                  >
+                    Table
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeTaskLayout === "calendar" ? "active" : ""
+                    }
+                    onClick={() => setActiveTaskLayout("calendar")}
+                  >
+                    Calendar
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="ui-button ui-button-primary"
+                  onClick={openCreateTask}
+                >
+                  + New Task
+                </button>
+              </>
             ) : null
           }
         >
-          {activeView === "tasks" ? (
+          {activeView === "tasks" && activeTaskLayout === "kanban" ? (
             <DndContext
               sensors={sensors}
               onDragEnd={handleTaskDragEnd}
@@ -398,8 +434,22 @@ return (
                 />
               </div>
             </DndContext>
+          ) : activeView === "tasks" ? (
+            activeTaskLayout === "table" ? (
+              <TaskTable
+                tasks={activeTasks}
+                onSelectTask={selectTask}
+              />
+            ) : (
+              <TaskCalendar
+                tasks={activeTasks}
+                onSelectTask={selectTask}
+              />
+            )
           ) : activeView === "archive" ? (
             <ArchivedTasks token={token} />
+          ) : activeView === "organizations" ? (
+            <OrganizationsWorkspace token={token} />
           ) : (
             <div className="workspace-placeholder">
               {currentWorkspace.placeholder}

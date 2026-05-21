@@ -255,6 +255,7 @@ socket.on("task_updated", (data) => {
               title: data.title,
               dueDate: data.dueDate,
               archivedAt: data.archivedAt,
+              project: data.project ?? task.project,
               assignments,
             }
           : task
@@ -270,6 +271,7 @@ socket.on("task_updated", (data) => {
         status: data.status,
         dueDate: data.dueDate,
         archivedAt: data.archivedAt,
+        project: data.project,
         assignments,
       },
     ];

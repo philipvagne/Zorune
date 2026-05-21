@@ -48,6 +48,12 @@ private async getTaskUpdatePayload(taskId: string) {
   const task = await this.prisma.task.findUnique({
     where: { id: taskId },
     include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       assignments: {
         include: {
           user: {
@@ -74,6 +80,7 @@ private async getTaskUpdatePayload(taskId: string) {
       title: task.title,
       dueDate: task.dueDate,
       archivedAt: task.archivedAt,
+      project: task.project,
       assignments: task.assignments,
     },
   };
@@ -637,6 +644,12 @@ async getArchivedTasks(userId: string) {
       archivedAt: 'desc',
     },
     include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       assignments: {
         include: {
           user: {
