@@ -3,6 +3,11 @@ import useTasks from "../hooks/useTasks";
 import NotificationBell from "../components/notifications/NotificationBell";
 import KanbanColumn from "../components/kanban/KanbanColumn";
 import TaskModal from "../components/tasks/TaskModal";
+import TopBar from "../components/dashboard/TopBar";
+import LeftRail from "../components/dashboard/LeftRail";
+import CenterWorkspace from "../components/dashboard/CenterWorkspace";
+import RightRail from "../components/dashboard/RightRail";
+import ContextPanel from "../components/dashboard/ContextPanel";
 import api from "../api";
 import { createSocket } from "../socket";
 import toast from "react-hot-toast";
@@ -175,49 +180,53 @@ useEffect(() => {
   };
 
 return (
-  <div>
-    <div className="dashboard-topbar">
-      <h2>Dashboard</h2>
-      <button className="logout-button" onClick={onLogout}>
-        Logout
-      </button>
-    </div>
-
-    <NotificationBell
-      notifications={notifications}
-      openNotifications={openNotifications}
-      setOpenNotifications={setOpenNotifications}
-      markAsRead={markAsRead}
-      deleteNotification={deleteNotification}
+  <div className="dashboard-shell">
+    <TopBar
+      title="Dashboard"
+      actions={
+        <button className="logout-button" onClick={onLogout}>
+          Logout
+        </button>
+      }
     />
 
-    <div
-      style={{
-        display: "flex",
-        gap: "20px",
-        alignItems: "flex-start",
-        marginTop: "20px",
-      }}
-    >
-      <KanbanColumn
-        title="TODO"
-        tasks={todoTasks}
-        setSelectedTask={selectTask}
-      />
+    <div className="dashboard-body">
+      <LeftRail />
 
-      <KanbanColumn
-        title="IN PROGRESS"
-        tasks={inProgressTasks}
-        setSelectedTask={selectTask}
-      />
+      <CenterWorkspace>
+        <div className="kanban-board">
+          <KanbanColumn
+            title="TODO"
+            tasks={todoTasks}
+            setSelectedTask={selectTask}
+          />
 
-      <KanbanColumn
-        title="DONE"
-        tasks={doneTasks}
-        setSelectedTask={selectTask}
-      />
+          <KanbanColumn
+            title="IN PROGRESS"
+            tasks={inProgressTasks}
+            setSelectedTask={selectTask}
+          />
+
+          <KanbanColumn
+            title="DONE"
+            tasks={doneTasks}
+            setSelectedTask={selectTask}
+          />
+        </div>
+      </CenterWorkspace>
+
+      <RightRail>
+        <NotificationBell
+          notifications={notifications}
+          openNotifications={openNotifications}
+          setOpenNotifications={setOpenNotifications}
+          markAsRead={markAsRead}
+          deleteNotification={deleteNotification}
+        />
+      </RightRail>
     </div>
 
+    <ContextPanel>
       <TaskModal
         task={selectedTask}
         onClose={() => setSelectedTaskId(null)}
@@ -228,6 +237,7 @@ return (
         removeAssignee={removeAssignee}
         archiveTask={archiveTask}
       />
+    </ContextPanel>
   </div>
 );
 }

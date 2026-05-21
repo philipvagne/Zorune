@@ -140,10 +140,111 @@
   gap: 16px;
 }
 
+.dashboard-topbar h2,
+.workspace-header h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.dashboard-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-eyebrow,
+.rail-section-title {
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .logout-button {
   padding: 8px 12px;
   color: #334155;
   background: #e2e8f0;
+}
+
+.dashboard-shell {
+  min-height: 100svh;
+  box-sizing: border-box;
+  padding: 18px;
+  background: #f8fafc;
+}
+
+.dashboard-body {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 18px;
+}
+
+.dashboard-left-rail,
+.dashboard-right-rail,
+.dashboard-center-workspace {
+  min-height: calc(100svh - 116px);
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-left-rail,
+.dashboard-right-rail {
+  padding: 14px;
+}
+
+.dashboard-center-workspace {
+  min-width: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.rail-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rail-nav button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: #334155;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.rail-nav button.active {
+  color: #0f172a;
+  background: #e2e8f0;
+  font-weight: 700;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  min-width: 720px;
+}
+
+.dashboard-context-panel {
+  display: contents;
 }
 
 @media (max-width: 760px) {
@@ -154,5 +255,15 @@
 
   .auth-copy h1 {
     font-size: 34px;
+  }
+
+  .dashboard-body {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-left-rail,
+  .dashboard-right-rail,
+  .dashboard-center-workspace {
+    min-height: auto;
   }
 }
