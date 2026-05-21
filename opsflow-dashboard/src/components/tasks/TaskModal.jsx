@@ -221,17 +221,10 @@ export default function TaskModal({
 
   return (
     <div className="task-detail-panel">
-        {/* HEADER */}
         <div
           className="task-detail-header"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
-          }}
         >
-          <h2 style={{ margin: 0 }}>{task.title}</h2>
+          <h2>{task.title}</h2>
 
           <button
             type="button"
@@ -243,96 +236,75 @@ export default function TaskModal({
           </button>
         </div>
 
-        {/* STATUS */}
-        <div style={{ marginBottom: "15px" }}>
+        <section className="task-panel-section">
           <strong>Status</strong>
 
-          <div style={{ marginTop: "10px", display: "flex", gap: "8px" }}>
-            <button onClick={() => updateTaskStatus(task.id, "TODO")}>
+          <div className="button-row">
+            <button
+              className="ui-button ui-button-secondary"
+              onClick={() => updateTaskStatus(task.id, "TODO")}
+            >
               TODO
             </button>
 
-            <button onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}>
+            <button
+              className="ui-button ui-button-secondary"
+              onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}
+            >
               IN PROGRESS
             </button>
 
-            <button onClick={() => updateTaskStatus(task.id, "DONE")}>
+            <button
+              className="ui-button ui-button-secondary"
+              onClick={() => updateTaskStatus(task.id, "DONE")}
+            >
               DONE
             </button>
           </div>
 
-          <div style={{ marginTop: "10px", fontSize: "12px", color: "#666" }}>
+          <div className="muted-text">
             Current: <strong>{task.status}</strong>
           </div>
 
           {task.status === "DONE" && !task.archivedAt && (
-            <div style={{ marginTop: "12px" }}>
+            <div className="section-action">
               <button
+                className="ui-button ui-button-dark"
                 onClick={handleArchive}
                 disabled={archiving}
-                style={{
-                  background: "#111827",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 10px",
-                  cursor: archiving ? "not-allowed" : "pointer",
-                  opacity: archiving ? 0.7 : 1,
-                }}
               >
                 {archiving ? "Archiving..." : "Archive completed task"}
               </button>
 
               {archiveError && (
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#991b1b",
-                    marginTop: "6px",
-                  }}
-                >
+                <div className="form-error">
                   {archiveError}
                 </div>
               )}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* DUE DATE */}
-        <div style={{ marginTop: "20px" }}>
+        <section className="task-panel-section">
           <strong>Due Date</strong>
 
           <div
-            style={{
-              marginTop: "8px",
-              fontSize: "13px",
-              color: isOverdue ? "#b91c1c" : "#444",
-              fontWeight: isOverdue ? "bold" : "normal",
-            }}
+            className={isOverdue ? "due-date-text overdue" : "due-date-text"}
           >
             {formattedDueDate}
             {isOverdue && " - Overdue"}
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "10px",
-            }}
-          >
+          <div className="button-row">
             <input
               type="date"
               value={dueDateValue}
               onChange={(e) => setDueDateValue(e.target.value)}
-              style={{
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
+              className="ui-input"
             />
 
             <button
+              className="ui-button ui-button-primary"
               onClick={() =>
                 updateTaskDueDate(task.id, dueDateValue || null)
               }
@@ -341,6 +313,7 @@ export default function TaskModal({
             </button>
 
             <button
+              className="ui-button ui-button-secondary"
               onClick={() => {
                 setDueDateValue("");
                 updateTaskDueDate(task.id, null);
@@ -349,34 +322,17 @@ export default function TaskModal({
               Clear
             </button>
           </div>
-        </div>
+        </section>
 
-      {/* ASSIGN */}
-      <div style={{ marginTop: "20px" }}>
+      <section className="task-panel-section">
         <strong>Assign Task</strong>
 
-        {/* ASSIGNED USERS */}
-        <div style={{ marginBottom: "15px", marginTop: "10px" }}>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
+        <div className="assignee-list">
             {task.assignments?.length ? (
               task.assignments.map((assignment) => (
           <div
             key={assignment.id}
-            style={{
-              padding: "6px 10px",
-              background: "#f3f4f6",
-              borderRadius: "999px",
-              fontSize: "13px",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
+            className="assignee-chip"
           >
             <span>
               {assignment.user?.fullName ||
@@ -385,50 +341,20 @@ export default function TaskModal({
             </span>
 
             <button
+              className="assignee-remove"
               onClick={() =>
                 removeAssignee(task.id, assignment.userId)
               }
-
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#d1d5db";
-                }}
-
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = "#e5e7eb";
-                }}
-
-                style={{
-                  border: "none",
-                  background: "#e5e7eb",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  color: "#444",
-                  borderRadius: "50%",
-                  width: "18px",
-                  height: "18px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
-                  fontSize: "12px",
-                  transition: "0.15s ease",
-                }}
             >
               x
             </button>
           </div>
               ))
             ) : (
-              <div
-                style={{
-                  fontSize: "13px",
-                  color: "#777",
-                }}
-              >
+              <div className="muted-text">
                 No assignees
               </div>
             )}
-          </div>
         </div>
 
         <input
@@ -441,55 +367,34 @@ export default function TaskModal({
               assignSelectedUser(e.target.value.trim());
             }
           }}
-          style={{
-            padding: "8px",
-            width: "100%",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            marginTop: "10px",
-          }}
+          className="ui-input full-width"
         />
 
         {searchingUsers && (
-          <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
+          <div className="muted-text">
             Searching users...
           </div>
         )}
 
         {searchError && (
-          <div style={{ fontSize: "12px", color: "#991b1b", marginTop: "6px" }}>
+          <div className="form-error">
             {searchError}
           </div>
         )}
 
         {userResults.length > 0 && (
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              marginTop: "8px",
-              overflow: "hidden",
-            }}
-          >
+          <div className="user-search-results">
             {userResults.map((user) => (
               <button
                 key={user.id}
                 type="button"
                 onClick={() => assignSelectedUser(user.id)}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  borderBottom: "1px solid #f3f4f6",
-                  background: "white",
-                  cursor: "pointer",
-                  padding: "8px 10px",
-                  textAlign: "left",
-                }}
+                className="user-search-result"
               >
-                <div style={{ fontSize: "13px", fontWeight: "bold" }}>
+                <div className="user-search-name">
                   {user.fullName || user.username || user.email}
                 </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
+                <div className="muted-text">
                   {user.username ? `@${user.username} - ` : ""}
                   {user.email}
                 </div>
@@ -498,62 +403,44 @@ export default function TaskModal({
           </div>
         )}
 
-        <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
+        <div className="muted-text">
           Select a user from search, or press Enter to assign by raw user ID.
         </div>
-      </div>
+      </section>
 
-        {/* PROGRESS UPDATES */}
-        <div style={{ marginTop: "20px" }}>
+        <section className="task-panel-section">
           <strong>Progress Updates</strong>
 
-          <div style={{ marginTop: "10px" }}>
+          <div className="stack-sm">
             <textarea
               value={newUpdateMessage}
               onChange={(e) => setNewUpdateMessage(e.target.value)}
               placeholder="Share a progress update..."
               rows={3}
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-                resize: "vertical",
-                font: "inherit",
-              }}
+              className="ui-textarea"
             />
 
             <button
+              className="ui-button ui-button-primary"
               onClick={submitTaskUpdate}
-              style={{ marginTop: "8px" }}
             >
               Post Update
             </button>
           </div>
 
           {updateError && (
-            <div style={{ fontSize: "12px", color: "#991b1b", marginTop: "6px" }}>
+            <div className="form-error">
               {updateError}
             </div>
           )}
 
-          <div
-            style={{
-              marginTop: "12px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              maxHeight: "180px",
-              overflowY: "auto",
-            }}
-          >
+          <div className="task-updates-list">
             {updatesLoading ? (
-              <div style={{ fontSize: "13px", color: "#666" }}>
+              <div className="muted-text">
                 Loading updates...
               </div>
             ) : taskUpdates.length === 0 ? (
-              <div style={{ fontSize: "13px", color: "#777" }}>
+              <div className="muted-text">
                 No progress updates yet
               </div>
             ) : (
@@ -567,28 +454,14 @@ export default function TaskModal({
                 return (
                   <div
                     key={update.id}
-                    style={{
-                      padding: "10px",
-                      background: "#f9fafb",
-                      border: "1px solid #edf0f3",
-                      borderRadius: "8px",
-                    }}
+                    className="task-update-card"
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "10px",
-                        fontSize: "12px",
-                        color: "#666",
-                        marginBottom: "5px",
-                      }}
-                    >
+                    <div className="task-update-meta">
                       <span>{author}</span>
                       <span>{new Date(update.createdAt).toLocaleString()}</span>
                     </div>
 
-                    <div style={{ fontSize: "14px", color: "#333" }}>
+                    <div className="task-update-message">
                       {update.message}
                     </div>
                   </div>
@@ -596,24 +469,16 @@ export default function TaskModal({
               })
             )}
           </div>
-        </div>
+        </section>
 
-        {/* DESCRIPTION */}
-        <div style={{ marginTop: "20px" }}>
+        <section className="task-panel-section">
           <strong>Description</strong>
-          <p style={{ marginTop: "8px", color: "#444" }}>
+          <p className="task-description">
             {task.description || "No description"}
           </p>
-        </div>
+        </section>
 
-        {/* FOOTER */}
-        <div
-          style={{
-            marginTop: "25px",
-            fontSize: "12px",
-            color: "#888",
-          }}
-        >
+        <div className="task-id">
           Task ID: {task.id}
         </div>
     </div>

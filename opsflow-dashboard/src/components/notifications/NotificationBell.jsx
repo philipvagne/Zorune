@@ -10,14 +10,9 @@ export default function NotificationBell({
   ).length;
 
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "inline-block",
-      }}
-    >
-      {/* BUTTON */}
+    <div className="notification-shell">
       <button
+        className="ui-button ui-button-secondary notification-trigger"
         onClick={(e) => {
           e.stopPropagation();
           setOpenNotifications((prev) => !prev);
@@ -27,79 +22,35 @@ export default function NotificationBell({
         {unreadCount > 0 && `(${unreadCount})`}
       </button>
 
-      {/* DROPDOWN */}
       {openNotifications && (
         <div
+          className="notification-menu"
           onClick={(e) => e.stopPropagation()}
-          style={{
-            position: "absolute",
-            top: "40px",
-            right: "0",
-            width: "320px",
-            background: "white",
-            border: "1px solid #ddd",
-            borderRadius: "10px",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-            zIndex: 1000,
-            overflow: "hidden",
-          }}
         >
-          {/* HEADER */}
-          <div
-            style={{
-              padding: "10px",
-              borderBottom: "1px solid #eee",
-              fontWeight: "bold",
-            }}
-          >
+          <div className="notification-menu-header">
             Notifications
           </div>
 
-          {/* CONTENT */}
-          <div
-            style={{
-              maxHeight: "300px",
-              overflowY: "auto",
-            }}
-          >
+          <div className="notification-list">
             {notifications.length === 0 ? (
-              <div
-                style={{
-                  padding: "10px",
-                  color: "#666",
-                }}
-              >
+              <div className="notification-empty">
                 No notifications yet
               </div>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
+                  className={
+                    n.isRead
+                      ? "notification-item"
+                      : "notification-item unread"
+                  }
                   onClick={(e) => {
                     e.stopPropagation();
                     markAsRead(n.id);
                   }}
-                  style={{
-                    padding: "10px",
-                    borderBottom: "1px solid #f1f1f1",
-                    fontWeight: n.isRead
-                      ? "normal"
-                      : "bold",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    background: n.isRead
-                      ? "white"
-                      : "#f5f9ff",
-                  }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "10px",
-                    }}
-                  >
+                  <div className="notification-item-row">
                     <span>{n.message}</span>
 
                     {n.isRead && (
@@ -109,16 +60,7 @@ export default function NotificationBell({
                           e.stopPropagation();
                           deleteNotification(n.id);
                         }}
-                        style={{
-                          border: "none",
-                          background: "#f3f4f6",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                          padding: "4px 7px",
-                          color: "#444",
-                          fontSize: "12px",
-                          flexShrink: 0,
-                        }}
+                        className="ui-button ui-button-ghost notification-delete"
                       >
                         Delete
                       </button>
