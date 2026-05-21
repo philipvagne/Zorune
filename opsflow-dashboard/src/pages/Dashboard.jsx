@@ -193,27 +193,44 @@ return (
     <div className="dashboard-body">
       <LeftRail />
 
-      <CenterWorkspace>
-        <div className="kanban-board">
-          <KanbanColumn
-            title="TODO"
-            tasks={todoTasks}
-            setSelectedTask={selectTask}
-          />
+      <div className="dashboard-workspace-stack">
+        <CenterWorkspace>
+          <div className="kanban-board">
+            <KanbanColumn
+              title="TODO"
+              tasks={todoTasks}
+              setSelectedTask={selectTask}
+            />
 
-          <KanbanColumn
-            title="IN PROGRESS"
-            tasks={inProgressTasks}
-            setSelectedTask={selectTask}
-          />
+            <KanbanColumn
+              title="IN PROGRESS"
+              tasks={inProgressTasks}
+              setSelectedTask={selectTask}
+            />
 
-          <KanbanColumn
-            title="DONE"
-            tasks={doneTasks}
-            setSelectedTask={selectTask}
-          />
-        </div>
-      </CenterWorkspace>
+            <KanbanColumn
+              title="DONE"
+              tasks={doneTasks}
+              setSelectedTask={selectTask}
+            />
+          </div>
+        </CenterWorkspace>
+
+        <ContextPanel>
+          {selectedTask && (
+            <TaskModal
+              task={selectedTask}
+              onClose={() => setSelectedTaskId(null)}
+              token={token}
+              updateTaskStatus={updateTaskStatus}
+              updateTaskDueDate={updateTaskDueDate}
+              assignTask={assignTask}
+              removeAssignee={removeAssignee}
+              archiveTask={archiveTask}
+            />
+          )}
+        </ContextPanel>
+      </div>
 
       <RightRail>
         <NotificationBell
@@ -225,19 +242,6 @@ return (
         />
       </RightRail>
     </div>
-
-    <ContextPanel>
-      <TaskModal
-        task={selectedTask}
-        onClose={() => setSelectedTaskId(null)}
-        token={token}
-        updateTaskStatus={updateTaskStatus}
-        updateTaskDueDate={updateTaskDueDate}
-        assignTask={assignTask}
-        removeAssignee={removeAssignee}
-        archiveTask={archiveTask}
-      />
-    </ContextPanel>
   </div>
 );
 }

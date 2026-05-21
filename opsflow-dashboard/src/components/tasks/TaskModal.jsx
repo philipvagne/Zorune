@@ -220,34 +220,10 @@ export default function TaskModal({
   if (!task) return null;
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "rgba(0,0,0,0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 2000,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "white",
-          width: "520px",
-          maxWidth: "90%",
-          borderRadius: "14px",
-          padding: "24px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-        }}
-      >
+    <div className="task-detail-panel">
         {/* HEADER */}
         <div
+          className="task-detail-header"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -258,15 +234,12 @@ export default function TaskModal({
           <h2 style={{ margin: 0 }}>{task.title}</h2>
 
           <button
+            type="button"
+            aria-label="Close task details"
+            className="task-detail-close"
             onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              fontSize: "18px",
-              cursor: "pointer",
-            }}
           >
-            x
+            Close
           </button>
         </div>
 
@@ -643,7 +616,6 @@ export default function TaskModal({
         >
           Task ID: {task.id}
         </div>
-      </div>
     </div>
   );
 }

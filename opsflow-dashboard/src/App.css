@@ -138,6 +138,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: 58px;
+  box-sizing: border-box;
+  padding: 0 2px;
 }
 
 .dashboard-topbar h2,
@@ -169,10 +172,14 @@
 }
 
 .dashboard-shell {
-  min-height: 100svh;
+  height: 100svh;
   box-sizing: border-box;
   padding: 18px;
   background: #f8fafc;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  text-align: left;
 }
 
 .dashboard-body {
@@ -181,27 +188,42 @@
   gap: 16px;
   align-items: stretch;
   margin-top: 18px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .dashboard-left-rail,
 .dashboard-right-rail,
-.dashboard-center-workspace {
-  min-height: calc(100svh - 116px);
+.dashboard-center-workspace,
+.dashboard-context-panel {
+  min-height: 0;
   box-sizing: border-box;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #ffffff;
+  overflow: hidden;
 }
 
 .dashboard-left-rail,
 .dashboard-right-rail {
   padding: 14px;
+  overflow-y: auto;
 }
 
 .dashboard-center-workspace {
   min-width: 0;
+  min-height: 0;
   padding: 16px;
-  overflow-x: auto;
+  overflow: auto;
+}
+
+.dashboard-workspace-stack {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(220px, 34%);
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .rail-nav {
@@ -241,10 +263,51 @@
   gap: 20px;
   align-items: flex-start;
   min-width: 720px;
+  min-height: 100%;
 }
 
 .dashboard-context-panel {
-  display: contents;
+  min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.context-panel-empty {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.task-detail-panel {
+  width: 100%;
+  max-width: 100%;
+}
+
+.task-detail-panel h2 {
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.task-detail-header {
+  gap: 16px;
+}
+
+.task-detail-close {
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #334155;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.task-detail-close:hover {
+  background: #f1f5f9;
 }
 
 @media (max-width: 760px) {
@@ -259,11 +322,19 @@
 
   .dashboard-body {
     grid-template-columns: 1fr;
+    overflow-y: auto;
   }
 
   .dashboard-left-rail,
   .dashboard-right-rail,
-  .dashboard-center-workspace {
+  .dashboard-center-workspace,
+  .dashboard-context-panel {
     min-height: auto;
+    overflow: visible;
+  }
+
+  .dashboard-workspace-stack {
+    grid-template-rows: auto auto;
+    overflow: visible;
   }
 }

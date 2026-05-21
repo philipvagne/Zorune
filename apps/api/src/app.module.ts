@@ -7,7 +7,6 @@ import { ProjectsModule } from './projects/projects.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TasksModule } from './tasks/tasks.module';
 import { OrganizationsModule } from './organizations/organizations.module';
-import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -17,7 +16,6 @@ import { UsersModule } from './users/users.module';
     ProjectsModule,
     TasksModule,
     OrganizationsModule,
-    NotificationsModule,
     UsersModule,
   ],
   controllers: [AppController],

@@ -571,6 +571,13 @@ async archiveTask(userId: string, taskId: string) {
     },
   });
 
+  await this.notifyAssignedUsersExceptActor(
+    taskId,
+    userId,
+    'TASK_ARCHIVED',
+    `Task "${task.title}" was archived`,
+  );
+
   const { task: archivedTask, payload } = await this.getTaskUpdatePayload(taskId);
   const recipientIds = await this.getTaskUpdateRecipientIds(
     task.project.organizationId,
