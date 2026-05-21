@@ -428,6 +428,12 @@
   background: var(--surface-subtle);
   display: flex;
   flex-direction: column;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.kanban-column.drop-target-active {
+  border-color: var(--accent);
+  background: #ecfdf5;
 }
 
 .kanban-column-header {
@@ -466,12 +472,18 @@
   background: #ffffff;
   box-shadow: var(--shadow-card);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: box-shadow 0.12s ease, opacity 0.12s ease;
 }
 
 .task-card:hover {
-  transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+.task-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 .task-card-title {
@@ -479,6 +491,23 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 1.35;
+}
+
+.task-drag-handle {
+  flex-shrink: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px 3px;
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+  cursor: grab;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.task-drag-handle:active {
+  cursor: grabbing;
 }
 
 .task-card-date {

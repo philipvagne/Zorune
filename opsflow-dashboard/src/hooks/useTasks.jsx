@@ -47,6 +47,14 @@ export default function useTasks(token) {
 
   // UPDATE STATUS
   const updateTask = async (taskId, updates) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, ...updates }
+          : t
+      )
+    );
+
     try {
       await api.patch(
         `/tasks/${taskId}`,
@@ -57,19 +65,12 @@ export default function useTasks(token) {
           },
         }
       );
-
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId
-            ? { ...t, ...updates }
-            : t
-        )
-      );
     } catch (err) {
       console.error(
         "Failed to update task:",
         err
       );
+      fetchTasks();
     }
   };
 

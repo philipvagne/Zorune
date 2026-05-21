@@ -1,4 +1,10 @@
 import { useEffect, useState } from "react";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import useTasks from "../hooks/useTasks";
 import NotificationBell from "../components/notifications/NotificationBell";
 import KanbanColumn from "../components/kanban/KanbanColumn";
@@ -37,6 +43,14 @@ export default function Dashboard({ token, onLogout }) {
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || null;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    })
+  );
+
   const selectTask = (task) => {
     setActiveView("tasks");
     setContextMode("details");
@@ -68,6 +82,24 @@ export default function Dashboard({ token, onLogout }) {
     setContextMode("details");
 
     return createdTask;
+  };
+
+  const handleTaskDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (!over) {
+      return;
+    }
+
+    const taskId = active.id;
+    const nextStatus = over.id;
+    const currentStatus = active.data.current?.status;
+
+    if (!taskId || !nextStatus || currentStatus === nextStatus) {
+      return;
+    }
+
+    await updateTaskStatus(taskId, nextStatus);
   };
 
   const workspaceMeta = {
@@ -284,25 +316,33 @@ return (
           }
         >
           {activeView === "tasks" ? (
-            <div className="kanban-board">
-              <KanbanColumn
-                title="TODO"
-                tasks={todoTasks}
-                setSelectedTask={selectTask}
-              />
+            <DndContext
+              sensors={sensors}
+              onDragEnd={handleTaskDragEnd}
+            >
+              <div className="kanban-board">
+                <KanbanColumn
+                  id="TODO"
+                  title="TODO"
+                  tasks={todoTasks}
+                  setSelectedTask={selectTask}
+                />
 
-              <KanbanColumn
-                title="IN PROGRESS"
-                tasks={inProgressTasks}
-                setSelectedTask={selectTask}
-              />
+                <KanbanColumn
+                  id="IN_PROGRESS"
+                  title="IN PROGRESS"
+                  tasks={inProgressTasks}
+                  setSelectedTask={selectTask}
+                />
 
-              <KanbanColumn
-                title="DONE"
-                tasks={doneTasks}
-                setSelectedTask={selectTask}
-              />
-            </div>
+                <KanbanColumn
+                  id="DONE"
+                  title="DONE"
+                  tasks={doneTasks}
+                  setSelectedTask={selectTask}
+                />
+              </div>
+            </DndContext>
           ) : activeView === "archive" ? (
             <ArchivedTasks token={token} />
           ) : (

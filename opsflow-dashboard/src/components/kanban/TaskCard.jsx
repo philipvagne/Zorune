@@ -1,4 +1,19 @@
+import { useDraggable } from "@dnd-kit/core";
+
 export default function TaskCard({ task, onClick }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: task.id,
+    data: {
+      status: task.status,
+    },
+  });
+
   const statusColors = {
     TODO: "#f59e0b",
     IN_PROGRESS: "#3b82f6",
@@ -13,14 +28,32 @@ export default function TaskCard({ task, onClick }) {
 
   return (
     <div
+      ref={setNodeRef}
       className="task-card"
       onClick={() => onClick(task)}
       style={{
         borderLeft: `4px solid ${statusColors[task.status] || "#ccc"}`,
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
+        opacity: isDragging ? 0.7 : 1,
       }}
     >
-      <div className="task-card-title">
-        {task.title}
+      <div className="task-card-header">
+        <div className="task-card-title">
+          {task.title}
+        </div>
+
+        <button
+          type="button"
+          className="task-drag-handle"
+          aria-label={`Drag ${task.title}`}
+          onClick={(event) => event.stopPropagation()}
+          {...attributes}
+          {...listeners}
+        >
+          ::
+        </button>
       </div>
 
       {hasDueDate && (

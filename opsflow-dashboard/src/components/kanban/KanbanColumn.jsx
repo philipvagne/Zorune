@@ -1,12 +1,25 @@
 import TaskCard from "./TaskCard";
+import { useDroppable } from "@dnd-kit/core";
 
 export default function KanbanColumn({
+  id,
   title,
   tasks,
   setSelectedTask,
 }) {
+  const { isOver, setNodeRef } = useDroppable({
+    id,
+  });
+
   return (
-    <div className="kanban-column">
+    <div
+      ref={setNodeRef}
+      className={
+        isOver
+          ? "kanban-column drop-target-active"
+          : "kanban-column"
+      }
+    >
       <div className="kanban-column-header">
         <h4>{title}</h4>
 
