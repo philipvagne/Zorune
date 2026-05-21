@@ -15,6 +15,7 @@ export default function TaskModal({
   assignTask,
   removeAssignee,
   archiveTask,
+  viewers = [],
 }) {
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [dueDateValue, setDueDateValue] = useState("");
@@ -235,6 +236,39 @@ export default function TaskModal({
             Close
           </button>
         </div>
+
+        <section className="task-panel-section compact">
+          <strong>Viewing this task</strong>
+
+          {viewers.length === 0 ? (
+            <div className="muted-text">No active viewers</div>
+          ) : (
+            <div className="presence-list inline">
+              {viewers.map((viewer) => {
+                const name =
+                  viewer.fullName ||
+                  viewer.username ||
+                  viewer.email ||
+                  "User";
+                const initials = name
+                  .split(" ")
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase();
+
+                return (
+                  <div key={viewer.id} className="presence-user compact">
+                    <div className="presence-avatar">
+                      {initials}
+                    </div>
+                    <span>{name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         <section className="task-panel-section">
           <strong>Status</strong>

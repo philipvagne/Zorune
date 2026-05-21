@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -26,6 +26,10 @@ export default function Dashboard({ token, onLogout }) {
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [activeView, setActiveView] = useState("tasks");
   const [contextMode, setContextMode] = useState("empty");
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [taskViewersByTask, setTaskViewersByTask] = useState({});
+  const [presenceSocket, setPresenceSocket] = useState(null);
+  const viewedTaskIdRef = useRef(null);
   
   const {
     tasks,
@@ -42,6 +46,9 @@ export default function Dashboard({ token, onLogout }) {
 
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || null;
+  const selectedTaskViewers = selectedTaskId
+    ? taskViewersByTask[selectedTaskId] || []
+    : [];
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -141,6 +148,7 @@ useEffect(() => {
   fetchNotifications();
 
   const socket = createSocket(token);
+  setPresenceSocket(socket);
 
   socket.on("notification", (data) => {
     toast.success(data.message);
@@ -164,8 +172,55 @@ useEffect(() => {
     });
   });
 
-  return () => socket.disconnect();
+  socket.on("presence_online_users", (data) => {
+    setOnlineUsers(data.users || []);
+  });
+
+  socket.on("task_viewers_updated", (data) => {
+    setTaskViewersByTask((current) => ({
+      ...current,
+      [data.taskId]: data.viewers || [],
+    }));
+  });
+
+  return () => {
+    const viewedTaskId = viewedTaskIdRef.current;
+
+    if (viewedTaskId) {
+      socket.emit("task_viewing_leave", {
+        taskId: viewedTaskId,
+      });
+      viewedTaskIdRef.current = null;
+    }
+
+    socket.disconnect();
+    setPresenceSocket(null);
+  };
 }, [token]);
+
+useEffect(() => {
+  if (!presenceSocket) {
+    return;
+  }
+
+  const nextViewedTaskId =
+    contextMode === "details" ? selectedTaskId : null;
+  const previousViewedTaskId = viewedTaskIdRef.current;
+
+  if (previousViewedTaskId && previousViewedTaskId !== nextViewedTaskId) {
+    presenceSocket.emit("task_viewing_leave", {
+      taskId: previousViewedTaskId,
+    });
+  }
+
+  if (nextViewedTaskId && previousViewedTaskId !== nextViewedTaskId) {
+    presenceSocket.emit("task_viewing_join", {
+      taskId: nextViewedTaskId,
+    });
+  }
+
+  viewedTaskIdRef.current = nextViewedTaskId;
+}, [contextMode, presenceSocket, selectedTaskId]);
 
   // CLICK OUTSIDE CLOSE
   useEffect(() => {
@@ -369,12 +424,13 @@ return (
               assignTask={assignTask}
               removeAssignee={removeAssignee}
               archiveTask={archiveTask}
+              viewers={selectedTaskViewers}
             />
           ) : null}
         </ContextPanel>
       </div>
 
-      <RightRail>
+      <RightRail onlineUsers={onlineUsers}>
         <NotificationBell
           notifications={notifications}
           openNotifications={openNotifications}
