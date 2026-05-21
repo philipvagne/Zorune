@@ -2,6 +2,31 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import { createSocket } from "../socket";
 
+function getUserIdFromToken(token) {
+  try {
+    const payload = token.split(".")[1];
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedPayload = normalizedPayload.padEnd(
+      normalizedPayload.length + ((4 - (normalizedPayload.length % 4)) % 4),
+      "="
+    );
+    const decodedPayload = JSON.parse(atob(paddedPayload));
+
+    return decodedPayload.sub;
+  } catch (err) {
+    console.error("Failed to read user id from token:", err);
+    return null;
+  }
+}
+
+function isTaskAssignedToUser(assignments, userId) {
+  return assignments.some(
+    (assignment) =>
+      assignment.userId === userId ||
+      assignment.user?.id === userId
+  );
+}
+
 export default function useTasks(token) {
   const [tasks, setTasks] = useState([]);
 
@@ -97,12 +122,27 @@ useEffect(() => {
   fetchTasks();
 
   const socket = createSocket(token);
+  const currentUserId = getUserIdFromToken(token);
 
   // TASK STATUS / CONTENT UPDATES
 socket.on("task_updated", (data) => {
   console.log("task_updated RECEIVED:", data);
 
+  if (!currentUserId) {
+    return;
+  }
+
+  const assignments = data.assignments || [];
+  const isAssignedToCurrentUser = isTaskAssignedToUser(
+    assignments,
+    currentUserId
+  );
+
   setTasks((prev) => {
+    if (!isAssignedToCurrentUser) {
+      return prev.filter((task) => task.id !== data.taskId);
+    }
+
     const exists = prev.some(
       (task) => task.id === data.taskId
     );
@@ -115,7 +155,7 @@ socket.on("task_updated", (data) => {
               ...task,
               status: data.status,
               title: data.title,
-              assignments: data.assignments || [],
+              assignments,
             }
           : task
       );
@@ -128,7 +168,7 @@ socket.on("task_updated", (data) => {
         id: data.taskId,
         title: data.title,
         status: data.status,
-        assignments: data.assignments || [],
+        assignments,
       },
     ];
   });

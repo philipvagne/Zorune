@@ -10,9 +10,10 @@ import toast from "react-hot-toast";
 export default function Dashboard({ token, onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [openNotifications, setOpenNotifications] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
   
   const {
+    tasks,
     todoTasks,
     inProgressTasks,
     doneTasks,
@@ -20,6 +21,13 @@ export default function Dashboard({ token, onLogout }) {
     assignTask,
     removeAssignee,
   } = useTasks(token);
+
+  const selectedTask =
+    tasks.find((task) => task.id === selectedTaskId) || null;
+
+  const selectTask = (task) => {
+    setSelectedTaskId(task.id);
+  };
 
 useEffect(() => {
   fetchNotifications();
@@ -75,7 +83,7 @@ useEffect(() => {
   useEffect(() => {
   const handleEsc = (event) => {
     if (event.key === "Escape") {
-      setSelectedTask(null);
+      setSelectedTaskId(null);
     }
   };
 
@@ -85,6 +93,12 @@ useEffect(() => {
     window.removeEventListener("keydown", handleEsc);
   };
 }, []);
+
+useEffect(() => {
+  if (selectedTaskId && !selectedTask) {
+    setSelectedTaskId(null);
+  }
+}, [selectedTaskId, selectedTask]);
 
   // FETCH NOTIFICATIONS
   const fetchNotifications = async () => {
@@ -163,25 +177,26 @@ return (
       <KanbanColumn
         title="TODO"
         tasks={todoTasks}
-        setSelectedTask={setSelectedTask}
+        setSelectedTask={selectTask}
       />
 
       <KanbanColumn
         title="IN PROGRESS"
         tasks={inProgressTasks}
-        setSelectedTask={setSelectedTask}
+        setSelectedTask={selectTask}
       />
 
       <KanbanColumn
         title="DONE"
         tasks={doneTasks}
-        setSelectedTask={setSelectedTask}
+        setSelectedTask={selectTask}
       />
     </div>
 
       <TaskModal
         task={selectedTask}
-        onClose={() => setSelectedTask(null)}
+        onClose={() => setSelectedTaskId(null)}
+        token={token}
         updateTaskStatus={updateTaskStatus}
         assignTask={assignTask}
         removeAssignee={removeAssignee}

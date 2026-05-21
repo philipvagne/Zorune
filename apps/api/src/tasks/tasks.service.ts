@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { TaskStatus } from '@prisma/client';
+import { Prisma, TaskStatus } from '@prisma/client';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 
@@ -18,6 +18,39 @@ private async getTaskUpdateRecipientIds(organizationId: string) {
   });
 
   return memberships.map((membership) => membership.userId);
+}
+
+private async getTaskUpdatePayload(taskId: string) {
+  const task = await this.prisma.task.findUnique({
+    where: { id: taskId },
+    include: {
+      assignments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!task) {
+    throw new ForbiddenException('Task not found after update');
+  }
+
+  return {
+    task,
+    payload: {
+      taskId: task.id,
+      status: task.status,
+      title: task.title,
+      assignments: task.assignments,
+    },
+  };
 }
 
 async createTask(
@@ -171,13 +204,20 @@ const assignees = await this.prisma.taskAssignment.findMany({
 
 if (data.status && data.status !== task.status) {
   for (const a of assignees) {
-    await this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         type: 'TASK_STATUS_CHANGED',
         message: `Task "${task.title}" moved from ${task.status} to ${data.status}`,
         userId: a.userId,
         taskId: task.id,
       },
+    });
+
+    this.notificationsGateway.sendNotification(a.userId, {
+      type: 'TASK_STATUS_CHANGED',
+      message: `Task "${task.title}" moved from ${task.status} to ${data.status}`,
+      taskId: task.id,
+      notificationId: notification.id,
     });
   }
 }
@@ -238,26 +278,33 @@ async assignTask(userId: string, taskId: string, assigneeId: string) {
     throw new ForbiddenException('Not allowed');
   }
 
-  try {
-    // 1. Check if already assigned
-    const existing = await this.prisma.taskAssignment.findFirst({
+  const assigneeMembership = await this.prisma.membership.findFirst({
+    where: {
+      userId: assigneeId,
+      organizationId: task.project.organizationId,
+    },
+  });
+
+  if (!assigneeMembership) {
+    throw new ForbiddenException('Assignee is not in this organization');
+  }
+
+  const notification = await this.prisma.$transaction(async (tx) => {
+    await tx.taskAssignment.upsert({
       where: {
+        taskId_userId: {
+          taskId,
+          userId: assigneeId,
+        },
+      },
+      update: {},
+      create: {
         taskId,
         userId: assigneeId,
       },
     });
 
-    if (!existing) {
-      await this.prisma.taskAssignment.create({
-        data: {
-          taskId,
-          userId: assigneeId,
-        },
-      });
-    }
-
-    // 2. Create DB notification (popup system)
-    const notification = await this.prisma.notification.create({
+    return tx.notification.create({
       data: {
         type: 'TASK_ASSIGNED',
         message: `You were assigned to "${task.title}"`,
@@ -265,54 +312,23 @@ async assignTask(userId: string, taskId: string, assigneeId: string) {
         taskId: task.id,
       },
     });
+  });
 
-    this.notificationsGateway.sendNotification(assigneeId, {
-      type: 'TASK_ASSIGNED',
-      message: `You were assigned to "${task.title}"`,
-      taskId: task.id,
-      notificationId: notification.id,
-    });
+  const { task: updatedTask, payload } = await this.getTaskUpdatePayload(taskId);
+  const recipientIds = await this.getTaskUpdateRecipientIds(
+    task.project.organizationId,
+  );
 
-    // 3. Fetch updated task WITH assignments (source of truth)
-    const updatedTask = await this.prisma.task.findUnique({
-      where: { id: taskId },
-      include: {
-        assignments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
-    });
+  this.notificationsGateway.sendNotification(assigneeId, {
+    type: 'TASK_ASSIGNED',
+    message: `You were assigned to "${task.title}"`,
+    taskId: task.id,
+    notificationId: notification.id,
+  });
 
-    if (!updatedTask) {
-      throw new ForbiddenException('Task not found after update');
-    }
+  this.notificationsGateway.emitTaskUpdated(recipientIds, payload);
 
-    // 4. SINGLE Kanban sync event (IMPORTANT FIX)
-      const recipientIds = await this.getTaskUpdateRecipientIds(
-        task.project.organizationId,
-      );
-
-      this.notificationsGateway.emitTaskUpdated(recipientIds, {
-        taskId: updatedTask.id,
-        status: updatedTask.status,
-        title: updatedTask.title,
-        assignments: updatedTask.assignments,
-      });
-
-    return updatedTask;
-
-  } catch (error) {
-    console.log('ASSIGN TASK ERROR:', error);
-    throw error;
-  }
+  return updatedTask;
 }
 
 async removeAssignee(
@@ -340,44 +356,41 @@ async removeAssignee(
     throw new ForbiddenException('Not allowed');
   }
 
-  await this.prisma.taskAssignment.deleteMany({
-    where: {
-      taskId,
-      userId: assigneeId,
-    },
-  });
-
-  const updatedTask = await this.prisma.task.findUnique({
-    where: { id: taskId },
-    include: {
-      assignments: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-            },
-          },
-        },
+  const notification = await this.prisma.$transaction(async (tx) => {
+    await tx.taskAssignment.deleteMany({
+      where: {
+        taskId,
+        userId: assigneeId,
       },
-    },
+    });
+
+    return tx.notification.create({
+      data: {
+        type: 'TASK_UNASSIGNED',
+        message: `You were removed from "${task.title}"`,
+        userId: assigneeId,
+        taskId: task.id,
+      },
+    });
   });
 
-  if (!updatedTask) {
-    throw new ForbiddenException('Task not found after update');
-  }
+  const { task: updatedTask, payload } = await this.getTaskUpdatePayload(taskId);
 
   const recipientIds = await this.getTaskUpdateRecipientIds(
     task.project.organizationId,
   );
 
-  this.notificationsGateway.emitTaskUpdated(recipientIds, {
-    taskId: updatedTask.id,
-    status: updatedTask.status,
-    title: updatedTask.title,
-    assignments: updatedTask.assignments,
+  this.notificationsGateway.sendNotification(assigneeId, {
+    type: 'TASK_UNASSIGNED',
+    message: `You were removed from "${task.title}"`,
+    taskId: task.id,
+    notificationId: notification.id,
   });
+
+  this.notificationsGateway.emitTaskUpdated(
+    [...recipientIds, assigneeId],
+    payload,
+  );
 
   return updatedTask;
 }
@@ -385,7 +398,7 @@ async removeAssignee(
 
 async getMyTasks(userId: string, status?: string, projectId?: string, page = 1, limit = 10) {
 
-  const where: any = {
+  const where: Prisma.TaskWhereInput = {
     assignments: {
       some: {
         userId,

@@ -17,7 +17,12 @@ export class AuthService {
   private prisma: PrismaService,
 ) {}
 
-  async register(email: string, username: string, password: string) {
+  async register(
+    email: string,
+    username: string,
+    password: string,
+    fullName?: string,
+  ) {
     if (!email || !username || !password) {
       throw new BadRequestException('Email, username, and password are required');
     }
@@ -39,6 +44,7 @@ export class AuthService {
         data: {
           email,
           username,
+          fullName,
           passwordHash: hashed,
         },
       });

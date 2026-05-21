@@ -223,6 +223,12 @@ This architecture avoids:
 * Prisma relational modeling
 * Real-time event normalization
 
+## User Search Scope
+
+User search is limited to users who share an organization with the logged-in user.
+New registrations automatically create an organization and OWNER membership for that user.
+To make another user discoverable for assignment testing, add that user to the same organization through the existing organization membership endpoint.
+
 ## Frontend Patterns
 
 * Custom React hooks

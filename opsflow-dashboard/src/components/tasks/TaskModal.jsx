@@ -1,10 +1,77 @@
+import { useEffect, useState } from "react";
+import { searchUsers } from "../../api";
+
 export default function TaskModal({
   task,
   onClose,
+  token,
   updateTaskStatus,
   assignTask,
   removeAssignee,
 }) {
+  const [assigneeQuery, setAssigneeQuery] = useState("");
+  const [userResults, setUserResults] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [searchError, setSearchError] = useState("");
+
+  useEffect(() => {
+    if (!task) {
+      return;
+    }
+
+    setAssigneeQuery("");
+    setUserResults([]);
+    setSearchError("");
+  }, [task?.id]);
+
+  useEffect(() => {
+    const query = assigneeQuery.trim();
+
+    if (!token || query.length < 2) {
+      setUserResults([]);
+      setSearchError("");
+      return;
+    }
+
+    let active = true;
+
+    const timeoutId = setTimeout(async () => {
+      setSearchingUsers(true);
+      setSearchError("");
+
+      try {
+        const res = await searchUsers(token, query);
+
+        if (active) {
+          setUserResults(res.data);
+        }
+      } catch (err) {
+        if (active) {
+          setSearchError("Could not search users.");
+        }
+      } finally {
+        if (active) {
+          setSearchingUsers(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timeoutId);
+    };
+  }, [assigneeQuery, token]);
+
+  const assignSelectedUser = async (userId) => {
+    if (!userId) {
+      return;
+    }
+
+    await assignTask(task.id, userId);
+    setAssigneeQuery("");
+    setUserResults([]);
+  };
+
   if (!task) return null;
 
   return (
@@ -163,13 +230,12 @@ export default function TaskModal({
 
         <input
           type="text"
-          placeholder="Enter user ID"
-          defaultValue={
-            task.assignments?.[0]?.user?.id || ""
-          }
+          placeholder="Search name, username, email, or enter user ID"
+          value={assigneeQuery}
+          onChange={(e) => setAssigneeQuery(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              assignTask(task.id, e.target.value);
+              assignSelectedUser(e.target.value.trim());
             }
           }}
           style={{
@@ -181,8 +247,56 @@ export default function TaskModal({
           }}
         />
 
+        {searchingUsers && (
+          <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
+            Searching users...
+          </div>
+        )}
+
+        {searchError && (
+          <div style={{ fontSize: "12px", color: "#991b1b", marginTop: "6px" }}>
+            {searchError}
+          </div>
+        )}
+
+        {userResults.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              marginTop: "8px",
+              overflow: "hidden",
+            }}
+          >
+            {userResults.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => assignSelectedUser(user.id)}
+                style={{
+                  width: "100%",
+                  border: "none",
+                  borderBottom: "1px solid #f3f4f6",
+                  background: "white",
+                  cursor: "pointer",
+                  padding: "8px 10px",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ fontSize: "13px", fontWeight: "bold" }}>
+                  {user.fullName || user.username || user.email}
+                </div>
+                <div style={{ fontSize: "12px", color: "#666" }}>
+                  {user.username ? `@${user.username} · ` : ""}
+                  {user.email}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
-          Press Enter to assign
+          Select a user from search, or press Enter to assign by raw user ID.
         </div>
       </div>
 
