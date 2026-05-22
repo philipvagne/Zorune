@@ -21,7 +21,6 @@ export default function TaskCard({ task, onClick }) {
   };
   const hasDueDate = Boolean(task.dueDate);
   const unreadNoteCount = task.unreadNoteCount || 0;
-  const isRecentlyActive = Boolean(task.isRecentlyActive);
   const isOverdue =
     hasDueDate &&
     task.status !== "DONE" &&
@@ -31,13 +30,7 @@ export default function TaskCard({ task, onClick }) {
   return (
     <div
       ref={setNodeRef}
-      className={
-        unreadNoteCount > 0
-          ? "task-card has-awareness"
-          : isRecentlyActive
-            ? "task-card is-recently-active"
-            : "task-card"
-      }
+      className="task-card"
       onClick={() => onClick(task)}
       style={{
         borderLeft: `4px solid ${statusColors[task.status] || "#ccc"}`,
@@ -51,22 +44,6 @@ export default function TaskCard({ task, onClick }) {
         <div className="task-card-title">
           {task.title}
         </div>
-
-        {(unreadNoteCount > 0 || isRecentlyActive) && (
-          <div className="task-card-awareness">
-            {unreadNoteCount > 0 ? (
-              <span className="task-awareness-badge">
-                {unreadNoteCount} new note{unreadNoteCount > 1 ? "s" : ""}
-              </span>
-            ) : (
-              <span
-                className="task-awareness-dot"
-                aria-label="Recently active task"
-                title="Recently active"
-              />
-            )}
-          </div>
-        )}
 
         <button
           type="button"
@@ -120,6 +97,14 @@ export default function TaskCard({ task, onClick }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {unreadNoteCount > 0 && (
+        <div className="task-card-awareness-footer">
+          <span className="task-awareness-text">
+            {unreadNoteCount} new note{unreadNoteCount > 1 ? "s" : ""}
+          </span>
         </div>
       )}
     </div>

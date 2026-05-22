@@ -57,7 +57,7 @@ function CalendarTaskItem({ task, onSelectTask }) {
         <strong>
           {task.title}
           {task.unreadNoteCount > 0 ? (
-            <span className="task-awareness-badge subtle inline">
+            <span className="task-awareness-text inline">
               {task.unreadNoteCount} new note
               {task.unreadNoteCount > 1 ? "s" : ""}
             </span>

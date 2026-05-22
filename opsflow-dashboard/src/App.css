@@ -935,18 +935,6 @@ button:active:not(:disabled),
     transform var(--transition-fast);
 }
 
-.task-card.has-awareness {
-  box-shadow:
-    inset 0 0 0 1px rgba(15, 118, 110, 0.14),
-    var(--shadow-card);
-}
-
-.task-card.is-recently-active {
-  box-shadow:
-    inset 0 0 0 1px rgba(59, 130, 246, 0.12),
-    var(--shadow-card);
-}
-
 .task-card:hover {
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.09);
   transform: translateY(-1px);
@@ -963,12 +951,6 @@ button:active:not(:disabled),
   gap: var(--space-2);
 }
 
-.task-card-awareness {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .task-card-title {
   color: var(--text-primary);
   font-size: var(--font-card-title);
@@ -976,34 +958,22 @@ button:active:not(:disabled),
   line-height: var(--line-tight);
 }
 
-.task-awareness-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 3px 8px;
-  color: #0f766e;
-  background: rgba(209, 250, 229, 0.9);
+.task-card-awareness-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.task-awareness-text {
+  color: var(--text-muted);
   font-size: var(--font-small);
-  font-weight: 700;
+  line-height: 1.3;
   white-space: nowrap;
 }
 
-.task-awareness-badge.subtle {
-  color: var(--text-secondary);
-  background: rgba(241, 245, 249, 0.88);
-}
-
-.task-awareness-badge.inline {
+.task-awareness-text.inline {
   margin-left: 8px;
   vertical-align: middle;
-}
-
-.task-awareness-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.72);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
 }
 
 .task-drag-handle {
@@ -1095,10 +1065,6 @@ button:active:not(:disabled),
   transition:
     background-color var(--transition-fast),
     box-shadow var(--transition-fast);
-}
-
-.task-table-row.has-awareness {
-  box-shadow: inset 2px 0 0 rgba(15, 118, 110, 0.32);
 }
 
 .task-table-row:hover {

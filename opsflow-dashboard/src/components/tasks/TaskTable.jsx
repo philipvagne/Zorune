@@ -60,7 +60,7 @@ export default function TaskTable({ tasks, onSelectTask }) {
                 <div className="task-table-title-row">
                   <div className="task-table-title">{task.title}</div>
                   {task.unreadNoteCount > 0 ? (
-                    <span className="task-awareness-badge subtle">
+                    <span className="task-awareness-text">
                       {task.unreadNoteCount} new note
                       {task.unreadNoteCount > 1 ? "s" : ""}
                     </span>
