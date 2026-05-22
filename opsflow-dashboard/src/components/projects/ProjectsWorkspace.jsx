@@ -83,7 +83,11 @@ const isTaskOverdue = (task) =>
   new Date(task.dueDate).setHours(0, 0, 0, 0) <
     new Date().setHours(0, 0, 0, 0);
 
-export default function ProjectsWorkspace({ token, onSelectTask }) {
+export default function ProjectsWorkspace({
+  token,
+  onSelectTask,
+  onRememberProject,
+}) {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = usePersistentState(
     "opsflow.projects.selectedOrgId",
@@ -138,7 +142,6 @@ export default function ProjectsWorkspace({ token, onSelectTask }) {
     () => projectNotes.filter((note) => !note.isPinned),
     [projectNotes]
   );
-
   useEffect(() => {
     let active = true;
 
@@ -329,9 +332,35 @@ export default function ProjectsWorkspace({ token, onSelectTask }) {
 
         return [note, ...current].sort(compareProjectNotes);
       });
+      onRememberProject?.(
+        {
+          id: selectedProjectId,
+          name: selectedProject?.name,
+          organizationId: selectedOrganization?.id,
+          orgName: selectedOrganization?.name,
+        },
+        note.updatedAt
+      );
+      setProjectDetail((current) =>
+        current ? { ...current, recentActivityAt: note.updatedAt } : current
+      );
+      setProjects((current) =>
+        current.map((project) =>
+          project.id === selectedProjectId
+            ? { ...project, recentActivityAt: note.updatedAt }
+            : project
+        )
+      );
       setSelectedProjectNoteId((currentId) => currentId || note.id);
     });
-  }, [selectedProjectId, token]);
+  }, [
+    onRememberProject,
+    selectedOrganization?.id,
+    selectedOrganization?.name,
+    selectedProject?.name,
+    selectedProjectId,
+    token,
+  ]);
 
   useEffect(() => {
     if (!selectedProjectId || !token) {
@@ -410,13 +439,48 @@ export default function ProjectsWorkspace({ token, onSelectTask }) {
             new Date(right.updatedAt || 0) - new Date(left.updatedAt || 0)
         );
       });
+      onRememberProject?.(
+        {
+          id: selectedProjectId,
+          name: selectedProject?.name,
+          organizationId: selectedOrganization?.id,
+          orgName: selectedOrganization?.name,
+        },
+        data.recentActivityAt || data.updatedAt || new Date().toISOString()
+      );
+      setProjectDetail((current) =>
+        current
+          ? {
+              ...current,
+              recentActivityAt: data.recentActivityAt || data.updatedAt || current.recentActivityAt,
+            }
+          : current
+      );
+      setProjects((current) =>
+        current.map((project) =>
+          project.id === selectedProjectId
+            ? {
+                ...project,
+                recentActivityAt:
+                  data.recentActivityAt || data.updatedAt || project.recentActivityAt,
+              }
+            : project
+        )
+      );
     });
 
     return () => {
       socket.off("task_updated");
       socket.disconnect();
     };
-  }, [selectedProjectId, token]);
+  }, [
+    onRememberProject,
+    selectedOrganization?.id,
+    selectedOrganization?.name,
+    selectedProject?.name,
+    selectedProjectId,
+    token,
+  ]);
 
   const handleCreateProject = async (event) => {
     event.preventDefault();
@@ -449,6 +513,16 @@ export default function ProjectsWorkspace({ token, onSelectTask }) {
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleSelectProject = (project) => {
+    onRememberProject?.({
+      id: project.id,
+      name: project.name,
+      organizationId: selectedOrganization?.id,
+      orgName: selectedOrganization?.name,
+    });
+    setSelectedProjectId(project.id);
   };
 
   const handleUpdateProject = async (event) => {
@@ -668,7 +742,7 @@ export default function ProjectsWorkspace({ token, onSelectTask }) {
                     ? "project-card active"
                     : "project-card"
                 }
-                onClick={() => setSelectedProjectId(project.id)}
+                onClick={() => handleSelectProject(project)}
               >
                 <strong>{project.name}</strong>
                 <span>{project.description || "No description yet"}</span>

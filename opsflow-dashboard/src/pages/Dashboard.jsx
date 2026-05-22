@@ -19,11 +19,11 @@ import LeftRail from "../components/dashboard/LeftRail";
 import CenterWorkspace from "../components/dashboard/CenterWorkspace";
 import ContextPanel from "../components/dashboard/ContextPanel";
 import CommandPalette from "../components/command/CommandPalette";
+import RecentWorkPanel from "../components/workspace/RecentWorkPanel";
 import ArchivedTasks from "../components/archive/ArchivedTasks";
 import OrganizationsWorkspace from "../components/organizations/OrganizationsWorkspace";
 import ProjectsWorkspace from "../components/projects/ProjectsWorkspace";
 import NotesWorkspace from "../components/notes/NotesWorkspace";
-import QuickNotePopover from "../components/notes/QuickNotePopover";
 import api from "../api";
 import { createSocket } from "../socket";
 import toast from "react-hot-toast";
@@ -76,6 +76,17 @@ function getTaskTime(task, field) {
   return value ? new Date(value).getTime() : 0;
 }
 
+function rememberRecentEntry(currentEntries, nextEntry) {
+  return [
+    nextEntry,
+    ...currentEntries.filter((entry) => entry.id !== nextEntry.id),
+  ].slice(0, 8);
+}
+
+function persistWorkspaceValue(key, value) {
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
 export default function Dashboard({ token, onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [openNotifications, setOpenNotifications] = useState(false);
@@ -92,10 +103,21 @@ export default function Dashboard({ token, onLogout }) {
     "kanban"
   );
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [quickNoteOpen, setQuickNoteOpen] = useState(false);
   const [taskFilters, setTaskFilters] = usePersistentState(
     "opsflow.taskFilters",
     defaultTaskFilters
+  );
+  const [recentTaskHistory, setRecentTaskHistory] = usePersistentState(
+    "opsflow.recentTasks",
+    []
+  );
+  const [recentProjectHistory, setRecentProjectHistory] = usePersistentState(
+    "opsflow.recentProjects",
+    []
+  );
+  const [recentWorkOpen, setRecentWorkOpen] = usePersistentState(
+    "opsflow.recentWorkOpen",
+    false
   );
   const [contextMode, setContextMode] = useState(
     selectedTaskId ? "details" : "empty"
@@ -118,11 +140,6 @@ export default function Dashboard({ token, onLogout }) {
 
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || null;
-  const currentWorkspaceOrganizationId =
-    selectedTask?.project?.organizationId ||
-    window.localStorage.getItem("opsflow.notes.selectedOrgId") ||
-    window.localStorage.getItem("opsflow.projects.selectedOrgId") ||
-    "";
   const selectedTaskViewers = selectedTaskId
     ? taskViewersByTask[selectedTaskId] || []
     : [];
@@ -136,6 +153,14 @@ export default function Dashboard({ token, onLogout }) {
   );
 
   const selectTask = (task) => {
+    setRecentTaskHistory((current) =>
+      rememberRecentEntry(current, {
+        id: task.id,
+        title: task.title,
+        label: task.project?.name || "Task",
+        recentAt: new Date().toISOString(),
+      })
+    );
     setActiveView("tasks");
     setContextMode("details");
     setSelectedTaskId(task.id);
@@ -160,14 +185,6 @@ export default function Dashboard({ token, onLogout }) {
     setContextMode("create");
   };
 
-  const openQuickNote = () => {
-    setQuickNoteOpen(true);
-  };
-
-  const closeQuickNote = () => {
-    setQuickNoteOpen(false);
-  };
-
   const handleCommandSelect = (result) => {
     if (result.type === "view") {
       changeView(result.view);
@@ -182,6 +199,22 @@ export default function Dashboard({ token, onLogout }) {
     }
 
     setCommandPaletteOpen(false);
+  };
+
+  const rememberProject = (project, recentAt = new Date().toISOString()) => {
+    if (!project?.id) {
+      return;
+    }
+
+    setRecentProjectHistory((current) =>
+      rememberRecentEntry(current, {
+        id: project.id,
+        orgId: project.organizationId || project.orgId || "",
+        title: project.name || project.title || "Project",
+        label: project.orgName || "Project",
+        recentAt,
+      })
+    );
   };
 
   const closeContextPanel = () => {
@@ -303,6 +336,46 @@ export default function Dashboard({ token, onLogout }) {
       a.name.localeCompare(b.name)
     );
   }, [activeTasks]);
+  const recentlyActiveTasks = useMemo(() => {
+    const historyById = new Map(
+      recentTaskHistory.map((entry) => [entry.id, entry])
+    );
+
+    return activeTasks
+      .map((task) => {
+        const history = historyById.get(task.id);
+        const activityTime = Math.max(
+          history?.recentAt ? new Date(history.recentAt).getTime() : 0,
+          task.recentActivityAt ? new Date(task.recentActivityAt).getTime() : 0,
+          task.updatedAt ? new Date(task.updatedAt).getTime() : 0
+        );
+
+        return {
+          ...task,
+          label: task.project?.name || "Task",
+          recentAt: activityTime ? new Date(activityTime).toISOString() : null,
+          recentScore: activityTime,
+        };
+      })
+      .filter(
+        (task) =>
+          task.recentScore > 0 &&
+          (task.isRecentlyActive ||
+            task.hasUnreadNotes ||
+            historyById.has(task.id))
+      )
+      .sort((left, right) => right.recentScore - left.recentScore)
+      .slice(0, 6);
+  }, [activeTasks, recentTaskHistory]);
+  const recentWorkProjects = useMemo(
+    () =>
+      recentProjectHistory.map((project) => ({
+        ...project,
+        meta:
+          project.label && project.label !== "Project" ? project.label : "",
+      })),
+    [recentProjectHistory]
+  );
 
   const filteredTasks = useMemo(() => {
     const today = startOfToday();
@@ -422,16 +495,39 @@ export default function Dashboard({ token, onLogout }) {
     window.localStorage.removeItem("opsflow.activeTaskView");
     window.localStorage.removeItem("opsflow.taskFilters");
     window.localStorage.removeItem("opsflow.selectedTaskId");
+    window.localStorage.removeItem("opsflow.recentTasks");
     window.localStorage.removeItem("opsflow.projects.selectedOrgId");
     window.localStorage.removeItem("opsflow.projects.selectedProjectId");
+    window.localStorage.removeItem("opsflow.recentProjects");
+    window.localStorage.removeItem("opsflow.recentWorkOpen");
     window.localStorage.removeItem("opsflow.notes.selectedOrgId");
     window.localStorage.removeItem("opsflow.notes.selectedNoteId");
     window.localStorage.removeItem("opsflow.notes.search");
     setActiveView("tasks");
     setActiveTaskLayout("kanban");
     setTaskFilters(defaultTaskFilters);
+    setRecentTaskHistory([]);
+    setRecentProjectHistory([]);
+    setRecentWorkOpen(false);
     setSelectedTaskId(null);
     setContextMode("empty");
+  };
+
+  const openRecentProject = (project) => {
+    if (!project?.id) {
+      return;
+    }
+
+    rememberProject(project);
+
+    if (project.orgId) {
+      persistWorkspaceValue("opsflow.projects.selectedOrgId", project.orgId);
+    }
+
+    persistWorkspaceValue("opsflow.projects.selectedProjectId", project.id);
+    setSelectedTaskId(null);
+    setActiveView("projects");
+    setContextMode("workspace");
   };
 
   const renderActiveTasks = () => {
@@ -535,6 +631,7 @@ export default function Dashboard({ token, onLogout }) {
           <ProjectsWorkspace
             token={token}
             onSelectTask={selectTask}
+            onRememberProject={rememberProject}
           />
         );
       }
@@ -681,10 +778,6 @@ useEffect(() => {
       if (openNotifications) {
         setOpenNotifications(false);
       }
-
-      if (quickNoteOpen) {
-        setQuickNoteOpen(false);
-      }
     };
 
     document.addEventListener(
@@ -698,7 +791,7 @@ useEffect(() => {
         handleClickOutside
       );
     };
-  }, [openNotifications, quickNoteOpen]);
+  }, [openNotifications]);
   
 
 useEffect(() => {
@@ -721,11 +814,6 @@ useEffect(() => {
         return;
       }
 
-      if (quickNoteOpen) {
-        setQuickNoteOpen(false);
-        return;
-      }
-
       closeContextPanel();
     }
   };
@@ -735,7 +823,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("keydown", handleKeys);
   };
-}, [commandPaletteOpen, quickNoteOpen]);
+}, [commandPaletteOpen]);
 
 useEffect(() => {
   if (tasks.length > 0 && selectedTaskId && !selectedTask) {
@@ -885,16 +973,36 @@ return (
           >
             + New Task
           </button>
-          <button
-            type="button"
-            className="ui-button ui-button-secondary"
-            onClick={(event) => {
-              event.stopPropagation();
-              openQuickNote();
-            }}
-          >
-            Quick Note
-          </button>
+          <div className="recent-work-anchor">
+            <button
+              type="button"
+              className={recentWorkOpen ? "shortcut-hint active" : "shortcut-hint"}
+              onClick={(event) => {
+                event.stopPropagation();
+                setRecentWorkOpen((current) => !current);
+              }}
+              title="Recent work"
+            >
+              Recent Work
+            </button>
+            <RecentWorkPanel
+              isOpen={recentWorkOpen}
+              recentTasks={recentlyActiveTasks.map((task) => ({
+                ...task,
+                meta: [
+                  task.status === "IN_PROGRESS" ? "In progress" : task.status,
+                  task.unreadNoteCount > 0
+                    ? `${task.unreadNoteCount} new note${task.unreadNoteCount > 1 ? "s" : ""}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · "),
+              }))}
+              recentProjects={recentWorkProjects}
+              onSelectTask={selectTask}
+              onSelectProject={openRecentProject}
+            />
+          </div>
           <button
             type="button"
             className="shortcut-hint"
@@ -943,15 +1051,6 @@ return (
       </div>
 
     </div>
-
-    <QuickNotePopover
-      token={token}
-      isOpen={quickNoteOpen}
-      onClose={closeQuickNote}
-      selectedTask={selectedTask}
-      selectedProjectId={normalizedTaskFilters.project}
-      currentOrganizationId={currentWorkspaceOrganizationId}
-    />
 
     <CommandPalette
       isOpen={commandPaletteOpen}

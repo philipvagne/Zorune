@@ -13,21 +13,6 @@ import {
 import usePersistentState from "../../hooks/usePersistentState";
 import { subscribeToNoteCreated } from "../../lib/noteEvents";
 
-const noteKindFilters = [
-  { id: "ALL", label: "All" },
-  { id: "NOTE", label: "Notes" },
-  { id: "REFERENCE", label: "References" },
-];
-
-const discoveryFilters = [
-  { id: "ALL", label: "All context" },
-  { id: "PINNED", label: "Pinned" },
-  { id: "LINKED", label: "Linked" },
-  { id: "UNLINKED", label: "Unlinked" },
-  { id: "TASK", label: "Task Notes" },
-  { id: "PROJECT", label: "Project Notes" },
-];
-
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString() : "Unknown";
 
@@ -46,9 +31,6 @@ const getSnippet = (content) => {
 
   return text.length > 160 ? `${text.slice(0, 160)}...` : text;
 };
-
-const getNoteLinkCount = (note) =>
-  (note.sourceLinks?.length || 0) + (note.targetLinks?.length || 0);
 
 const getSearchableText = (note) => {
   const outgoingLinks =
@@ -177,14 +159,6 @@ export default function NotesWorkspace({ token }) {
     "opsflow.notes.search",
     ""
   );
-  const [kindFilter, setKindFilter] = usePersistentState(
-    "opsflow.notes.kindFilter",
-    "ALL"
-  );
-  const [discoveryFilter, setDiscoveryFilter] = usePersistentState(
-    "opsflow.notes.discoveryFilter",
-    "ALL"
-  );
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newProjectId, setNewProjectId] = useState("");
@@ -216,39 +190,8 @@ export default function NotesWorkspace({ token }) {
     [organizationNotes]
   );
   const visibleNotes = useMemo(() => {
-    return sortedNotes
-      .filter((note) => {
-        if (kindFilter === "NOTE" || kindFilter === "REFERENCE") {
-          return note.kind === kindFilter;
-        }
-
-        return true;
-      })
-      .filter((note) => {
-        if (discoveryFilter === "PINNED") {
-          return note.isPinned;
-        }
-
-        if (discoveryFilter === "LINKED") {
-          return getNoteLinkCount(note) > 0;
-        }
-
-        if (discoveryFilter === "UNLINKED") {
-          return getNoteLinkCount(note) === 0;
-        }
-
-        if (discoveryFilter === "TASK") {
-          return Boolean(note.taskId);
-        }
-
-        if (discoveryFilter === "PROJECT") {
-          return Boolean(note.projectId);
-        }
-
-        return true;
-      })
-      .filter((note) => matchesNoteSearch(note, search));
-  }, [discoveryFilter, kindFilter, search, sortedNotes]);
+    return sortedNotes.filter((note) => matchesNoteSearch(note, search));
+  }, [search, sortedNotes]);
   const pinnedNotes = useMemo(
     () => visibleNotes.filter((note) => note.isPinned),
     [visibleNotes]
@@ -688,56 +631,9 @@ export default function NotesWorkspace({ token }) {
               {!selectedNoteVisible && selectedNote ? " - current note still open" : ""}
             </div>
 
-            <div className="notes-filter-strip" role="tablist" aria-label="Note filters">
-              {noteKindFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  type="button"
-                  className={kindFilter === filter.id ? "active" : ""}
-                  onClick={() => setKindFilter(filter.id)}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
-            <div
-              className="notes-filter-strip notes-filter-strip-secondary"
-              role="tablist"
-              aria-label="Discovery filters"
-            >
-              {discoveryFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  type="button"
-                  className={discoveryFilter === filter.id ? "active" : ""}
-                  onClick={() => setDiscoveryFilter(filter.id)}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
             <form className="note-form" onSubmit={handleCreateNote}>
-              <div className="note-kind-toggle" role="tablist" aria-label="Create note type">
-                <button
-                  type="button"
-                  className={newKind === "NOTE" ? "active" : ""}
-                  onClick={() => setNewKind("NOTE")}
-                >
-                  New Note
-                </button>
-                <button
-                  type="button"
-                  className={newKind === "REFERENCE" ? "active" : ""}
-                  onClick={() => setNewKind("REFERENCE")}
-                >
-                  New Reference
-                </button>
-              </div>
-
               <label className="form-label">
-                {newKind === "REFERENCE" ? "New reference" : "New note"}
+                New note
                 <input
                   className="ui-input"
                   value={newTitle}
@@ -773,16 +669,24 @@ export default function NotesWorkspace({ token }) {
                 />
               </label>
 
+              <label className="form-label">
+                Type
+                <select
+                  className="ui-input"
+                  value={newKind}
+                  onChange={(event) => setNewKind(event.target.value)}
+                >
+                  <option value="NOTE">Note</option>
+                  <option value="REFERENCE">Reference</option>
+                </select>
+              </label>
+
               <button
                 type="submit"
                 className="ui-button ui-button-primary"
                 disabled={creating || !selectedOrgId}
               >
-                {creating
-                  ? "Creating..."
-                  : newKind === "REFERENCE"
-                    ? "Create reference"
-                    : "Create note"}
+                {creating ? "Creating..." : "Create note"}
               </button>
             </form>
           </>
@@ -911,7 +815,7 @@ export default function NotesWorkspace({ token }) {
           <>
             <div className="note-panel-header">
               <div>
-                <div className="dashboard-eyebrow">Note Detail</div>
+                <div className="dashboard-eyebrow">Note</div>
                 <h4>{selectedNote.title}</h4>
               </div>
 
@@ -929,111 +833,123 @@ export default function NotesWorkspace({ token }) {
               {selectedNote.isPinned && <span>Pinned</span>}
               {selectedNote.kind === "REFERENCE" && <span>Reference</span>}
               <span>{selectedNote.project?.name || "General note"}</span>
+              {selectedNote.task?.title ? (
+                <span>Task: {selectedNote.task.title}</span>
+              ) : null}
               <span>Updated {formatDate(selectedNote.updatedAt)}</span>
               <span>By {getCreatorName(selectedNote)}</span>
             </div>
 
-            <section className="note-links-section">
-              <div className="note-links-header">
+            <details className="note-links-section">
+              <summary className="note-links-header">
                 <strong>Linked Notes</strong>
-              </div>
+                <span className="muted-text">
+                  {loadingLinks
+                    ? "Loading..."
+                    : linkedNotes.length === 0
+                      ? "None"
+                      : `${linkedNotes.length} connected`}
+                </span>
+              </summary>
 
-              <label className="form-label">
-                Link another note
-                <input
-                  className="ui-input"
-                  value={linkQuery}
-                  onChange={(event) => setLinkQuery(event.target.value)}
-                  placeholder="Search title, content, or kind..."
-                />
-              </label>
+              <div className="note-links-body">
+                <label className="form-label">
+                  Link another note
+                  <input
+                    className="ui-input"
+                    value={linkQuery}
+                    onChange={(event) => setLinkQuery(event.target.value)}
+                    placeholder="Search title, content, or kind..."
+                  />
+                </label>
 
-              {linkError ? <div className="form-error">{linkError}</div> : null}
+                {linkError ? <div className="form-error">{linkError}</div> : null}
 
-              {linkQuery.trim() ? (
-                <div className="linked-note-picker">
-                  {linkableNotes.length === 0 ? (
+                {linkQuery.trim() ? (
+                  <div className="linked-note-picker">
+                    {linkableNotes.length === 0 ? (
+                      <div className="muted-text">
+                        No matching notes available to link
+                      </div>
+                    ) : (
+                      linkableNotes.map((note) => (
+                        <button
+                          key={note.id}
+                          type="button"
+                          className="linked-note-picker-item"
+                          onClick={() => handleAddLink(note)}
+                          disabled={linkingNoteId === note.id}
+                        >
+                          <div>
+                            <strong>{note.title}</strong>
+                            <div className="muted-text">
+                              {note.kind === "REFERENCE" ? "Reference" : "Note"}
+                              {" - "}
+                              {note.project?.name || "General"}
+                            </div>
+                          </div>
+                          <span>
+                            {linkingNoteId === note.id ? "Linking..." : "Link"}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+
+                <div className="linked-notes-list">
+                  {loadingLinks ? (
+                    <div className="muted-text">Loading linked notes...</div>
+                  ) : linkedNotes.length === 0 ? (
                     <div className="muted-text">
-                      No matching notes available to link
+                      No linked notes yet
                     </div>
                   ) : (
-                    linkableNotes.map((note) => (
-                      <button
-                        key={note.id}
-                        type="button"
-                        className="linked-note-picker-item"
-                        onClick={() => handleAddLink(note)}
-                        disabled={linkingNoteId === note.id}
-                      >
-                        <div>
-                          <strong>{note.title}</strong>
-                          <div className="muted-text">
-                            {note.kind === "REFERENCE" ? "Reference" : "Note"}
-                            {" - "}
-                            {note.project?.name || "General"}
+                    linkedNotes.map((note) => (
+                      <div key={note.id} className="linked-note-card">
+                        <button
+                          type="button"
+                          className="linked-note-main"
+                          onClick={() => handleSelectLinkedNote(note)}
+                        >
+                          <div className="note-card-topline">
+                            <span>{note.project?.name || "General"}</span>
+                            <span>{formatDate(note.updatedAt)}</span>
                           </div>
+                          <strong>{note.title}</strong>
+                          <p>{getSnippet(note.content)}</p>
+                          <div className="linked-note-meta">
+                            {note.task?.title ? (
+                              <span>Task: {note.task.title}</span>
+                            ) : null}
+                            {note.project?.name ? (
+                              <span>Project: {note.project.name}</span>
+                            ) : null}
+                            {note.isPinned ? <span>Pinned</span> : null}
+                          </div>
+                        </button>
+
+                        <div className="linked-note-actions">
+                          {note.kind === "REFERENCE" && (
+                            <span className="note-kind-pill reference">
+                              Reference
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className="note-pin-button"
+                            onClick={() => handleRemoveLink(note.id)}
+                            disabled={unlinkingNoteId === note.id}
+                          >
+                            {unlinkingNoteId === note.id ? "Removing..." : "Unlink"}
+                          </button>
                         </div>
-                        <span>
-                          {linkingNoteId === note.id ? "Linking..." : "Link"}
-                        </span>
-                      </button>
+                      </div>
                     ))
                   )}
                 </div>
-              ) : null}
-
-              <div className="linked-notes-list">
-                {loadingLinks ? (
-                  <div className="muted-text">Loading linked notes...</div>
-                ) : linkedNotes.length === 0 ? (
-                  <div className="muted-text">
-                    No linked notes yet
-                  </div>
-                ) : (
-                  linkedNotes.map((note) => (
-                    <div key={note.id} className="linked-note-card">
-                      <button
-                        type="button"
-                        className="linked-note-main"
-                        onClick={() => handleSelectLinkedNote(note)}
-                      >
-                        <div className="note-card-topline">
-                          <span>{note.project?.name || "General"}</span>
-                          <span>{formatDate(note.updatedAt)}</span>
-                        </div>
-                        <strong>{note.title}</strong>
-                        <p>{getSnippet(note.content)}</p>
-                        <div className="linked-note-meta">
-                          {note.task?.title ? (
-                            <span>Task: {note.task.title}</span>
-                          ) : null}
-                          {note.project?.name ? (
-                            <span>Project: {note.project.name}</span>
-                          ) : null}
-                          {note.isPinned ? <span>Pinned</span> : null}
-                        </div>
-                      </button>
-
-                      <div className="linked-note-actions">
-                        {note.kind === "REFERENCE" && (
-                          <span className="note-kind-pill reference">
-                            Reference
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          className="note-pin-button"
-                          onClick={() => handleRemoveLink(note.id)}
-                          disabled={unlinkingNoteId === note.id}
-                        >
-                          {unlinkingNoteId === note.id ? "Removing..." : "Unlink"}
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
               </div>
-            </section>
+            </details>
 
             <form className="note-form" onSubmit={handleUpdateNote}>
               <label className="form-label">
