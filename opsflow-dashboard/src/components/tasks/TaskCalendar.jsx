@@ -54,7 +54,15 @@ function CalendarTaskItem({ task, onSelectTask }) {
       onClick={() => onSelectTask(task)}
     >
       <span>
-        <strong>{task.title}</strong>
+        <strong>
+          {task.title}
+          {task.unreadNoteCount > 0 ? (
+            <span className="task-awareness-badge subtle inline">
+              {task.unreadNoteCount} new note
+              {task.unreadNoteCount > 1 ? "s" : ""}
+            </span>
+          ) : null}
+        </strong>
         <span className="calendar-task-meta">
           {formatStatus(task.status)} - {getAssigneeLabel(task)}
           {task.project?.name ? ` - ${task.project.name}` : ""}

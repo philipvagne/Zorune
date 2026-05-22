@@ -61,6 +61,33 @@ export class NotesController {
   deleteNote(@Req() req: any, @Param('noteId') noteId: string) {
     return this.notesService.deleteNote(noteId, req.user.sub);
   }
+
+  @Get(':noteId/links')
+  getNoteLinks(@Req() req: any, @Param('noteId') noteId: string) {
+    return this.notesService.getNoteLinks(noteId, req.user.sub);
+  }
+
+  @Post(':noteId/links')
+  addNoteLink(
+    @Req() req: any,
+    @Param('noteId') noteId: string,
+    @Body('linkedNoteId') linkedNoteId: string,
+  ) {
+    return this.notesService.addNoteLink(noteId, linkedNoteId, req.user.sub);
+  }
+
+  @Delete(':noteId/links/:linkedNoteId')
+  removeNoteLink(
+    @Req() req: any,
+    @Param('noteId') noteId: string,
+    @Param('linkedNoteId') linkedNoteId: string,
+  ) {
+    return this.notesService.removeNoteLink(
+      noteId,
+      linkedNoteId,
+      req.user.sub,
+    );
+  }
 }
 
 @UseGuards(JwtAuthGuard)
@@ -71,5 +98,10 @@ export class TaskNotesController {
   @Get(':taskId/notes')
   getTaskNotes(@Req() req: any, @Param('taskId') taskId: string) {
     return this.notesService.getTaskNotes(req.user.sub, taskId);
+  }
+
+  @Patch(':taskId/notes/seen')
+  markTaskNotesSeen(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.notesService.markTaskNotesSeen(req.user.sub, taskId);
   }
 }

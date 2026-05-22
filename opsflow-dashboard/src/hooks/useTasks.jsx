@@ -88,6 +88,20 @@ export default function useTasks(token) {
     return updateTask(taskId, { dueDate });
   };
 
+  const clearTaskNoteAwareness = (taskId) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              unreadNoteCount: 0,
+              hasUnreadNotes: false,
+            }
+          : task
+      )
+    );
+  };
+
 const assignTask = async (taskId, assigneeId) => {
   try {
     await api.patch(
@@ -185,6 +199,11 @@ const createTask = async ({
 
   const visibleTask = {
     ...createdTask,
+    unreadNoteCount: 0,
+    hasUnreadNotes: false,
+    recentNoteActivityAt: null,
+    recentActivityAt: createdTask.updatedAt || createdTask.createdAt || null,
+    isRecentlyActive: true,
     assignments: currentUserId
       ? [
           {
@@ -253,10 +272,23 @@ socket.on("task_updated", (data) => {
               ...task,
               status: data.status,
               title: data.title,
+              description: data.description ?? task.description,
               dueDate: data.dueDate,
               archivedAt: data.archivedAt,
+              createdAt: data.createdAt ?? task.createdAt,
+              updatedAt: data.updatedAt ?? task.updatedAt,
               project: data.project ?? task.project,
               assignments,
+              unreadNoteCount:
+                data.unreadNoteCount ?? task.unreadNoteCount ?? 0,
+              hasUnreadNotes:
+                data.hasUnreadNotes ?? task.hasUnreadNotes ?? false,
+              recentNoteActivityAt:
+                data.recentNoteActivityAt ?? task.recentNoteActivityAt ?? null,
+              recentActivityAt:
+                data.recentActivityAt ?? task.recentActivityAt ?? null,
+              isRecentlyActive:
+                data.isRecentlyActive ?? task.isRecentlyActive ?? false,
             }
           : task
       );
@@ -269,10 +301,18 @@ socket.on("task_updated", (data) => {
         id: data.taskId,
         title: data.title,
         status: data.status,
+        description: data.description,
         dueDate: data.dueDate,
         archivedAt: data.archivedAt,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
         project: data.project,
         assignments,
+        unreadNoteCount: data.unreadNoteCount ?? 0,
+        hasUnreadNotes: data.hasUnreadNotes ?? false,
+        recentNoteActivityAt: data.recentNoteActivityAt ?? null,
+        recentActivityAt: data.recentActivityAt ?? null,
+        isRecentlyActive: data.isRecentlyActive ?? false,
       },
     ];
   });
@@ -311,5 +351,6 @@ return {
   removeAssignee,
   archiveTask,
   createTask,
+  clearTaskNoteAwareness,
 };
 }

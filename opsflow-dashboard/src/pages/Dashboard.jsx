@@ -113,6 +113,7 @@ export default function Dashboard({ token, onLogout }) {
     removeAssignee,
     archiveTask,
     createTask,
+    clearTaskNoteAwareness,
   } = useTasks(token);
 
   const selectedTask =
@@ -505,6 +506,7 @@ export default function Dashboard({ token, onLogout }) {
           assignTask={assignTask}
           removeAssignee={removeAssignee}
           archiveTask={archiveTask}
+          clearTaskNoteAwareness={clearTaskNoteAwareness}
           viewers={selectedTaskViewers}
         />
       );

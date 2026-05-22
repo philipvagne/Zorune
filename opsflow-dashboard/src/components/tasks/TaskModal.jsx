@@ -4,6 +4,7 @@ import {
   createTaskUpdate,
   deleteNote,
   getTaskNotes,
+  markTaskNotesSeen,
   getTaskUpdates,
   searchUsers,
   updateNote,
@@ -65,6 +66,7 @@ export default function TaskModal({
   assignTask,
   removeAssignee,
   archiveTask,
+  clearTaskNoteAwareness,
   viewers = [],
 }) {
   const [assigneeQuery, setAssigneeQuery] = useState("");
@@ -181,6 +183,18 @@ export default function TaskModal({
       active = false;
     };
   }, [task?.id, token]);
+
+  useEffect(() => {
+    if (!task || !token) {
+      return;
+    }
+
+    clearTaskNoteAwareness?.(task.id);
+
+    markTaskNotesSeen(token, task.id).catch(() => {
+      // Awareness should stay quiet; no blocking UI needed here.
+    });
+  }, [clearTaskNoteAwareness, task?.id, token]);
 
   useEffect(() => {
     if (!task) {

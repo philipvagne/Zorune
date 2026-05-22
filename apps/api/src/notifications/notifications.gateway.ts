@@ -120,20 +120,18 @@ async handleDisconnect(client: Socket) {
 }
 
 sendNotification(userId: string, payload: any) {
-  console.log('EMITTING NOTIFICATION:', {
-    userId,
-    payload,
-  });
-
   this.server.to(userId).emit('notification', payload);
 }
 
 emitTaskUpdated(userIds: string[], payload: any) {
   const uniqueUserIds = [...new Set(userIds)];
-  console.log("task_updated EMIT:", payload);
   for (const userId of uniqueUserIds) {
     this.server.to(userId).emit("task_updated", payload);
   }
+}
+
+emitTaskUpdatedToUser(userId: string, payload: any) {
+  this.server.to(userId).emit('task_updated', payload);
 }
 
 emitTaskUpdateCreated(userIds: string[], payload: any) {

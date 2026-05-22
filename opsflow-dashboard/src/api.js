@@ -123,6 +123,17 @@ export const getTaskNotes = (token, taskId) =>
     },
   });
 
+export const markTaskNotesSeen = (token, taskId) =>
+  api.patch(
+    `/tasks/${taskId}/notes/seen`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
 export const getArchivedTasks = (token) =>
   api.get("/tasks/archived", {
     headers: {
@@ -169,6 +180,31 @@ export const createNote = (token, note) =>
 
 export const updateNote = (token, noteId, note) =>
   api.patch(`/notes/${noteId}`, note, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const getNoteLinks = (token, noteId) =>
+  api.get(`/notes/${noteId}/links`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const addNoteLink = (token, noteId, linkedNoteId) =>
+  api.post(
+    `/notes/${noteId}/links`,
+    { linkedNoteId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+export const removeNoteLink = (token, noteId, linkedNoteId) =>
+  api.delete(`/notes/${noteId}/links/${linkedNoteId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

@@ -37,6 +37,7 @@ model User {
   notifications Notification[]
   taskUpdates   TaskUpdate[]
   notesCreated  Note[]
+  taskNoteReadStates TaskNoteReadState[]
 
   taskAssignments TaskAssignment[] @relation("UserTaskAssignments")
 
@@ -104,10 +105,27 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  sourceLinks NoteLink[] @relation("SourceLinks")
+  targetLinks NoteLink[] @relation("TargetLinks")
+
   @@index([organizationId, updatedAt])
   @@index([projectId, updatedAt])
   @@index([taskId, updatedAt])
   @@index([createdById])
+}
+
+model NoteLink {
+  id           String   @id @default(cuid())
+  sourceNoteId String
+  targetNoteId String
+  createdAt    DateTime @default(now())
+
+  sourceNote Note @relation("SourceLinks", fields: [sourceNoteId], references: [id], onDelete: Cascade)
+  targetNote Note @relation("TargetLinks", fields: [targetNoteId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceNoteId, targetNoteId])
+  @@index([sourceNoteId])
+  @@index([targetNoteId])
 }
 
 model Task {
@@ -133,6 +151,7 @@ model Task {
   activityLogs ActivityLog[]
   updates      TaskUpdate[]
   notes        Note[]
+  noteReadStates TaskNoteReadState[]
 }
 
 model ActivityLog {
@@ -189,4 +208,20 @@ model TaskUpdate {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId, createdAt])
+}
+
+model TaskNoteReadState {
+  id         String   @id @default(cuid())
+  taskId      String
+  userId      String
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId, lastSeenAt])
+  @@index([userId, lastSeenAt])
 }

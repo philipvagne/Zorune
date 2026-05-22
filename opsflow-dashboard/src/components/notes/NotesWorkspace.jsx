@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  addNoteLink,
   createNote,
   deleteNote,
+  getNoteLinks,
   getMyOrganizations,
   getNotes,
   getOrganizationProjects,
+  removeNoteLink,
   updateNote,
 } from "../../api";
 import usePersistentState from "../../hooks/usePersistentState";
@@ -14,7 +17,15 @@ const noteKindFilters = [
   { id: "ALL", label: "All" },
   { id: "NOTE", label: "Notes" },
   { id: "REFERENCE", label: "References" },
+];
+
+const discoveryFilters = [
+  { id: "ALL", label: "All context" },
   { id: "PINNED", label: "Pinned" },
+  { id: "LINKED", label: "Linked" },
+  { id: "UNLINKED", label: "Unlinked" },
+  { id: "TASK", label: "Task Notes" },
+  { id: "PROJECT", label: "Project Notes" },
 ];
 
 const formatDate = (value) =>
@@ -34,6 +45,77 @@ const getSnippet = (content) => {
   }
 
   return text.length > 160 ? `${text.slice(0, 160)}...` : text;
+};
+
+const getNoteLinkCount = (note) =>
+  (note.sourceLinks?.length || 0) + (note.targetLinks?.length || 0);
+
+const getSearchableText = (note) => {
+  const outgoingLinks =
+    note.sourceLinks
+      ?.map((link) =>
+        [
+          link.targetNote?.title,
+          link.targetNote?.kind,
+          link.targetNote?.project?.name,
+          link.targetNote?.task?.title,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      )
+      .join(" ") || "";
+
+  const incomingLinks =
+    note.targetLinks
+      ?.map((link) =>
+        [
+          link.sourceNote?.title,
+          link.sourceNote?.kind,
+          link.sourceNote?.project?.name,
+          link.sourceNote?.task?.title,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      )
+      .join(" ") || "";
+
+  return [
+    note.title || "",
+    note.content || "",
+    note.kind || "",
+    note.project?.name || "",
+    note.task?.title || "",
+    outgoingLinks,
+    incomingLinks,
+  ]
+    .join(" ")
+    .toLowerCase();
+};
+
+const renderHighlightedText = (text, query) => {
+  if (!query.trim()) {
+    return text;
+  }
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedText = text.toLowerCase();
+  const index = normalizedText.indexOf(normalizedQuery);
+
+  if (index === -1) {
+    return text;
+  }
+
+  const before = text.slice(0, index);
+  const match = text.slice(index, index + query.trim().length);
+  const after = text.slice(index + query.trim().length);
+
+  return (
+    <>
+      {before}
+      <mark className="search-highlight">{match}</mark>
+      {after}
+    </>
+  );
 };
 
 const compareNotes = (left, right) => {
@@ -76,9 +158,7 @@ const matchesNoteSearch = (note, search) => {
     return true;
   }
 
-  return `${note.title || ""} ${note.content || ""} ${note.kind || ""}`
-    .toLowerCase()
-    .includes(query);
+  return getSearchableText(note).includes(query);
 };
 
 export default function NotesWorkspace({ token }) {
@@ -88,7 +168,7 @@ export default function NotesWorkspace({ token }) {
     ""
   );
   const [projects, setProjects] = useState([]);
-  const [notes, setNotes] = useState([]);
+  const [organizationNotes, setOrganizationNotes] = useState([]);
   const [selectedNoteId, setSelectedNoteId] = usePersistentState(
     "opsflow.notes.selectedNoteId",
     ""
@@ -101,6 +181,10 @@ export default function NotesWorkspace({ token }) {
     "opsflow.notes.kindFilter",
     "ALL"
   );
+  const [discoveryFilter, setDiscoveryFilter] = usePersistentState(
+    "opsflow.notes.discoveryFilter",
+    "ALL"
+  );
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newProjectId, setNewProjectId] = useState("");
@@ -109,33 +193,62 @@ export default function NotesWorkspace({ token }) {
   const [editContent, setEditContent] = useState("");
   const [editProjectId, setEditProjectId] = useState("");
   const [editKind, setEditKind] = useState("NOTE");
+  const [linkedNotes, setLinkedNotes] = useState([]);
+  const [linkQuery, setLinkQuery] = useState("");
   const [loadingOrganizations, setLoadingOrganizations] = useState(true);
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [loadingLinks, setLoadingLinks] = useState(false);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pinningNoteId, setPinningNoteId] = useState(null);
+  const [linkingNoteId, setLinkingNoteId] = useState(null);
+  const [unlinkingNoteId, setUnlinkingNoteId] = useState(null);
   const [error, setError] = useState("");
+  const [linkError, setLinkError] = useState("");
 
   const selectedNote = useMemo(
-    () => notes.find((note) => note.id === selectedNoteId) || null,
-    [notes, selectedNoteId]
+    () => organizationNotes.find((note) => note.id === selectedNoteId) || null,
+    [organizationNotes, selectedNoteId]
   );
   const sortedNotes = useMemo(
-    () => [...notes].sort(compareNotes),
-    [notes]
+    () => [...organizationNotes].sort(compareNotes),
+    [organizationNotes]
   );
   const visibleNotes = useMemo(() => {
-    if (kindFilter === "PINNED") {
-      return sortedNotes.filter((note) => note.isPinned);
-    }
+    return sortedNotes
+      .filter((note) => {
+        if (kindFilter === "NOTE" || kindFilter === "REFERENCE") {
+          return note.kind === kindFilter;
+        }
 
-    if (kindFilter === "NOTE" || kindFilter === "REFERENCE") {
-      return sortedNotes.filter((note) => note.kind === kindFilter);
-    }
+        return true;
+      })
+      .filter((note) => {
+        if (discoveryFilter === "PINNED") {
+          return note.isPinned;
+        }
 
-    return sortedNotes;
-  }, [kindFilter, sortedNotes]);
+        if (discoveryFilter === "LINKED") {
+          return getNoteLinkCount(note) > 0;
+        }
+
+        if (discoveryFilter === "UNLINKED") {
+          return getNoteLinkCount(note) === 0;
+        }
+
+        if (discoveryFilter === "TASK") {
+          return Boolean(note.taskId);
+        }
+
+        if (discoveryFilter === "PROJECT") {
+          return Boolean(note.projectId);
+        }
+
+        return true;
+      })
+      .filter((note) => matchesNoteSearch(note, search));
+  }, [discoveryFilter, kindFilter, search, sortedNotes]);
   const pinnedNotes = useMemo(
     () => visibleNotes.filter((note) => note.isPinned),
     [visibleNotes]
@@ -144,6 +257,38 @@ export default function NotesWorkspace({ token }) {
     () => visibleNotes.filter((note) => !note.isPinned),
     [visibleNotes]
   );
+  const linkableNotes = useMemo(() => {
+    const linkedIds = new Set(linkedNotes.map((note) => note.id));
+    return organizationNotes
+      .filter((note) => note.id !== selectedNoteId)
+      .filter((note) => !linkedIds.has(note.id))
+      .filter((note) => matchesNoteSearch(note, linkQuery))
+      .slice(0, 8);
+  }, [linkQuery, linkedNotes, organizationNotes, selectedNoteId]);
+  const matchingCount = visibleNotes.length;
+  const selectedNoteVisible = Boolean(
+    selectedNoteId && visibleNotes.some((note) => note.id === selectedNoteId)
+  );
+
+  const upsertOrganizationNote = (nextNote) => {
+    setOrganizationNotes((current) => {
+      const exists = current.some((note) => note.id === nextNote.id);
+
+      if (exists) {
+        return current
+          .map((note) => (note.id === nextNote.id ? nextNote : note))
+          .sort(compareNotes);
+      }
+
+      return [nextNote, ...current].sort(compareNotes);
+    });
+  };
+
+  const upsertOrganizationNotes = (...nextNotes) => {
+    nextNotes.filter(Boolean).forEach((note) => {
+      upsertOrganizationNote(note);
+    });
+  };
 
   useEffect(() => {
     let active = true;
@@ -183,10 +328,14 @@ export default function NotesWorkspace({ token }) {
   }, [setSelectedOrgId, token]);
 
   useEffect(() => {
-    if (!selectedOrgId) {
+    const resetWorkspaceData = () => {
       setProjects([]);
-      setNotes([]);
+      setOrganizationNotes([]);
       setSelectedNoteId("");
+    };
+
+    if (!selectedOrgId) {
+      resetWorkspaceData();
       return;
     }
 
@@ -197,33 +346,28 @@ export default function NotesWorkspace({ token }) {
       setError("");
 
       try {
-        const [projectsRes, notesRes] = await Promise.all([
+        const [projectsRes, allNotesRes] = await Promise.all([
           getOrganizationProjects(token, selectedOrgId),
           getNotes(token, {
             organizationId: selectedOrgId,
-            kind:
-              kindFilter === "NOTE" || kindFilter === "REFERENCE"
-                ? kindFilter
-                : undefined,
-            q: search.trim() || undefined,
           }),
         ]);
 
         if (!active) return;
 
         const nextProjects = projectsRes.data || [];
-        const nextNotes = notesRes.data || [];
+        const nextOrganizationNotes = allNotesRes.data || [];
         setProjects(nextProjects);
-        setNotes(nextNotes);
+        setOrganizationNotes(nextOrganizationNotes);
         setSelectedNoteId((currentId) =>
-          nextNotes.some((note) => note.id === currentId)
+          nextOrganizationNotes.some((note) => note.id === currentId)
             ? currentId
-            : nextNotes[0]?.id || ""
+            : nextOrganizationNotes[0]?.id || ""
         );
       } catch {
         if (active) {
           setProjects([]);
-          setNotes([]);
+          setOrganizationNotes([]);
           setSelectedNoteId("");
           setError("Could not load notes.");
         }
@@ -239,51 +383,76 @@ export default function NotesWorkspace({ token }) {
     return () => {
       active = false;
     };
-  }, [kindFilter, search, selectedOrgId, setSelectedNoteId, token]);
+  }, [selectedOrgId, setSelectedNoteId, token]);
 
   useEffect(() => {
-    setEditTitle(selectedNote?.title || "");
-    setEditContent(selectedNote?.content || "");
-    setEditProjectId(selectedNote?.projectId || "");
-    setEditKind(selectedNote?.kind || "NOTE");
+    const syncSelectedNoteState = () => {
+      setEditTitle(selectedNote?.title || "");
+      setEditContent(selectedNote?.content || "");
+      setEditProjectId(selectedNote?.projectId || "");
+      setEditKind(selectedNote?.kind || "NOTE");
+      setLinkQuery("");
+      setLinkError("");
+    };
+
+    syncSelectedNoteState();
   }, [selectedNote]);
 
   useEffect(() => {
-    return subscribeToNoteCreated((note) => {
-      if (
-        note.organizationId !== selectedOrgId ||
-        !matchesNoteSearch(note, search)
-      ) {
-        return;
-      }
+    const clearLinkedNoteState = () => {
+      setLinkedNotes([]);
+    };
 
-      if (kindFilter === "PINNED" && !note.isPinned) {
-        return;
-      }
+    if (!selectedNoteId) {
+      clearLinkedNoteState();
+      return;
+    }
 
-      if (
-        (kindFilter === "NOTE" || kindFilter === "REFERENCE") &&
-        note.kind !== kindFilter
-      ) {
-        return;
-      }
+    let active = true;
 
-      setNotes((current) => {
-        const exists = current.some(
-          (currentNote) => currentNote.id === note.id
-        );
+    const loadLinkedNotes = async () => {
+      setLoadingLinks(true);
+      setLinkError("");
 
-        if (exists) {
-          return current;
+      try {
+        const res = await getNoteLinks(token, selectedNoteId);
+
+        if (!active) return;
+
+        setLinkedNotes(res.data || []);
+      } catch (err) {
+        if (active) {
+          setLinkedNotes([]);
+          setLinkError(
+            err.response?.data?.message || "Could not load linked notes."
+          );
         }
+      } finally {
+        if (active) {
+          setLoadingLinks(false);
+        }
+      }
+    };
 
-        return [note, ...current].sort(compareNotes);
-      });
+    loadLinkedNotes();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedNoteId, token]);
+
+  useEffect(() => {
+    return subscribeToNoteCreated((note) => {
+      if (note.organizationId !== selectedOrgId) {
+        return;
+      }
+
+      upsertOrganizationNote(note);
     });
-  }, [kindFilter, search, selectedOrgId]);
+  }, [selectedOrgId]);
 
   const updateNoteInState = (noteId, updater) => {
-    setNotes((current) =>
+    setOrganizationNotes((current) =>
       current
         .map((note) =>
           note.id === noteId ? updater(note) : note
@@ -315,7 +484,7 @@ export default function NotesWorkspace({ token }) {
       });
 
       const createdNote = res.data;
-      setNotes((current) => [createdNote, ...current].sort(compareNotes));
+      upsertOrganizationNote(createdNote);
       setSelectedNoteId(createdNote.id);
       setNewTitle("");
       setNewContent("");
@@ -352,13 +521,7 @@ export default function NotesWorkspace({ token }) {
       });
 
       const updatedNote = res.data;
-      setNotes((current) =>
-        current
-          .map((note) =>
-            note.id === updatedNote.id ? updatedNote : note
-          )
-          .sort(compareNotes)
-      );
+      upsertOrganizationNote(updatedNote);
     } catch (err) {
       setError(err.response?.data?.message || "Could not save note.");
     } finally {
@@ -374,7 +537,7 @@ export default function NotesWorkspace({ token }) {
 
     try {
       await deleteNote(token, selectedNote.id);
-      setNotes((current) =>
+      setOrganizationNotes((current) =>
         current.filter((note) => note.id !== selectedNote.id)
       );
       setSelectedNoteId("");
@@ -416,6 +579,56 @@ export default function NotesWorkspace({ token }) {
     } finally {
       setPinningNoteId(null);
     }
+  };
+
+  const handleAddLink = async (linkedNote) => {
+    if (!selectedNoteId) {
+      return;
+    }
+
+    setLinkingNoteId(linkedNote.id);
+    setLinkError("");
+
+    try {
+      const res = await addNoteLink(token, selectedNoteId, linkedNote.id);
+      const { linkedNote: linkedNoteState, sourceNote } = res.data;
+      setLinkedNotes((current) =>
+        [...current.filter((note) => note.id !== linkedNoteState.id), linkedNoteState].sort(
+          compareNotes
+        )
+      );
+      upsertOrganizationNotes(sourceNote, linkedNoteState);
+      setLinkQuery("");
+    } catch (err) {
+      setLinkError(err.response?.data?.message || "Could not link note.");
+    } finally {
+      setLinkingNoteId(null);
+    }
+  };
+
+  const handleRemoveLink = async (linkedNoteId) => {
+    if (!selectedNoteId) {
+      return;
+    }
+
+    setUnlinkingNoteId(linkedNoteId);
+    setLinkError("");
+
+    try {
+      const res = await removeNoteLink(token, selectedNoteId, linkedNoteId);
+      setLinkedNotes((current) =>
+        current.filter((note) => note.id !== linkedNoteId)
+      );
+      upsertOrganizationNotes(res.data?.sourceNote, res.data?.linkedNote);
+    } catch (err) {
+      setLinkError(err.response?.data?.message || "Could not unlink note.");
+    } finally {
+      setUnlinkingNoteId(null);
+    }
+  };
+
+  const handleSelectLinkedNote = (linkedNote) => {
+    setSelectedNoteId(linkedNote.id);
   };
 
   if (loadingOrganizations) {
@@ -466,6 +679,15 @@ export default function NotesWorkspace({ token }) {
               />
             </label>
 
+            <div className="notes-search-summary">
+              {matchingCount === 0
+                ? "No matching operational notes"
+                : `${matchingCount} matching ${
+                    matchingCount === 1 ? "note" : "notes"
+                  }`}
+              {!selectedNoteVisible && selectedNote ? " - current note still open" : ""}
+            </div>
+
             <div className="notes-filter-strip" role="tablist" aria-label="Note filters">
               {noteKindFilters.map((filter) => (
                 <button
@@ -473,6 +695,23 @@ export default function NotesWorkspace({ token }) {
                   type="button"
                   className={kindFilter === filter.id ? "active" : ""}
                   onClick={() => setKindFilter(filter.id)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className="notes-filter-strip notes-filter-strip-secondary"
+              role="tablist"
+              aria-label="Discovery filters"
+            >
+              {discoveryFilters.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  className={discoveryFilter === filter.id ? "active" : ""}
+                  onClick={() => setDiscoveryFilter(filter.id)}
                 >
                   {filter.label}
                 </button>
@@ -600,8 +839,8 @@ export default function NotesWorkspace({ token }) {
                           <span>{note.project?.name || "General"}</span>
                           <span>{formatDate(note.updatedAt)}</span>
                         </div>
-                        <strong>{note.title}</strong>
-                        <p>{getSnippet(note.content)}</p>
+                        <strong>{renderHighlightedText(note.title, search)}</strong>
+                        <p>{renderHighlightedText(getSnippet(note.content), search)}</p>
                         <div className="note-card-footer">
                           By {getCreatorName(note)}
                         </div>
@@ -653,8 +892,8 @@ export default function NotesWorkspace({ token }) {
                         <span>{note.project?.name || "General"}</span>
                         <span>{formatDate(note.updatedAt)}</span>
                       </div>
-                      <strong>{note.title}</strong>
-                      <p>{getSnippet(note.content)}</p>
+                      <strong>{renderHighlightedText(note.title, search)}</strong>
+                      <p>{renderHighlightedText(getSnippet(note.content), search)}</p>
                       <div className="note-card-footer">
                         By {getCreatorName(note)}
                       </div>
@@ -693,6 +932,108 @@ export default function NotesWorkspace({ token }) {
               <span>Updated {formatDate(selectedNote.updatedAt)}</span>
               <span>By {getCreatorName(selectedNote)}</span>
             </div>
+
+            <section className="note-links-section">
+              <div className="note-links-header">
+                <strong>Linked Notes</strong>
+              </div>
+
+              <label className="form-label">
+                Link another note
+                <input
+                  className="ui-input"
+                  value={linkQuery}
+                  onChange={(event) => setLinkQuery(event.target.value)}
+                  placeholder="Search title, content, or kind..."
+                />
+              </label>
+
+              {linkError ? <div className="form-error">{linkError}</div> : null}
+
+              {linkQuery.trim() ? (
+                <div className="linked-note-picker">
+                  {linkableNotes.length === 0 ? (
+                    <div className="muted-text">
+                      No matching notes available to link
+                    </div>
+                  ) : (
+                    linkableNotes.map((note) => (
+                      <button
+                        key={note.id}
+                        type="button"
+                        className="linked-note-picker-item"
+                        onClick={() => handleAddLink(note)}
+                        disabled={linkingNoteId === note.id}
+                      >
+                        <div>
+                          <strong>{note.title}</strong>
+                          <div className="muted-text">
+                            {note.kind === "REFERENCE" ? "Reference" : "Note"}
+                            {" - "}
+                            {note.project?.name || "General"}
+                          </div>
+                        </div>
+                        <span>
+                          {linkingNoteId === note.id ? "Linking..." : "Link"}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : null}
+
+              <div className="linked-notes-list">
+                {loadingLinks ? (
+                  <div className="muted-text">Loading linked notes...</div>
+                ) : linkedNotes.length === 0 ? (
+                  <div className="muted-text">
+                    No linked notes yet
+                  </div>
+                ) : (
+                  linkedNotes.map((note) => (
+                    <div key={note.id} className="linked-note-card">
+                      <button
+                        type="button"
+                        className="linked-note-main"
+                        onClick={() => handleSelectLinkedNote(note)}
+                      >
+                        <div className="note-card-topline">
+                          <span>{note.project?.name || "General"}</span>
+                          <span>{formatDate(note.updatedAt)}</span>
+                        </div>
+                        <strong>{note.title}</strong>
+                        <p>{getSnippet(note.content)}</p>
+                        <div className="linked-note-meta">
+                          {note.task?.title ? (
+                            <span>Task: {note.task.title}</span>
+                          ) : null}
+                          {note.project?.name ? (
+                            <span>Project: {note.project.name}</span>
+                          ) : null}
+                          {note.isPinned ? <span>Pinned</span> : null}
+                        </div>
+                      </button>
+
+                      <div className="linked-note-actions">
+                        {note.kind === "REFERENCE" && (
+                          <span className="note-kind-pill reference">
+                            Reference
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="note-pin-button"
+                          onClick={() => handleRemoveLink(note.id)}
+                          disabled={unlinkingNoteId === note.id}
+                        >
+                          {unlinkingNoteId === note.id ? "Removing..." : "Unlink"}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
 
             <form className="note-form" onSubmit={handleUpdateNote}>
               <label className="form-label">
@@ -771,3 +1112,4 @@ export default function NotesWorkspace({ token }) {
     </div>
   );
 }
+

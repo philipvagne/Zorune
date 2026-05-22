@@ -49,11 +49,23 @@ export default function TaskTable({ tasks, onSelectTask }) {
           {tasks.map((task) => (
             <tr
               key={task.id}
-              className="task-table-row"
+              className={
+                task.unreadNoteCount > 0
+                  ? "task-table-row has-awareness"
+                  : "task-table-row"
+              }
               onClick={() => onSelectTask(task)}
             >
               <td>
-                <div className="task-table-title">{task.title}</div>
+                <div className="task-table-title-row">
+                  <div className="task-table-title">{task.title}</div>
+                  {task.unreadNoteCount > 0 ? (
+                    <span className="task-awareness-badge subtle">
+                      {task.unreadNoteCount} new note
+                      {task.unreadNoteCount > 1 ? "s" : ""}
+                    </span>
+                  ) : null}
+                </div>
                 {task.description ? (
                   <div className="task-table-description">
                     {task.description}
