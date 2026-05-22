@@ -13,4 +13,8 @@ export class UpdateNoteDto {
   @IsOptional()
   @IsString()
   projectId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  taskId?: string | null;
 }

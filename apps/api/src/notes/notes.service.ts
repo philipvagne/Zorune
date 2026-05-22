@@ -41,6 +41,13 @@ export class NotesService {
           organizationId: true,
         },
       },
+      task: {
+        select: {
+          id: true,
+          title: true,
+          projectId: true,
+        },
+      },
     } as const;
   }
 
@@ -86,6 +93,47 @@ export class NotesService {
     return project;
   }
 
+  private async requireTaskInOrganization(
+    taskId: string,
+    organizationId: string,
+  ) {
+    const task = await this.prisma.task.findUnique({
+      where: {
+        id: taskId,
+      },
+      select: {
+        id: true,
+        title: true,
+        projectId: true,
+        project: {
+          select: {
+            organizationId: true,
+          },
+        },
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    if (task.project.organizationId !== organizationId) {
+      throw new BadRequestException(
+        'Task must belong to the note organization',
+      );
+    }
+
+    return task;
+  }
+
+  private validateProjectTaskLink(projectId: string | null, taskProjectId: string) {
+    if (projectId && projectId !== taskProjectId) {
+      throw new BadRequestException(
+        'Project must match the linked task project',
+      );
+    }
+  }
+
   private async getAccessibleNote(noteId: string, userId: string) {
     const note = await this.prisma.note.findUnique({
       where: {
@@ -108,12 +156,14 @@ export class NotesService {
     filters: {
       organizationId?: string;
       projectId?: string;
+      taskId?: string;
       q?: string;
     },
   ) {
     const where: Prisma.NoteWhereInput = {};
     const organizationId = filters.organizationId?.trim();
     const projectId = filters.projectId?.trim();
+    const taskId = filters.taskId?.trim();
     const q = filters.q?.trim();
 
     if (organizationId) {
@@ -155,6 +205,43 @@ export class NotesService {
       where.projectId = projectId;
     }
 
+    if (taskId) {
+      const task = await this.prisma.task.findUnique({
+        where: {
+          id: taskId,
+        },
+        select: {
+          id: true,
+          projectId: true,
+          project: {
+            select: {
+              organizationId: true,
+            },
+          },
+        },
+      });
+
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
+
+      await this.requireMembership(userId, task.project.organizationId);
+
+      if (organizationId && task.project.organizationId !== organizationId) {
+        throw new BadRequestException(
+          'Task must belong to the requested organization',
+        );
+      }
+
+      if (projectId && task.projectId !== projectId) {
+        throw new BadRequestException(
+          'Project must match the requested task project',
+        );
+      }
+
+      where.taskId = taskId;
+    }
+
     if (q) {
       where.OR = [
         {
@@ -185,6 +272,7 @@ export class NotesService {
     const title = body.title?.trim();
     const organizationId = body.organizationId?.trim();
     const projectId = body.projectId?.trim() || null;
+    const taskId = body.taskId?.trim() || null;
 
     if (!title) {
       throw new BadRequestException('Note title is required');
@@ -200,12 +288,21 @@ export class NotesService {
       await this.requireProjectInOrganization(projectId, organizationId);
     }
 
+    if (taskId) {
+      const task = await this.requireTaskInOrganization(
+        taskId,
+        organizationId,
+      );
+      this.validateProjectTaskLink(projectId, task.projectId);
+    }
+
     return this.prisma.note.create({
       data: {
         title,
         content: body.content ?? '',
         organizationId,
         projectId,
+        taskId,
         createdById: userId,
       },
       include: this.noteInclude(),
@@ -219,6 +316,8 @@ export class NotesService {
   async updateNote(noteId: string, userId: string, body: UpdateNoteDto) {
     const note = await this.getAccessibleNote(noteId, userId);
     const data: Prisma.NoteUpdateInput = {};
+    let nextProjectId = note.projectId;
+    let nextTaskId = note.taskId;
 
     if (body.title !== undefined) {
       const title = body.title.trim();
@@ -253,6 +352,40 @@ export class NotesService {
           disconnect: true,
         };
       }
+
+      nextProjectId = projectId;
+    }
+
+    if (body.taskId !== undefined) {
+      const taskId = body.taskId?.trim() || null;
+
+      if (taskId) {
+        const task = await this.requireTaskInOrganization(
+          taskId,
+          note.organizationId,
+        );
+        this.validateProjectTaskLink(nextProjectId, task.projectId);
+
+        data.task = {
+          connect: {
+            id: taskId,
+          },
+        };
+      } else {
+        data.task = {
+          disconnect: true,
+        };
+      }
+
+      nextTaskId = taskId;
+    }
+
+    if (nextTaskId && nextProjectId) {
+      const task = await this.requireTaskInOrganization(
+        nextTaskId,
+        note.organizationId,
+      );
+      this.validateProjectTaskLink(nextProjectId, task.projectId);
     }
 
     return this.prisma.note.update({
@@ -277,5 +410,11 @@ export class NotesService {
     });
 
     return deletedNote;
+  }
+
+  async getTaskNotes(userId: string, taskId: string) {
+    return this.getNotes(userId, {
+      taskId,
+    });
   }
 }

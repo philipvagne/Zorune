@@ -25,11 +25,13 @@ export class NotesController {
     @Req() req: any,
     @Query('organizationId') organizationId?: string,
     @Query('projectId') projectId?: string,
+    @Query('taskId') taskId?: string,
     @Query('q') q?: string,
   ) {
     return this.notesService.getNotes(req.user.sub, {
       organizationId,
       projectId,
+      taskId,
       q,
     });
   }
@@ -56,5 +58,16 @@ export class NotesController {
   @Delete(':noteId')
   deleteNote(@Req() req: any, @Param('noteId') noteId: string) {
     return this.notesService.deleteNote(noteId, req.user.sub);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@Controller('tasks')
+export class TaskNotesController {
+  constructor(private readonly notesService: NotesService) {}
+
+  @Get(':taskId/notes')
+  getTaskNotes(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.notesService.getTaskNotes(req.user.sub, taskId);
   }
 }
