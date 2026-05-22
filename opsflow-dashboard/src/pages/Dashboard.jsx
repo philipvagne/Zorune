@@ -22,6 +22,7 @@ import CommandPalette from "../components/command/CommandPalette";
 import ArchivedTasks from "../components/archive/ArchivedTasks";
 import OrganizationsWorkspace from "../components/organizations/OrganizationsWorkspace";
 import ProjectsWorkspace from "../components/projects/ProjectsWorkspace";
+import NotesWorkspace from "../components/notes/NotesWorkspace";
 import api from "../api";
 import { createSocket } from "../socket";
 import toast from "react-hot-toast";
@@ -216,6 +217,11 @@ export default function Dashboard({ token, onLogout }) {
       title: "Projects",
       placeholder: "Projects workspace coming soon",
     },
+    notes: {
+      eyebrow: "Notes",
+      title: "Notes",
+      placeholder: "Notes workspace coming soon",
+    },
     organizations: {
       eyebrow: "Organizations",
       title: "Organizations",
@@ -402,6 +408,9 @@ export default function Dashboard({ token, onLogout }) {
     window.localStorage.removeItem("opsflow.selectedTaskId");
     window.localStorage.removeItem("opsflow.projects.selectedOrgId");
     window.localStorage.removeItem("opsflow.projects.selectedProjectId");
+    window.localStorage.removeItem("opsflow.notes.selectedOrgId");
+    window.localStorage.removeItem("opsflow.notes.selectedNoteId");
+    window.localStorage.removeItem("opsflow.notes.search");
     setActiveView("tasks");
     setActiveTaskLayout("kanban");
     setTaskFilters(defaultTaskFilters);
@@ -506,6 +515,10 @@ export default function Dashboard({ token, onLogout }) {
 
       if (activeView === "projects") {
         return <ProjectsWorkspace token={token} />;
+      }
+
+      if (activeView === "notes") {
+        return <NotesWorkspace token={token} />;
       }
 
       if (activeView !== "tasks") {

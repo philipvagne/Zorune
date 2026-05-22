@@ -36,6 +36,13 @@ export default function CommandPalette({
         view: "projects",
       },
       {
+        id: "go-notes",
+        label: "Go to Notes",
+        hint: "Workspace",
+        type: "view",
+        view: "notes",
+      },
+      {
         id: "go-organizations",
         label: "Go to Organizations",
         hint: "Workspace",

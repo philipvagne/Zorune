@@ -15,6 +15,11 @@ const navItems = [
     icon: "//",
   },
   {
+    id: "notes",
+    label: "Notes",
+    icon: "N",
+  },
+  {
     id: "organizations",
     label: "Organizations",
     icon: "::",

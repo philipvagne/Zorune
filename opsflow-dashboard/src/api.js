@@ -145,4 +145,33 @@ export const restoreTask = (token, taskId) =>
     },
   );
 
+export const getNotes = (token, filters = {}) =>
+  api.get("/notes", {
+    params: filters,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const createNote = (token, note) =>
+  api.post("/notes", note, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const updateNote = (token, noteId, note) =>
+  api.patch(`/notes/${noteId}`, note, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const deleteNote = (token, noteId) =>
+  api.delete(`/notes/${noteId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
 export default api;

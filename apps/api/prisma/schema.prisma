@@ -31,6 +31,7 @@ model User {
   activityLogs  ActivityLog[]
   notifications Notification[]
   taskUpdates   TaskUpdate[]
+  notesCreated  Note[]
 
   taskAssignments TaskAssignment[] @relation("UserTaskAssignments")
 
@@ -46,6 +47,7 @@ model Organization {
 
   memberships Membership[]
   projects    Project[]
+  notes       Note[]
 }
 
 model Membership {
@@ -69,8 +71,31 @@ model Project {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   tasks Task[]
+  notes Note[]
 
   createdAt DateTime @default(now())
+}
+
+model Note {
+  id      String @id @default(cuid())
+  title   String
+  content String @default("")
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, updatedAt])
+  @@index([projectId, updatedAt])
+  @@index([createdById])
 }
 
 model Task {
