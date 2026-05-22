@@ -16,7 +16,6 @@ import TaskProductivityToolbar from "../components/tasks/TaskProductivityToolbar
 import TopBar from "../components/dashboard/TopBar";
 import LeftRail from "../components/dashboard/LeftRail";
 import CenterWorkspace from "../components/dashboard/CenterWorkspace";
-import RightRail from "../components/dashboard/RightRail";
 import ContextPanel from "../components/dashboard/ContextPanel";
 import CommandPalette from "../components/command/CommandPalette";
 import ArchivedTasks from "../components/archive/ArchivedTasks";
@@ -645,6 +644,32 @@ useEffect(() => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      await api.patch(
+        "/tasks/notifications/mark-all-read",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setNotifications((prev) =>
+        prev.map((notification) => ({
+          ...notification,
+          isRead: true,
+        }))
+      );
+    } catch (err) {
+      console.error(
+        "Failed to mark all notifications as read:",
+        err
+      );
+    }
+  };
+
 return (
   <div className="dashboard-shell">
     <TopBar
@@ -652,6 +677,42 @@ return (
       onViewChange={changeView}
       actions={
         <>
+          <div className="view-toggle" aria-label="Task view">
+            <button
+              type="button"
+              className={
+                activeTaskLayout === "kanban" ? "active" : ""
+              }
+              onClick={() => setActiveTaskLayout("kanban")}
+            >
+              Kanban
+            </button>
+            <button
+              type="button"
+              className={
+                activeTaskLayout === "table" ? "active" : ""
+              }
+              onClick={() => setActiveTaskLayout("table")}
+            >
+              Table
+            </button>
+            <button
+              type="button"
+              className={
+                activeTaskLayout === "calendar" ? "active" : ""
+              }
+              onClick={() => setActiveTaskLayout("calendar")}
+            >
+              Calendar
+            </button>
+          </div>
+          <button
+            type="button"
+            className="ui-button ui-button-primary"
+            onClick={openCreateTask}
+          >
+            + New Task
+          </button>
           <button
             type="button"
             className="shortcut-hint"
@@ -660,6 +721,14 @@ return (
           >
             Ctrl K
           </button>
+          <NotificationBell
+            notifications={notifications}
+            openNotifications={openNotifications}
+            setOpenNotifications={setOpenNotifications}
+            markAsRead={markAsRead}
+            markAllAsRead={markAllAsRead}
+            deleteNotification={deleteNotification}
+          />
           <button className="logout-button" onClick={onLogout}>
             Logout
           </button>
@@ -676,46 +745,6 @@ return (
         <CenterWorkspace
           eyebrow="Live workspace"
           title="Active Tasks"
-          actions={
-            <>
-              <div className="view-toggle" aria-label="Task view">
-                <button
-                  type="button"
-                  className={
-                    activeTaskLayout === "kanban" ? "active" : ""
-                  }
-                  onClick={() => setActiveTaskLayout("kanban")}
-                >
-                  Kanban
-                </button>
-                <button
-                  type="button"
-                  className={
-                    activeTaskLayout === "table" ? "active" : ""
-                  }
-                  onClick={() => setActiveTaskLayout("table")}
-                >
-                  Table
-                </button>
-                <button
-                  type="button"
-                  className={
-                    activeTaskLayout === "calendar" ? "active" : ""
-                  }
-                  onClick={() => setActiveTaskLayout("calendar")}
-                >
-                  Calendar
-                </button>
-              </div>
-              <button
-                type="button"
-                className="ui-button ui-button-primary"
-                onClick={openCreateTask}
-              >
-                + New Task
-              </button>
-            </>
-          }
         >
           <TaskProductivityToolbar
             filters={taskFilters}
@@ -730,15 +759,6 @@ return (
         <ContextPanel>{renderCanvasContent()}</ContextPanel>
       </div>
 
-      <RightRail>
-        <NotificationBell
-          notifications={notifications}
-          openNotifications={openNotifications}
-          setOpenNotifications={setOpenNotifications}
-          markAsRead={markAsRead}
-          deleteNotification={deleteNotification}
-        />
-      </RightRail>
     </div>
 
     <CommandPalette
