@@ -1,16 +1,42 @@
 # OpsFlow
 
-OpsFlow is a real-time collaborative project management workspace inspired by Linear, Jira, and ClickUp.
+OpsFlow is a real-time operational workspace for teams that need to manage execution and context in the same place.
 
-The project is a full-stack app with a NestJS API, Prisma/PostgreSQL database layer, React dashboard, JWT authentication, Socket.IO realtime updates, organization onboarding, multi-assignee tasks, due dates, task progress updates, notifications, presence, archive/restore, and multiple task views.
+Tasks answer what needs to happen. Notes answer why, how, and what to remember.
 
----
+The project currently combines:
+
+* a NestJS + Prisma + PostgreSQL backend
+* a React + Vite frontend workspace
+* JWT authentication
+* Socket.IO realtime updates
+* organizations, projects, tasks, notes, notifications, and presence
+
+## Product Shape
+
+OpsFlow currently behaves like a persistent workspace instead of a page-based dashboard:
+
+* Active Tasks always stays visible in the main workspace
+* the lower context area opens and closes modular workspace cards
+* top rail launcher switches between workspace areas
+* notifications open as a floating overlay
+* task detail opens as a docked panel rather than a blocking modal
+
+Current workspace areas:
+
+* Active Tasks
+* Archived Tasks
+* Projects
+* Notes
+* Organizations
+* Settings
+* Profile
 
 ## Tech Stack
 
 ### Frontend
 
-* React
+* React 19
 * Vite
 * Axios
 * Socket.IO Client
@@ -25,8 +51,6 @@ The project is a full-stack app with a NestJS API, Prisma/PostgreSQL database la
 * Socket.IO
 * JWT Authentication
 
----
-
 ## Project Structure
 
 ```txt
@@ -35,166 +59,172 @@ opsflow/
 |   `-- api/                 # NestJS backend
 |       |-- prisma/          # Prisma schema and migrations
 |       `-- src/             # API modules
-|-- opsflow-dashboard/       # React frontend
+|-- opsflow-dashboard/       # React frontend workspace
 |-- docker-compose.yml       # Local PostgreSQL service
 `-- README.md
 ```
-
----
-
-## Current Product Shape
-
-OpsFlow now behaves as a persistent workspace application:
-
-* Top bar for global actions
-* Left rail for workspace navigation
-* Center workspace for active task views
-* Right rail for notifications and presence
-* Docked context panel for task details and task creation
-
-Active Tasks currently supports:
-
-* Kanban view
-* Table view
-* Calendar agenda view
-
----
 
 ## Current Features
 
 ### Authentication
 
-* User signup with full name, username, email, and password
+* Signup with full name, username, email, and password
 * Signup creates only the user account
-* New users can exist without an organization immediately after signup
-* User login with JWT token response
-* Protected backend routes
-* Socket authentication through JWT
-* Frontend login/signup UI with validation and loading states
-* Logout flow that clears the stored token
+* Users can exist without an organization after registration
+* JWT login flow
+* protected backend routes
+* socket authentication through JWT
+* frontend login/signup validation and loading states
+* logout flow
 
-### Organization Onboarding
+### Organizations
 
-* Users can view organizations they belong to
-* Users with no organization see a safe empty state
-* Users can create an organization from the dashboard
-* Organization creator becomes `OWNER`
-* Owners and admins can add existing users by email or username
-* Members can be viewed per organization
-* Duplicate memberships are prevented
-* No email invite delivery yet
+* users can view organizations they belong to
+* users with no organizations see a safe empty state
+* users can create organizations from the dashboard
+* organization creator becomes `OWNER`
+* owners and admins can add existing users by email or username
+* duplicate memberships are prevented
+* organization membership scopes users, projects, tasks, notes, and search
 
 ### Projects
 
-* Projects belong to organizations
-* Project access is scoped through organization membership
-* Existing project APIs support project creation and project lookup
-* Full project workspace UI is still planned
+* projects belong to organizations
+* project creation and editing from the Projects workspace
+* project detail cards with active, done, and overdue task counts
+* project filtering inside Active Tasks
+* project access inherits organization membership
 
-### User Identity Foundation
+### Users
 
-* `GET /users/me` returns the logged-in user's public profile
-* `GET /users/search?q=` searches users by username, full name, or email
-* User search is scoped to users who share an organization
-* Search responses return only `id`, `email`, `username`, and `fullName`
-* Password hashes and unnecessary user fields are never exposed
+* `GET /users/me`
+* `GET /users/search?q=`
+* search by username, full name, or email
+* results scoped to users who share an organization
+* safe public profile fields only
 
-### Task Management
+### Tasks
 
-* Create tasks inside projects from the dashboard context panel
-* Update task title, description, status, and due date
-* Move tasks freely between `TODO`, `IN_PROGRESS`, and `DONE`
-* Drag and drop task cards between Kanban columns
-* Fetch only active, non-archived tasks assigned to the current user
-* Activity logs are created for task status changes and archive/restore events
-* Due dates can be added, changed, or cleared from the task panel
-* Overdue tasks are visually highlighted when not complete
+* create tasks from the dashboard context area
+* multi-assignee tasks
+* status changes between `TODO`, `IN_PROGRESS`, and `DONE`
+* drag-and-drop Kanban with dnd-kit
+* due dates with overdue highlighting
+* archive and restore using soft archive via `archivedAt`
+* task progress updates timeline
+* task detail panel synchronized from live task state
 
 ### Active Task Views
 
-* Kanban view for status-based task movement
-* Table view for scanning title, status, due date, assignees, and project
-* Calendar agenda view grouped by due date
-* Tasks without due dates appear in a separate calendar section
-* Clicking a card, row, or calendar item opens the same docked task panel
-* All views reuse the same live task state from `useTasks`
+* Kanban
+* Table
+* Calendar agenda view
 
-### Archive And Restore
+All three views reuse the same live task state and the same filters.
 
-* Completed `DONE` tasks can be archived
-* Tasks are soft-archived with `archivedAt`
-* Archived tasks disappear from Active Tasks immediately
-* Archived tasks remain available in the Archived Tasks workspace
-* Archived tasks can be restored
-* Restored tasks become eligible to appear in Active Tasks again
+### Task Productivity Layer
 
-### Multi-Assignee System
+Active Tasks currently supports local:
 
-* Assign multiple users to one task
-* Remove assignees from a task
-* Assignment still supports raw user IDs
-* Assignment UI also supports same-organization user search
-* Assignment and removal emit realtime task updates to authorized users
-* Assignment and removal create database notifications and websocket alerts
+* search
+* status filtering
+* assignee filtering
+* due date filtering
+* project filtering
+* sorting
 
-### Task Progress Updates
+Workspace state is persisted in `localStorage`, including:
 
-* Docked task panel includes a progress update timeline
-* Users can post written task updates such as blockers, review notes, and completed work
-* Progress updates are stored in a separate `TaskUpdate` model
-* Updates include author identity and creation time
-* Updates are delivered in realtime through `task_update_created`
-* Progress update notifications are sent to assigned users except the author
+* active workspace view
+* active task view
+* task filters
+* selected task when still valid
+* selected project organization where relevant
+
+### Notes
+
+OpsFlow notes are lightweight operational knowledge surfaces, not a full document system.
+
+Supported today:
+
+* organization-scoped notes
+* optional project-linked notes
+* optional task-linked notes
+* Notes workspace with search and editing
+* note creation from the Notes workspace
+* related notes inside the task detail panel
+* linked note creation directly from a task
+
+Current note use cases:
+
+* decisions
+* procedures
+* references
+* task context
+* internal operational memory
 
 ### Notifications
 
-* Realtime popup notifications through Socket.IO
-* Notification dropdown with read/unread state
-* Assignment notifications
-* Removal/unassignment notifications
-* Task status change notifications
-* Task progress update notifications
-* Due date added, changed, and cleared notifications
-* Mark single notifications as read
-* Mark all notifications as read
-* Delete read notifications
-* Unread notifications cannot be deleted
+* realtime toast notifications
+* floating notification dropdown
+* unread counts
+* notification category filters
+* mark one read
+* mark all read
+* delete read notifications
+
+Current notification coverage:
+
+* task assignment
+* task unassignment
+* task status changes
+* due date added, changed, and cleared
+* task progress updates
+* archive notifications where supported
 
 ### Presence
 
-* Online users are tracked in memory through the websocket gateway
-* Right rail shows online users
-* Opening a task panel emits task viewing presence
-* The task panel shows users currently viewing the same task
-* Presence is not persisted in the database
+* online users tracked in memory
+* online member list in the workspace
+* task viewer presence
+* users viewing the same task are shown in the task panel
 
----
+### Command Palette
+
+Keyboard shortcut:
+
+* `Ctrl+K` on Windows/Linux
+* `Cmd+K` on macOS
+
+Current command palette actions:
+
+* jump between workspace views
+* open tasks
+* create a new task
 
 ## Realtime Architecture
 
-OpsFlow uses separate websocket events for task state, user alerts, task progress, and presence.
+OpsFlow intentionally separates task state, notifications, updates, and presence.
 
 ### `task_updated`
 
-Used for active task state synchronization:
+Used for task state synchronization:
 
 * status changes
 * due date changes
 * assignment changes
-* avatar stack updates
-* open task panel synchronization
-* archived task removal from Active Tasks
-* removing cards when the current user is no longer assigned
+* archive and restore changes
+* keeping the open task panel synchronized
+* removing tasks from a user’s board when they are no longer assigned
 
-`task_updated` events are emitted to authorized user rooms instead of being broadcast globally.
+Task updates are emitted to authorized user rooms, not broadcast globally.
 
 ### `task_update_created`
 
-Used for user-written progress updates:
+Used for user-written task progress updates:
 
-* appends a new progress update to an open task panel
-* keeps collaborators viewing the same task in sync
-* is scoped to authorized organization members
+* appends new updates to open task panels
+* keeps collaborators in sync without refetching everything
 
 ### `notification`
 
@@ -202,13 +232,7 @@ Used for user-facing alerts:
 
 * toast popups
 * notification dropdown updates
-* assignment alerts
-* unassignment alerts
-* status change alerts
-* due date alerts
-* progress update alerts
-
-The frontend keeps notification handling in `Dashboard.jsx`. `socket.js` only creates the socket connection.
+* unread count changes
 
 ### Presence Events
 
@@ -219,29 +243,28 @@ task_viewing_leave
 task_viewers_updated
 ```
 
-Presence is lightweight V1 state kept in memory by the websocket gateway.
-
----
+Presence is lightweight V1 state stored in memory only.
 
 ## Database Models
 
 Core Prisma models:
 
-* User
-* Organization
-* Membership
-* Project
-* Task
-* TaskAssignment
-* TaskUpdate
-* ActivityLog
-* Notification
+* `User`
+* `Organization`
+* `Membership`
+* `Project`
+* `Task`
+* `TaskAssignment`
+* `TaskUpdate`
+* `ActivityLog`
+* `Notification`
+* `Note`
 
-`TaskUpdate` is separate from `ActivityLog` because it stores user-written collaboration updates. `ActivityLog` remains the foundation for system-generated audit history.
+Important modeling choices:
 
-Tasks use `archivedAt` for soft archive behavior instead of hard deletion.
-
----
+* `TaskUpdate` is separate from `ActivityLog`
+* `Task` uses `archivedAt` for soft archive behavior
+* `Note` belongs to an organization and can optionally link to a project and a task
 
 ## API Overview
 
@@ -274,9 +297,10 @@ POST /organizations/:orgId/members
 ### Projects
 
 ```txt
-POST /organizations/:orgId/projects
-GET  /organizations/:orgId/projects
-GET  /projects/:projectId
+GET   /organizations/:orgId/projects
+POST  /organizations/:orgId/projects
+GET   /projects/:projectId
+PATCH /projects/:projectId
 ```
 
 ### Tasks
@@ -295,6 +319,26 @@ PATCH  /tasks/:taskId/restore
 GET    /tasks/:taskId/activity
 GET    /tasks/:taskId/updates
 POST   /tasks/:taskId/updates
+GET    /tasks/:taskId/notes
+```
+
+### Notes
+
+```txt
+GET    /notes
+POST   /notes
+GET    /notes/:noteId
+PATCH  /notes/:noteId
+DELETE /notes/:noteId
+```
+
+Supported note filters:
+
+```txt
+GET /notes?organizationId=...
+GET /notes?projectId=...
+GET /notes?taskId=...
+GET /notes?q=...
 ```
 
 ### Notifications
@@ -305,8 +349,6 @@ PATCH  /notifications/:id/read
 DELETE /notifications/:id
 PATCH  /tasks/notifications/mark-all-read
 ```
-
----
 
 ## Notification Types
 
@@ -323,10 +365,6 @@ TASK_DUE_DATE_CLEARED
 TASK_ARCHIVED
 ```
 
-Progress update and due date notifications are sent only to assigned users, excluding the user who performed the action.
-
----
-
 ## Local Development
 
 ### 1. Start PostgreSQL
@@ -337,15 +375,10 @@ From the repository root:
 docker compose up -d
 ```
 
-The database runs on:
+Default local database:
 
 ```txt
 localhost:5432
-```
-
-Default local credentials from `docker-compose.yml`:
-
-```txt
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=opsflow
@@ -393,8 +426,6 @@ Frontend URL:
 http://localhost:5173
 ```
 
----
-
 ## Useful Commands
 
 ### Backend
@@ -414,166 +445,102 @@ npm run build
 npm run lint
 ```
 
-On this Windows machine, if PowerShell blocks `npm`, use:
+If PowerShell blocks `npm`, use:
 
 ```powershell
 npm.cmd run build
 ```
 
----
-
 ## Manual Testing Checklist
 
 ### Authentication
 
-1. Open the frontend.
-2. Create an account with full name, username, email, and password.
-3. Confirm login redirects to the dashboard.
-4. Confirm the new user can have zero organizations without crashing the dashboard.
-5. Logout and log back in.
-6. Try invalid credentials and confirm a readable error appears.
+1. Register a new user.
+2. Log in and confirm the dashboard loads.
+3. Log out and back in.
+4. Confirm a user with no organizations does not crash the app.
 
-### Organization Onboarding
+### Organizations And Projects
 
-1. Register or log in as a user with no organizations.
-2. Open the Organizations workspace from the left rail.
-3. Create an organization.
-4. Confirm the creator appears as `OWNER`.
-5. Add an existing user by email or username.
-6. Log in as the added user and confirm the organization appears.
-7. Confirm non-owner/non-admin users cannot add members.
+1. Open Organizations and create an organization.
+2. Confirm the creator becomes `OWNER`.
+3. Add an existing user by email or username.
+4. Open Projects and create a project inside that organization.
+5. Edit the project and confirm changes persist.
 
-### User Search And Assignment
+### Tasks
 
-1. Ensure two users share an organization.
-2. Open a task panel.
-3. Search by username, full name, or email.
-4. Assign the searched user.
-5. Confirm the assigned user receives a popup and dropdown notification.
-6. Confirm avatars update in realtime.
+1. Create a task from the dashboard.
+2. Move it between Kanban columns with drag and drop.
+3. Switch between Kanban, Table, and Calendar.
+4. Add and clear a due date.
+5. Assign and remove users.
+6. Archive a completed task and restore it from Archived Tasks.
 
-### Active Task Views
+### Progress Updates
 
-1. Open Active Tasks.
-2. Switch between Kanban, Table, and Calendar.
-3. Click a Kanban card, table row, and calendar item.
-4. Confirm each opens the docked task panel.
-5. Change a due date and confirm Table and Calendar update without refetching manually.
-6. Return to Kanban and confirm drag/drop still works.
-
-### Realtime Removal
-
-1. Open a task assigned to the current user.
-2. Remove the current user from the task.
-3. Confirm the card disappears instantly.
-4. Refresh the page and confirm the card stays gone.
-5. Remove another user while the current user remains assigned.
-6. Confirm the task stays visible and avatars update.
-
-### Status And Drag/Drop
-
-1. Assign users to a task.
-2. Drag the task between any status columns, including `DONE` back to `TODO`.
-3. Confirm the status persists after refresh.
-4. Confirm assigned users receive status change notifications.
-5. Confirm the Kanban board and open task panel stay synchronized.
-
-### Due Dates
-
-1. Open a task panel.
-2. Add a due date.
-3. Confirm assigned users except the actor receive a due date added notification.
-4. Change the due date.
-5. Confirm assigned users except the actor receive a due date changed notification.
-6. Clear the due date.
-7. Confirm assigned users except the actor receive a due date cleared notification.
-8. Refresh and confirm the persisted due date state is correct.
-9. Set a past due date on an incomplete task and confirm overdue visuals appear in cards, table, and calendar.
-
-### Task Progress Updates
-
-1. Open a task panel.
+1. Open a task.
 2. Post a progress update.
-3. Confirm the update appears in the timeline immediately.
-4. Open the same task as another authorized organization member.
-5. Post another update and confirm it appears in realtime.
-6. Confirm assigned users except the author receive a popup and dropdown notification.
-7. Confirm unauthorized users cannot fetch or post task updates.
+3. Confirm it appears immediately.
+4. Open the same task as another user and confirm realtime update delivery.
 
-### Archive And Restore
+### Notes
 
-1. Move a task to `DONE`.
-2. Archive the task from the task panel.
-3. Confirm it disappears from Active Tasks instantly.
-4. Refresh and confirm it stays hidden.
-5. Open Archived Tasks.
-6. Restore the task.
-7. Return to Active Tasks and confirm it appears again if assigned to the current user.
+1. Open the Notes workspace.
+2. Create an organization-scoped note.
+3. Create a project-linked note.
+4. Search notes by title or content.
+5. Edit and delete a note.
+6. Open a task and create a linked note from the Related Notes section.
+7. Close and reopen the task to confirm the linked note persists.
 
 ### Notifications
 
-1. Receive or create a notification.
-2. Mark it as read.
-3. Delete it from the dropdown.
-4. Refresh and confirm it stays deleted.
-5. Confirm unread notifications do not show a delete button and cannot be deleted by the API.
+1. Trigger assignment, status, due date, and update notifications.
+2. Confirm toast popup and dropdown entry both appear.
+3. Mark one notification read.
+4. Mark all as read.
+5. Delete a read notification.
 
 ### Presence
 
-1. Open the app in two browsers or two logged-in users.
-2. Confirm online users appear in the right rail when allowed by scope.
-3. Open the same task as both users.
-4. Confirm both users appear in the task panel viewer list.
-5. Close the panel and confirm the viewer list updates.
+1. Open the app in two sessions.
+2. Confirm online users appear.
+3. Open the same task in both sessions.
+4. Confirm both viewers appear in the task panel.
 
----
-
-## Current Development Status
+## Current Status
 
 ### Completed
 
-* Authentication and signup/login UI
-* JWT-protected API routes
-* Signup without automatic organization creation
-* Organization onboarding V1
-* Organization member management V1
-* Project management foundation
-* User identity endpoints
-* Same-organization user search
-* Task creation from the dashboard context panel
-* Task assignment and multi-assignee support
-* Realtime Kanban synchronization
-* Drag and drop Kanban task movement
-* Table task view
-* Calendar agenda task view
-* Realtime notification system
-* Docked task panel synchronization
-* Lightweight online presence
-* Task viewer presence
-* Task activity log foundation
-* Due date UI and backend support
-* Due date notifications
-* Task progress update timeline
-* Realtime task progress updates
-* Progress update notifications
-* Task archive and restore
-* Read notification deletion
+* authentication and JWT route protection
+* signup without automatic organization creation
+* organization onboarding V1
+* project workspace foundation
+* user identity endpoints and safe search
+* create, update, assign, archive, and restore tasks
+* multi-view Active Tasks workspace
+* drag-and-drop Kanban
+* realtime task synchronization
+* due dates and overdue states
+* task progress updates and notifications
+* floating notification system
+* lightweight presence
+* notes workspace
+* task-linked notes inside the task detail panel
+* workspace memory via localStorage
+* command palette
 
 ### Planned / Next Improvements
 
-* Full email invite flow
-* Richer project workspace UI
-* Profile and avatar management
-* Task filtering and search
-* Task comments evolving from progress updates
-* Attachments
-* Timeline view
-* Richer calendar interactions
-* Organization settings and roles management
-* Analytics dashboard
-* Mobile/responsive polish
-
----
+* richer note collaboration
+* note comments
+* note realtime collaboration
+* fuller project hub workflows
+* invite email delivery
+* settings and profile expansion
+* richer analytics and reporting
+* mobile polish
 
 ## Author
 

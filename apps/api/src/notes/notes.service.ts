@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { NoteKind, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
@@ -157,6 +157,7 @@ export class NotesService {
       organizationId?: string;
       projectId?: string;
       taskId?: string;
+      kind?: string;
       q?: string;
     },
   ) {
@@ -164,7 +165,9 @@ export class NotesService {
     const organizationId = filters.organizationId?.trim();
     const projectId = filters.projectId?.trim();
     const taskId = filters.taskId?.trim();
+    const kind = filters.kind?.trim();
     const q = filters.q?.trim();
+    const qLower = q?.toLowerCase() || '';
 
     if (organizationId) {
       await this.requireMembership(userId, organizationId);
@@ -243,6 +246,10 @@ export class NotesService {
     }
 
     if (q) {
+      const matchingKinds = Object.values(NoteKind).filter((noteKind) =>
+        noteKind.toLowerCase().includes(qLower),
+      );
+
       where.OR = [
         {
           title: {
@@ -256,15 +263,37 @@ export class NotesService {
             mode: 'insensitive',
           },
         },
+        ...matchingKinds.map((matchingKind) => ({
+          kind: matchingKind,
+        })),
       ];
+    }
+
+    if (kind) {
+      if (!Object.values(NoteKind).includes(kind as NoteKind)) {
+        throw new BadRequestException('Invalid note kind');
+      }
+
+      where.kind = kind as NoteKind;
     }
 
     return this.prisma.note.findMany({
       where,
       include: this.noteInclude(),
-      orderBy: {
-        updatedAt: 'desc',
-      },
+      orderBy: [
+        {
+          isPinned: 'desc',
+        },
+        {
+          pinnedAt: 'desc',
+        },
+        {
+          updatedAt: 'desc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
     });
   }
 
@@ -273,6 +302,8 @@ export class NotesService {
     const organizationId = body.organizationId?.trim();
     const projectId = body.projectId?.trim() || null;
     const taskId = body.taskId?.trim() || null;
+    const isPinned = body.isPinned === true;
+    const kind = body.kind ?? NoteKind.NOTE;
 
     if (!title) {
       throw new BadRequestException('Note title is required');
@@ -300,6 +331,9 @@ export class NotesService {
       data: {
         title,
         content: body.content ?? '',
+        kind,
+        isPinned,
+        pinnedAt: isPinned ? new Date() : null,
         organizationId,
         projectId,
         taskId,
@@ -331,6 +365,15 @@ export class NotesService {
 
     if (body.content !== undefined) {
       data.content = body.content;
+    }
+
+    if (body.kind !== undefined) {
+      data.kind = body.kind;
+    }
+
+    if (body.isPinned !== undefined) {
+      data.isPinned = body.isPinned;
+      data.pinnedAt = body.isPinned ? new Date() : null;
     }
 
     if (body.projectId !== undefined) {

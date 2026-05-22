@@ -23,6 +23,7 @@ import ArchivedTasks from "../components/archive/ArchivedTasks";
 import OrganizationsWorkspace from "../components/organizations/OrganizationsWorkspace";
 import ProjectsWorkspace from "../components/projects/ProjectsWorkspace";
 import NotesWorkspace from "../components/notes/NotesWorkspace";
+import QuickNotePopover from "../components/notes/QuickNotePopover";
 import api from "../api";
 import { createSocket } from "../socket";
 import toast from "react-hot-toast";
@@ -91,6 +92,7 @@ export default function Dashboard({ token, onLogout }) {
     "kanban"
   );
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [quickNoteOpen, setQuickNoteOpen] = useState(false);
   const [taskFilters, setTaskFilters] = usePersistentState(
     "opsflow.taskFilters",
     defaultTaskFilters
@@ -115,6 +117,11 @@ export default function Dashboard({ token, onLogout }) {
 
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || null;
+  const currentWorkspaceOrganizationId =
+    selectedTask?.project?.organizationId ||
+    window.localStorage.getItem("opsflow.notes.selectedOrgId") ||
+    window.localStorage.getItem("opsflow.projects.selectedOrgId") ||
+    "";
   const selectedTaskViewers = selectedTaskId
     ? taskViewersByTask[selectedTaskId] || []
     : [];
@@ -150,6 +157,14 @@ export default function Dashboard({ token, onLogout }) {
     setActiveView("tasks");
     setSelectedTaskId(null);
     setContextMode("create");
+  };
+
+  const openQuickNote = () => {
+    setQuickNoteOpen(true);
+  };
+
+  const closeQuickNote = () => {
+    setQuickNoteOpen(false);
   };
 
   const handleCommandSelect = (result) => {
@@ -659,6 +674,10 @@ useEffect(() => {
       if (openNotifications) {
         setOpenNotifications(false);
       }
+
+      if (quickNoteOpen) {
+        setQuickNoteOpen(false);
+      }
     };
 
     document.addEventListener(
@@ -672,7 +691,8 @@ useEffect(() => {
         handleClickOutside
       );
     };
-  }, [openNotifications]);
+  }, [openNotifications, quickNoteOpen]);
+  
 
 useEffect(() => {
   const handleKeys = (event) => {
@@ -694,6 +714,11 @@ useEffect(() => {
         return;
       }
 
+      if (quickNoteOpen) {
+        setQuickNoteOpen(false);
+        return;
+      }
+
       closeContextPanel();
     }
   };
@@ -703,7 +728,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("keydown", handleKeys);
   };
-}, [commandPaletteOpen]);
+}, [commandPaletteOpen, quickNoteOpen]);
 
 useEffect(() => {
   if (tasks.length > 0 && selectedTaskId && !selectedTask) {
@@ -855,6 +880,16 @@ return (
           </button>
           <button
             type="button"
+            className="ui-button ui-button-secondary"
+            onClick={(event) => {
+              event.stopPropagation();
+              openQuickNote();
+            }}
+          >
+            Quick Note
+          </button>
+          <button
+            type="button"
             className="shortcut-hint"
             onClick={() => setCommandPaletteOpen(true)}
             title="Open command palette"
@@ -901,6 +936,15 @@ return (
       </div>
 
     </div>
+
+    <QuickNotePopover
+      token={token}
+      isOpen={quickNoteOpen}
+      onClose={closeQuickNote}
+      selectedTask={selectedTask}
+      selectedProjectId={normalizedTaskFilters.project}
+      currentOrganizationId={currentWorkspaceOrganizationId}
+    />
 
     <CommandPalette
       isOpen={commandPaletteOpen}

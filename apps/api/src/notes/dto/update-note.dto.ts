@@ -1,4 +1,11 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { NoteKind } from '@prisma/client';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateNoteDto {
   @IsOptional()
@@ -17,4 +24,12 @@ export class UpdateNoteDto {
   @IsOptional()
   @IsString()
   taskId?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isPinned?: boolean;
+
+  @IsOptional()
+  @IsEnum(NoteKind)
+  kind?: NoteKind;
 }

@@ -26,12 +26,14 @@ export class NotesController {
     @Query('organizationId') organizationId?: string,
     @Query('projectId') projectId?: string,
     @Query('taskId') taskId?: string,
+    @Query('kind') kind?: string,
     @Query('q') q?: string,
   ) {
     return this.notesService.getNotes(req.user.sub, {
       organizationId,
       projectId,
       taskId,
+      kind,
       q,
     });
   }

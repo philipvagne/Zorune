@@ -8,6 +8,7 @@ import {
   searchUsers,
   updateNote,
 } from "../../api";
+import { subscribeToNoteCreated } from "../../lib/noteEvents";
 import { createSocket } from "../../socket";
 
 const formatNoteDate = (value) =>
@@ -27,6 +28,32 @@ const getNotePreview = (content) => {
   }
 
   return text.length > 120 ? `${text.slice(0, 120)}...` : text;
+};
+
+const compareRelatedNotes = (left, right) => {
+  if (left.isPinned !== right.isPinned) {
+    return left.isPinned ? -1 : 1;
+  }
+
+  const leftPinnedAt = left.pinnedAt ? new Date(left.pinnedAt).getTime() : 0;
+  const rightPinnedAt = right.pinnedAt ? new Date(right.pinnedAt).getTime() : 0;
+
+  if (leftPinnedAt !== rightPinnedAt) {
+    return rightPinnedAt - leftPinnedAt;
+  }
+
+  const leftUpdatedAt = left.updatedAt
+    ? new Date(left.updatedAt).getTime()
+    : 0;
+  const rightUpdatedAt = right.updatedAt
+    ? new Date(right.updatedAt).getTime()
+    : 0;
+
+  if (leftUpdatedAt !== rightUpdatedAt) {
+    return rightUpdatedAt - leftUpdatedAt;
+  }
+
+  return 0;
 };
 
 export default function TaskModal({
@@ -135,7 +162,7 @@ export default function TaskModal({
         const res = await getTaskNotes(token, task.id);
 
         if (active) {
-          setRelatedNotes(res.data);
+          setRelatedNotes([...res.data].sort(compareRelatedNotes));
         }
       } catch (err) {
         if (active) {
@@ -154,6 +181,30 @@ export default function TaskModal({
       active = false;
     };
   }, [task?.id, token]);
+
+  useEffect(() => {
+    if (!task) {
+      return;
+    }
+
+    return subscribeToNoteCreated((note) => {
+      if (note.taskId !== task.id) {
+        return;
+      }
+
+      setRelatedNotes((current) => {
+        const exists = current.some(
+          (currentNote) => currentNote.id === note.id
+        );
+
+        if (exists) {
+          return current;
+        }
+
+        return [note, ...current].sort(compareRelatedNotes);
+      });
+    });
+  }, [task]);
 
   useEffect(() => {
     if (!task || !token) {
@@ -297,7 +348,9 @@ export default function TaskModal({
         taskId: task.id,
       });
 
-      setRelatedNotes((current) => [res.data, ...current]);
+      setRelatedNotes((current) =>
+        [res.data, ...current].sort(compareRelatedNotes)
+      );
       setNewNoteTitle("");
       setNewNoteContent("");
       openNoteEditor(res.data);
@@ -328,9 +381,11 @@ export default function TaskModal({
       });
 
       setRelatedNotes((current) =>
-        current.map((note) =>
-          note.id === res.data.id ? res.data : note
-        )
+        current
+          .map((note) =>
+            note.id === res.data.id ? res.data : note
+          )
+          .sort(compareRelatedNotes)
       );
     } catch (err) {
       setNotesError(
@@ -737,6 +792,12 @@ export default function TaskModal({
                   onClick={() => openNoteEditor(note)}
                 >
                   <div className="task-note-meta">
+                    {note.isPinned && (
+                      <span className="task-note-pin-pill">Pinned</span>
+                    )}
+                    {note.kind === "REFERENCE" && (
+                      <span className="task-note-kind-pill">Reference</span>
+                    )}
                     <span>{formatNoteDate(note.updatedAt)}</span>
                     <span>{getNoteAuthor(note)}</span>
                   </div>
