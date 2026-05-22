@@ -43,6 +43,9 @@
   --font-workspace-title: 20px;
   --line-tight: 1.25;
   --line-normal: 1.45;
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.18);
+  --transition-fast: 120ms ease;
+  --transition-medium: 180ms ease;
 }
 
 * {
@@ -131,6 +134,27 @@
   border-radius: 6px;
   cursor: pointer;
   font: inherit;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+button:active:not(:disabled),
+[role="button"]:active {
+  transform: translateY(1px);
 }
 
 .auth-tabs button {
@@ -163,11 +187,13 @@
   color: #0f172a;
   background: #ffffff;
   font: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .auth-form input:focus {
-  outline: 3px solid rgba(20, 184, 166, 0.2);
+  outline: 0;
   border-color: #0f766e;
+  box-shadow: var(--focus-ring);
 }
 
 .auth-error {
@@ -188,6 +214,7 @@
 .auth-submit:disabled {
   cursor: not-allowed;
   opacity: 0.7;
+  transform: none;
 }
 
 .dashboard-topbar {
@@ -229,6 +256,11 @@
   font: inherit;
   font-family: var(--mono);
   font-size: 12px;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .top-launcher button:hover,
@@ -236,6 +268,10 @@
   color: var(--text-primary);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
+}
+
+.top-launcher button:hover {
+  transform: translateY(-1px);
 }
 
 .dashboard-topbar-actions {
@@ -261,6 +297,13 @@
   background: var(--surface-control);
 }
 
+.logout-button:hover,
+.shortcut-hint:hover {
+  color: var(--text-primary);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
 .shortcut-hint {
   border: 0;
   border-radius: 999px;
@@ -270,6 +313,11 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--font-small);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .dashboard-shell {
@@ -398,6 +446,10 @@
   background: var(--surface-control);
   font: inherit;
   font-size: var(--font-meta);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .toolbar-search {
@@ -411,7 +463,14 @@
 
 .toolbar-search:focus,
 .toolbar-select:focus {
-  outline: 3px solid rgba(15, 118, 110, 0.16);
+  outline: 0;
+  background: var(--surface-card);
+  box-shadow: var(--focus-ring);
+}
+
+.toolbar-search:hover,
+.toolbar-select:hover {
+  background: var(--surface-card);
 }
 
 .toolbar-clear {
@@ -425,6 +484,18 @@
   font: inherit;
   font-size: var(--font-meta);
   font-weight: 700;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.toolbar-clear:hover {
+  color: var(--accent-strong);
+  background: rgba(204, 251, 241, 0.72);
+  box-shadow: var(--shadow-card);
 }
 
 .command-palette-backdrop {
@@ -446,6 +517,18 @@
   border-radius: var(--radius-lg);
   background: var(--surface-overlay);
   box-shadow: var(--shadow-overlay);
+  animation: palette-in var(--transition-medium);
+}
+
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .command-palette-search {
@@ -497,11 +580,17 @@
   gap: var(--space-4);
   font: inherit;
   text-align: left;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .command-palette-item.active,
 .command-palette-item:hover {
   background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px var(--border-canvas);
+  transform: translateY(-1px);
 }
 
 .command-palette-item strong,
@@ -543,6 +632,11 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--font-meta);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .view-toggle button.active {
@@ -550,6 +644,11 @@
   background: #ffffff;
   box-shadow: var(--shadow-card);
   font-weight: 700;
+}
+
+.view-toggle button:hover:not(.active) {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.52);
 }
 
 .kanban-board {
@@ -586,6 +685,12 @@
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   font-size: var(--font-body);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .ui-button-primary {
@@ -595,6 +700,7 @@
 
 .ui-button-primary:hover {
   background: var(--accent-strong);
+  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.16);
 }
 
 .ui-button-secondary {
@@ -604,6 +710,7 @@
 
 .ui-button-secondary:hover {
   background: #e2e8f0;
+  box-shadow: var(--shadow-card);
 }
 
 .ui-button-dark {
@@ -611,14 +718,27 @@
   background: var(--text-primary);
 }
 
+.ui-button-dark:hover {
+  background: #1e293b;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+}
+
 .ui-button-ghost {
   color: var(--text-secondary);
   background: var(--surface-muted);
 }
 
+.ui-button-ghost:hover {
+  color: var(--text-primary);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
 .ui-button:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.58;
+  transform: none;
+  box-shadow: none;
 }
 
 .ui-input,
@@ -630,12 +750,14 @@
   color: var(--text-primary);
   background: #ffffff;
   font: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .ui-input:focus,
 .ui-textarea:focus {
-  outline: 3px solid rgba(15, 118, 110, 0.16);
+  outline: 0;
   border-color: var(--accent);
+  box-shadow: var(--focus-ring);
 }
 
 .ui-textarea {
@@ -685,7 +807,10 @@
   box-shadow: var(--shadow-panel);
   display: flex;
   flex-direction: column;
-  transition: border-color 0.12s ease, background 0.12s ease;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .kanban-column.drop-target-active {
@@ -730,11 +855,20 @@
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
   cursor: pointer;
-  transition: box-shadow 0.12s ease, opacity 0.12s ease;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .task-card:hover {
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.075);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.09);
+  transform: translateY(-1px);
+}
+
+.task-card:focus-within {
+  box-shadow: var(--focus-ring), var(--shadow-card);
 }
 
 .task-card-header {
@@ -762,10 +896,25 @@
   font-family: var(--mono);
   font-size: var(--font-small);
   line-height: 1;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.task-drag-handle:hover {
+  border-color: var(--border-canvas-strong);
+  color: var(--text-primary);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
 }
 
 .task-drag-handle:active {
   cursor: grabbing;
+  transform: scale(0.98);
 }
 
 .task-card-date {
@@ -822,10 +971,18 @@
 
 .task-table-row {
   cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .task-table-row:hover {
   background: rgba(255, 255, 255, 0.54);
+}
+
+.task-table-row:focus-within {
+  background: rgba(236, 253, 245, 0.44);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .task-table tr:last-child td {
@@ -946,11 +1103,18 @@
   gap: var(--space-3);
   font: inherit;
   text-align: left;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .calendar-task:hover {
   border-color: var(--border-canvas-strong);
   background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
 }
 
 .calendar-task strong {
@@ -1032,6 +1196,18 @@
   box-shadow: var(--shadow-overlay);
   z-index: 9999;
   overflow: hidden;
+  animation: overlay-in var(--transition-medium);
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .notification-menu-header {
@@ -1067,6 +1243,17 @@
   font: inherit;
   font-size: var(--font-small);
   font-weight: 700;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.notification-mark-all:hover {
+  color: var(--accent-strong);
+  background: rgba(204, 251, 241, 0.72);
+  box-shadow: var(--shadow-card);
 }
 
 .notification-filter-row {
@@ -1087,12 +1274,21 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--font-small);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .notification-filter-row button.active {
   color: var(--text-primary);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
+}
+
+.notification-filter-row button:hover:not(.active) {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.68);
 }
 
 .notification-list {
@@ -1114,12 +1310,24 @@
   cursor: pointer;
   font-size: var(--font-body);
   line-height: var(--line-normal);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
 .notification-item.unread {
   color: var(--text-primary);
   background: rgba(239, 246, 255, 0.72);
   font-weight: 700;
+}
+
+.notification-item:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.notification-item.unread:hover {
+  background: rgba(219, 234, 254, 0.74);
 }
 
 .notification-item-row {
@@ -1156,6 +1364,10 @@
   flex-shrink: 0;
   padding: 4px 7px;
   font-size: var(--font-small);
+}
+
+.notification-delete:hover {
+  color: var(--text-primary);
 }
 
 .presence-section {
@@ -1220,6 +1432,17 @@
   border-radius: var(--radius-md);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.archive-card:hover {
+  border-color: var(--border-canvas-strong);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.075);
 }
 
 .archive-card-main {
@@ -1261,11 +1484,23 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--font-body);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.archive-restore-button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.16);
 }
 
 .archive-restore-button:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.58;
+  transform: none;
+  box-shadow: none;
 }
 
 .archive-assignees {
@@ -1357,6 +1592,11 @@
   border-radius: var(--radius-md);
   padding: 10px 12px;
   background: var(--surface-card);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .org-list-item {
@@ -1376,6 +1616,13 @@
   color: var(--text-primary);
   background: rgba(236, 253, 245, 0.78);
   font-weight: 700;
+}
+
+.org-list-item:hover {
+  border-color: var(--border-canvas-strong);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
 }
 
 .org-form {
@@ -1474,12 +1721,22 @@
   font: inherit;
   text-align: left;
   box-shadow: var(--shadow-card);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .project-card.active,
 .project-card:hover {
   border-color: rgba(15, 118, 110, 0.35);
   background: rgba(236, 253, 245, 0.82);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.075);
+}
+
+.project-card:hover {
+  transform: translateY(-1px);
 }
 
 .project-card strong,
@@ -1549,7 +1806,10 @@
   padding: 16px;
   overflow-y: auto;
   background: var(--surface-floating);
-  transition: opacity 0.12s ease, background 0.12s ease;
+  transition:
+    background-color var(--transition-fast),
+    opacity var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .dashboard-context-panel.is-empty {
@@ -1625,10 +1885,19 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--font-body);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .task-detail-close:hover {
+  border-color: var(--border-canvas-strong);
+  color: var(--text-primary);
   background: #f1f5f9;
+  box-shadow: var(--shadow-card);
 }
 
 .task-panel-section {
@@ -1691,6 +1960,10 @@
   justify-content: center;
   font-size: 12px;
   font-weight: 700;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .assignee-remove:hover {
@@ -1712,6 +1985,7 @@
   background: var(--surface-card);
   cursor: pointer;
   text-align: left;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .user-search-result:hover {
