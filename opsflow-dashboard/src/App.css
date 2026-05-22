@@ -234,6 +234,17 @@
   background: rgba(241, 245, 249, 0.82);
 }
 
+.shortcut-hint {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--text-muted);
+  background: rgba(248, 250, 252, 0.78);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
 .dashboard-shell {
   height: 100svh;
   box-sizing: border-box;
@@ -386,6 +397,106 @@
   font: inherit;
   font-size: 13px;
   font-weight: 700;
+}
+
+.command-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.command-palette {
+  width: min(640px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.72);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
+}
+
+.command-palette-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.command-palette-search input {
+  flex: 1;
+  border: 0;
+  color: var(--text-primary);
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+}
+
+.command-palette-search input:focus {
+  outline: 0;
+}
+
+.command-palette-search span {
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  font-size: 12px;
+}
+
+.command-palette-results {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.command-palette-item {
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 10px 11px;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font: inherit;
+  text-align: left;
+}
+
+.command-palette-item.active,
+.command-palette-item:hover {
+  background: var(--surface-muted);
+}
+
+.command-palette-item strong,
+.command-palette-item small {
+  display: block;
+}
+
+.command-palette-item strong {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.command-palette-item small,
+.command-palette-item em {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.command-palette-empty {
+  padding: var(--space-5);
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .view-toggle {

@@ -18,6 +18,7 @@ import LeftRail from "../components/dashboard/LeftRail";
 import CenterWorkspace from "../components/dashboard/CenterWorkspace";
 import RightRail from "../components/dashboard/RightRail";
 import ContextPanel from "../components/dashboard/ContextPanel";
+import CommandPalette from "../components/command/CommandPalette";
 import ArchivedTasks from "../components/archive/ArchivedTasks";
 import OrganizationsWorkspace from "../components/organizations/OrganizationsWorkspace";
 import api from "../api";
@@ -77,6 +78,7 @@ export default function Dashboard({ token, onLogout }) {
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [activeView, setActiveView] = useState("tasks");
   const [activeTaskLayout, setActiveTaskLayout] = useState("kanban");
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [taskFilters, setTaskFilters] = useState(defaultTaskFilters);
   const [contextMode, setContextMode] = useState("empty");
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -124,6 +126,22 @@ export default function Dashboard({ token, onLogout }) {
     setActiveView("tasks");
     setSelectedTaskId(null);
     setContextMode("create");
+  };
+
+  const handleCommandSelect = (result) => {
+    if (result.type === "view") {
+      changeView(result.view);
+    }
+
+    if (result.type === "create-task") {
+      openCreateTask();
+    }
+
+    if (result.type === "open-task") {
+      selectTask(result.task);
+    }
+
+    setCommandPaletteOpen(false);
   };
 
   const closeContextPanel = () => {
@@ -523,20 +541,30 @@ useEffect(() => {
     };
   }, [openNotifications]);
 
-  useEffect(() => {
-  const handleEsc = (event) => {
-    if (event.key === "Escape") {
+useEffect(() => {
+  const handleKeys = (event) => {
+    const isCommandShortcut =
+      event.key.toLowerCase() === "k" &&
+      (event.metaKey || event.ctrlKey);
+
+    if (isCommandShortcut) {
+      event.preventDefault();
+      setCommandPaletteOpen((current) => !current);
+      return;
+    }
+
+    if (event.key === "Escape" && !commandPaletteOpen) {
       setSelectedTaskId(null);
       setContextMode("empty");
     }
   };
 
-  window.addEventListener("keydown", handleEsc);
+  window.addEventListener("keydown", handleKeys);
 
   return () => {
-    window.removeEventListener("keydown", handleEsc);
+    window.removeEventListener("keydown", handleKeys);
   };
-}, []);
+}, [commandPaletteOpen]);
 
 useEffect(() => {
   if (selectedTaskId && !selectedTask) {
@@ -623,9 +651,19 @@ return (
       activeView={activeView}
       onViewChange={changeView}
       actions={
-        <button className="logout-button" onClick={onLogout}>
-          Logout
-        </button>
+        <>
+          <button
+            type="button"
+            className="shortcut-hint"
+            onClick={() => setCommandPaletteOpen(true)}
+            title="Open command palette"
+          >
+            Ctrl K
+          </button>
+          <button className="logout-button" onClick={onLogout}>
+            Logout
+          </button>
+        </>
       }
     />
 
@@ -702,6 +740,13 @@ return (
         />
       </RightRail>
     </div>
+
+    <CommandPalette
+      isOpen={commandPaletteOpen}
+      tasks={activeTasks}
+      onClose={() => setCommandPaletteOpen(false)}
+      onSelect={handleCommandSelect}
+    />
   </div>
 );
 }
