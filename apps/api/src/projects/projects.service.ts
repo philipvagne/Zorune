@@ -22,6 +22,16 @@ export class ProjectsService {
     };
   }
 
+  private serializeOrganizationMember(membership: any) {
+    return {
+      id: membership.id,
+      membershipId: membership.id,
+      role: membership.role,
+      createdAt: membership.createdAt,
+      user: membership.user,
+    };
+  }
+
   private async requireMembership(orgId: string, userId: string) {
     const membership = await this.prisma.membership.findFirst({
       where: {
@@ -85,8 +95,8 @@ export class ProjectsService {
     };
   }
 
-  private async getProjectMembers(projectId: string) {
-    const memberships = await this.prisma.projectMembership.findMany({
+  private async getProjectMembers(projectId: string, organizationId: string) {
+    const projectMemberships = await this.prisma.projectMembership.findMany({
       where: {
         projectId,
       },
@@ -102,7 +112,27 @@ export class ProjectsService {
       },
     });
 
-    return memberships.map((membership) => this.serializeProjectMember(membership));
+    if (projectMemberships.length > 0) {
+      return projectMemberships.map((membership) =>
+        this.serializeProjectMember(membership),
+      );
+    }
+
+    const organizationMemberships = await this.prisma.membership.findMany({
+      where: {
+        organizationId,
+      },
+      include: {
+        user: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return organizationMemberships.map((membership) =>
+      this.serializeOrganizationMember(membership),
+    );
   }
 
   private async withTaskCounts(project: any) {
@@ -129,7 +159,7 @@ export class ProjectsService {
           updatedAt: true,
         },
       }),
-      this.getProjectMembers(project.id),
+      this.getProjectMembers(project.id, project.organizationId),
     ]);
 
     const recentActivityAtTimestamp =
