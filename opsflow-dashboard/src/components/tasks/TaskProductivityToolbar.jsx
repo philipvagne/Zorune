@@ -5,6 +5,7 @@ export default function TaskProductivityToolbar({
   projectOptions,
   activeFilterCount,
   onClear,
+  onCreateTask,
 }) {
   const updateFilter = (key, value) => {
     onFiltersChange((current) => ({
@@ -15,13 +16,6 @@ export default function TaskProductivityToolbar({
 
   return (
     <div className="task-productivity-toolbar">
-      <input
-        className="toolbar-search"
-        value={filters.search}
-        onChange={(event) => updateFilter("search", event.target.value)}
-        placeholder="Search tasks"
-      />
-
       <select
         className="toolbar-select"
         value={filters.status}
@@ -99,6 +93,14 @@ export default function TaskProductivityToolbar({
           Clear {activeFilterCount}
         </button>
       ) : null}
+
+      <button
+        type="button"
+        className="ui-button ui-button-primary toolbar-new-task"
+        onClick={onCreateTask}
+      >
+        + New Task
+      </button>
     </div>
   );
 }

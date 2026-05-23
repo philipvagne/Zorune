@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -120,11 +120,11 @@ export default function Dashboard({ token, onLogout }) {
     false
   );
   const [contextMode, setContextMode] = useState(
-    selectedTaskId ? "details" : "empty"
+    selectedTaskId ? "details" : activeView === "tasks" ? "empty" : "workspace"
   );
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [taskViewersByTask, setTaskViewersByTask] = useState({});
-  const [presenceSocket, setPresenceSocket] = useState(null);
+  const presenceSocketRef = useRef(null);
   const viewedTaskIdRef = useRef(null);
   
   const {
@@ -217,11 +217,31 @@ export default function Dashboard({ token, onLogout }) {
     );
   };
 
-  const closeContextPanel = () => {
+  const closeContextPanel = useCallback(() => {
     setSelectedTaskId(null);
     setActiveView("tasks");
     setContextMode("empty");
-  };
+  }, [setActiveView, setSelectedTaskId]);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await api.get(
+        "/tasks/notifications",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setNotifications(res.data);
+    } catch (err) {
+      console.error(
+        "Failed to fetch notifications:",
+        err
+      );
+    }
+  }, [token]);
 
   const handleCreateTask = async (taskInput) => {
     const createdTask = await createTask(taskInput);
@@ -292,10 +312,13 @@ export default function Dashboard({ token, onLogout }) {
     workspaceMeta[activeView] || workspaceMeta.tasks;
   const currentUserId = useMemo(() => getUserIdFromToken(token), [token]);
   const activeTasks = tasks.filter((task) => !task.archivedAt);
-  const normalizedTaskFilters = {
-    ...defaultTaskFilters,
-    ...taskFilters,
-  };
+  const normalizedTaskFilters = useMemo(
+    () => ({
+      ...defaultTaskFilters,
+      ...taskFilters,
+    }),
+    [taskFilters]
+  );
   const assigneeOptions = useMemo(() => {
     const users = new Map();
 
@@ -684,21 +707,15 @@ export default function Dashboard({ token, onLogout }) {
     );
   };
 
-useEffect(() => {
-  if (
-    activeView !== "tasks" &&
-    contextMode !== "workspace" &&
-    !selectedTaskId
-  ) {
-    setContextMode("workspace");
-  }
-}, [activeView, contextMode, selectedTaskId]);
+  const canvasContent = renderCanvasContent();
 
 useEffect(() => {
-  fetchNotifications();
+  const notificationLoad = window.setTimeout(() => {
+    fetchNotifications();
+  }, 0);
 
   const socket = createSocket(token);
-  setPresenceSocket(socket);
+  presenceSocketRef.current = socket;
 
   socket.on("notification", (data) => {
     toast.success(data.message);
@@ -743,12 +760,15 @@ useEffect(() => {
       viewedTaskIdRef.current = null;
     }
 
+    window.clearTimeout(notificationLoad);
     socket.disconnect();
-    setPresenceSocket(null);
+    presenceSocketRef.current = null;
   };
-}, [token]);
+}, [fetchNotifications, token]);
 
 useEffect(() => {
+  const presenceSocket = presenceSocketRef.current;
+
   if (!presenceSocket) {
     return;
   }
@@ -770,7 +790,7 @@ useEffect(() => {
   }
 
   viewedTaskIdRef.current = nextViewedTaskId;
-}, [contextMode, presenceSocket, selectedTaskId]);
+}, [contextMode, selectedTaskId]);
 
   // CLICK OUTSIDE CLOSE
   useEffect(() => {
@@ -823,35 +843,13 @@ useEffect(() => {
   return () => {
     window.removeEventListener("keydown", handleKeys);
   };
-}, [commandPaletteOpen]);
+}, [closeContextPanel, commandPaletteOpen]);
 
 useEffect(() => {
   if (tasks.length > 0 && selectedTaskId && !selectedTask) {
     setSelectedTaskId(null);
-    setContextMode("empty");
   }
 }, [selectedTaskId, selectedTask, setSelectedTaskId, tasks.length]);
-
-  // FETCH NOTIFICATIONS
-  const fetchNotifications = async () => {
-    try {
-      const res = await api.get(
-        "/tasks/notifications",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setNotifications(res.data);
-    } catch (err) {
-      console.error(
-        "Failed to fetch notifications:",
-        err
-      );
-    }
-  };
 
   // MARK AS READ
   const markAsRead = async (notificationId) => {
@@ -933,46 +931,20 @@ useEffect(() => {
 return (
   <div className="dashboard-shell">
     <TopBar
-      activeView={activeView}
-      onViewChange={changeView}
+      centerSlot={
+        <button
+          type="button"
+          className="workspace-search-button"
+          onClick={() => setCommandPaletteOpen(true)}
+          title="Search tasks, projects, and notes"
+        >
+          <span className="workspace-search-icon">⌕</span>
+          <span className="workspace-search-copy">Search tasks, projects, notes...</span>
+          <span className="workspace-search-shortcut">Ctrl K</span>
+        </button>
+      }
       actions={
         <>
-          <div className="view-toggle" aria-label="Task view">
-            <button
-              type="button"
-              className={
-                activeTaskLayout === "kanban" ? "active" : ""
-              }
-              onClick={() => setActiveTaskLayout("kanban")}
-            >
-              Kanban
-            </button>
-            <button
-              type="button"
-              className={
-                activeTaskLayout === "table" ? "active" : ""
-              }
-              onClick={() => setActiveTaskLayout("table")}
-            >
-              Table
-            </button>
-            <button
-              type="button"
-              className={
-                activeTaskLayout === "calendar" ? "active" : ""
-              }
-              onClick={() => setActiveTaskLayout("calendar")}
-            >
-              Calendar
-            </button>
-          </div>
-          <button
-            type="button"
-            className="ui-button ui-button-primary"
-            onClick={openCreateTask}
-          >
-            + New Task
-          </button>
           <div className="recent-work-anchor">
             <button
               type="button"
@@ -985,32 +957,7 @@ return (
             >
               Recent Work
             </button>
-            <RecentWorkPanel
-              isOpen={recentWorkOpen}
-              recentTasks={recentlyActiveTasks.map((task) => ({
-                ...task,
-                meta: [
-                  task.status === "IN_PROGRESS" ? "In progress" : task.status,
-                  task.unreadNoteCount > 0
-                    ? `${task.unreadNoteCount} new note${task.unreadNoteCount > 1 ? "s" : ""}`
-                    : "",
-                ]
-                  .filter(Boolean)
-                  .join(" · "),
-              }))}
-              recentProjects={recentWorkProjects}
-              onSelectTask={selectTask}
-              onSelectProject={openRecentProject}
-            />
           </div>
-          <button
-            type="button"
-            className="shortcut-hint"
-            onClick={() => setCommandPaletteOpen(true)}
-            title="Open command palette"
-          >
-            Ctrl K
-          </button>
           <NotificationBell
             notifications={notifications}
             openNotifications={openNotifications}
@@ -1029,9 +976,24 @@ return (
     <div className="dashboard-body">
       <LeftRail
         onlineUsers={onlineUsers}
+        activeView={activeView}
+        activeTaskLayout={activeTaskLayout}
+        onViewChange={changeView}
+        onTaskLayoutChange={(layout) => {
+          setActiveTaskLayout(layout);
+          setActiveView("tasks");
+          setContextMode("empty");
+          setSelectedTaskId(null);
+        }}
       />
 
-      <div className="dashboard-workspace-stack">
+      <div
+        className={
+          canvasContent
+            ? "dashboard-workspace-stack has-context-surface"
+            : "dashboard-workspace-stack"
+        }
+      >
         <CenterWorkspace
           eyebrow="Live workspace"
           title="Active Tasks"
@@ -1043,12 +1005,33 @@ return (
             projectOptions={projectOptions}
             activeFilterCount={activeFilterCount}
             onClear={() => setTaskFilters(defaultTaskFilters)}
+            onCreateTask={openCreateTask}
           />
           {renderActiveTasks()}
         </CenterWorkspace>
 
-        <ContextPanel>{renderCanvasContent()}</ContextPanel>
+        <ContextPanel>{canvasContent}</ContextPanel>
       </div>
+
+      <aside className="dashboard-right-context">
+        <RecentWorkPanel
+          isOpen={recentWorkOpen}
+          recentTasks={recentlyActiveTasks.map((task) => ({
+            ...task,
+            meta: [
+              task.status === "IN_PROGRESS" ? "In progress" : task.status,
+              task.unreadNoteCount > 0
+                ? `${task.unreadNoteCount} new note${task.unreadNoteCount > 1 ? "s" : ""}`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" - "),
+          }))}
+          recentProjects={recentWorkProjects}
+          onSelectTask={selectTask}
+          onSelectProject={openRecentProject}
+        />
+      </aside>
 
     </div>
 
