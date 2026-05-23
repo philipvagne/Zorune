@@ -781,19 +781,34 @@ export default function ProjectsWorkspace({
           <div className="workspace-placeholder">Loading project surface...</div>
         ) : selectedProject ? (
           <>
+            <div className="project-opened-strip">
+              <div className="project-opened-tab" aria-label="Opened project">
+                <div className="project-opened-tab-main">
+                  <span className="project-opened-tab-icon" aria-hidden="true">
+                    P
+                  </span>
+                  <div className="project-opened-tab-copy">
+                    <span className="project-opened-tab-label">Opened Project</span>
+                    <strong>{selectedProject.name}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="project-opened-tab-close"
+                  onClick={() => setSelectedProjectId("")}
+                  aria-label={`Close ${selectedProject.name}`}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
             <div className="project-panel-header project-detail-header">
               <div>
                 <div className="dashboard-eyebrow">Project Surface</div>
                 <h4>{selectedProject.name}</h4>
               </div>
-
-              <button
-                type="button"
-                className="task-detail-close"
-                onClick={() => setSelectedProjectId("")}
-              >
-                Close
-              </button>
             </div>
 
             <div
