@@ -853,7 +853,7 @@ export default function ProjectsWorkspace({
 
             <div className="project-detail-content">
               {activeProjectTab === "overview" ? (
-                <>
+                <div className="project-overview-surface">
                   <div className="project-detail-stats">
                     <div>
                       <strong>{selectedProject.taskCounts?.totalActive || 0}</strong>
@@ -916,11 +916,11 @@ export default function ProjectsWorkspace({
                       You can view this project. Owners and admins can edit it.
                     </p>
                   )}
-                </>
+                </div>
               ) : null}
 
               {activeProjectTab === "tasks" ? (
-                <section className="project-surface-section">
+                <section className="project-surface-section project-tasks-surface">
                   <div className="project-surface-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Project Tasks</div>
@@ -973,7 +973,7 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeProjectTab === "notes" ? (
-                <section className="project-surface-section">
+                <section className="project-surface-section project-notes-surface">
                   <div className="project-surface-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Project Notes</div>

@@ -2091,12 +2091,104 @@ button:active:not(:disabled),
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 18px;
 }
 
 .project-collection-controls {
   flex-shrink: 0;
-  padding-bottom: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 2px;
+}
+
+.project-collection-pane {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.24)),
+    rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 18px 36px rgba(15, 23, 42, 0.024);
+}
+
+.project-collection-header {
+  margin-bottom: 18px;
+}
+
+.project-collection-header .dashboard-eyebrow {
+  margin-bottom: 6px;
+}
+
+.project-collection-header h4 {
+  font-size: 18px;
+}
+
+.project-collection-pane .form-label {
+  gap: 7px;
+  margin-top: 0;
+  color: rgba(51, 65, 85, 0.9);
+  font-size: 13px;
+}
+
+.project-collection-pane .ui-input,
+.project-collection-pane .ui-textarea {
+  border-color: rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.project-collection-pane .ui-input:focus,
+.project-collection-pane .ui-textarea:focus {
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.project-collection-pane .org-empty-state,
+.project-list-panel .org-empty-state {
+  padding: 14px 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.project-collection-pane .org-empty-state p,
+.project-list-panel .org-empty-state p {
+  max-width: 32ch;
+}
+
+.project-collection-pane .muted-text {
+  font-size: var(--font-meta);
+  line-height: 1.55;
+}
+
+.project-collection-pane .project-form {
+  margin-top: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.14)),
+    rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.project-collection-pane .project-form:focus-within {
+  border-color: rgba(129, 140, 248, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.18)),
+    rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 10px 22px rgba(15, 23, 42, 0.02);
+}
+
+.project-collection-pane .project-form .ui-button {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding-inline: 14px;
 }
 
 .project-list-panel {
@@ -2104,15 +2196,23 @@ button:active:not(:disabled),
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: var(--space-4);
-  border: 1px solid rgba(148, 163, 184, 0.08);
-  border-radius: calc(var(--radius-lg) - 2px);
-  background: rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  padding: 6px 2px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .project-list-header {
-  margin-bottom: var(--space-3);
+  margin-bottom: 10px;
+}
+
+.project-list-header .dashboard-eyebrow {
+  margin-bottom: 5px;
+}
+
+.project-list-header h4 {
+  font-size: 16px;
 }
 
 .project-opened-strip {
@@ -2264,22 +2364,22 @@ button:active:not(:disabled),
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 8px;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
 .project-card {
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  padding: 12px 14px;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.16);
   cursor: pointer;
   font: inherit;
   text-align: left;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.028);
+  box-shadow: none;
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
@@ -2289,9 +2389,9 @@ button:active:not(:disabled),
 
 .project-card.active,
 .project-card:hover {
-  border-color: rgba(129, 140, 248, 0.2);
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.045);
+  border-color: rgba(148, 163, 184, 0.08);
+  background: rgba(255, 255, 255, 0.36);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.018);
 }
 
 .project-card:hover {
@@ -2299,9 +2399,12 @@ button:active:not(:disabled),
 }
 
 .project-card.active {
+  border-color: rgba(129, 140, 248, 0.16);
+  background:
+    linear-gradient(90deg, rgba(238, 242, 255, 0.68), rgba(255, 255, 255, 0.54));
   box-shadow:
-    inset 0 0 0 1px rgba(99, 102, 241, 0.16),
-    0 14px 28px rgba(15, 23, 42, 0.045);
+    inset 2px 0 0 rgba(99, 102, 241, 0.7),
+    0 10px 20px rgba(15, 23, 42, 0.022);
 }
 
 .project-card strong,
@@ -2311,31 +2414,31 @@ button:active:not(:disabled),
 
 .project-card strong {
   color: var(--text-primary);
-  font-size: var(--font-card-title);
+  font-size: 14px;
   line-height: var(--line-tight);
 }
 
 .project-card > span {
-  margin-top: var(--space-2);
+  margin-top: 4px;
   color: var(--text-muted);
-  font-size: var(--font-meta);
-  line-height: var(--line-normal);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .project-count-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
+  gap: 6px;
+  margin-top: 9px;
 }
 
 .project-count-row span {
   border-radius: 999px;
-  padding: 3px 7px;
+  padding: 4px 8px;
   color: var(--text-muted);
-  background: rgba(241, 245, 249, 0.54);
-  font-size: var(--font-small);
-  font-weight: 700;
+  background: rgba(241, 245, 249, 0.7);
+  font-size: 11px;
+  font-weight: 650;
 }
 
 .project-detail-stats {
@@ -2396,13 +2499,16 @@ button:active:not(:disabled),
 
 .project-detail-panel {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.26)),
-    rgba(255, 255, 255, 0.24);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.22)),
+    rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 18px 38px rgba(15, 23, 42, 0.028);
 }
 
 .project-detail-header {
   flex-shrink: 0;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .project-detail-header .dashboard-eyebrow {
@@ -2410,13 +2516,52 @@ button:active:not(:disabled),
 }
 
 .project-detail-header h4 {
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 1.15;
 }
 
 .project-detail-content {
   flex: 1;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 4px 8px 2px 2px;
+}
+
+.project-overview-surface,
+.project-tasks-surface,
+.project-notes-surface {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-overview-surface {
+  gap: 22px;
+}
+
+.project-overview-surface .project-form {
+  margin-top: 0;
+  padding: 20px 0 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.project-overview-surface .muted-text,
+.project-overview-surface .project-surface-description {
+  max-width: 680px;
+}
+
+.project-detail-stats {
+  gap: 14px;
+}
+
+.project-detail-stats div {
+  padding: 16px 18px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(248, 250, 252, 0.3)),
+    rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 10px 20px rgba(15, 23, 42, 0.018);
 }
 
 .project-surface-section-header {
@@ -2424,13 +2569,13 @@ button:active:not(:disabled),
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  margin-bottom: 14px;
 }
 
 .project-surface-section-header h5 {
   margin: 0;
   color: var(--text-primary);
-  font-size: var(--font-body);
+  font-size: 16px;
   line-height: var(--line-tight);
 }
 
@@ -2439,29 +2584,33 @@ button:active:not(:disabled),
 .project-note-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 10px;
 }
 
 .project-task-list,
 .project-note-list {
-  margin-top: var(--space-3);
+  margin-top: 0;
 }
 
 .project-task-row {
   width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: var(--radius-md);
-  padding: 11px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 18px;
+  padding: 14px 16px;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.22)),
+    rgba(255, 255, 255, 0.18);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: 14px;
   font: inherit;
   text-align: left;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.025);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 18px rgba(15, 23, 42, 0.016);
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
@@ -2470,35 +2619,51 @@ button:active:not(:disabled),
 }
 
 .project-task-row:hover {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.48);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.28)),
+    rgba(255, 255, 255, 0.24);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.028);
   transform: translateY(-1px);
 }
 
 .project-detail-panel .task-note-card {
-  border-color: rgba(148, 163, 184, 0.1);
-  background: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.024);
+  border-color: rgba(148, 163, 184, 0.08);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.24)),
+    rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 18px rgba(15, 23, 42, 0.016);
 }
 
 .project-detail-panel .task-note-card:hover,
 .project-detail-panel .task-note-card.active {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.28)),
+    rgba(255, 255, 255, 0.24);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.03);
 }
 
 .project-detail-panel .task-note-editor {
-  border-color: rgba(148, 163, 184, 0.1);
-  background: rgba(255, 255, 255, 0.32);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border-color: rgba(148, 163, 184, 0.08);
+  border-radius: 20px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(248, 250, 252, 0.24)),
+    rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 8px 18px rgba(15, 23, 42, 0.014);
 }
 
 .project-task-row-main strong {
   display: block;
   color: var(--text-primary);
-  font-size: var(--font-body);
+  font-size: 15px;
   line-height: var(--line-tight);
 }
 
@@ -2506,18 +2671,63 @@ button:active:not(:disabled),
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--text-muted);
   font-size: var(--font-meta);
 }
 
 .project-note-editor {
-  margin-top: var(--space-3);
+  margin-top: 18px;
 }
 
 .project-note-list {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+}
+
+.project-notes-surface > .project-form {
+  margin-top: 0;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.project-note-group .dashboard-eyebrow {
+  margin-bottom: 4px;
+}
+
+.project-detail-meta {
+  gap: 10px;
+  margin-top: 0;
+}
+
+.project-detail-meta span {
+  padding: 5px 10px;
+  background: rgba(248, 250, 252, 0.58);
+}
+
+.project-surface-description {
+  margin: 0;
+  color: rgba(51, 65, 85, 0.96);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.project-surface-section {
+  margin-top: 8px;
+}
+
+.project-tasks-surface .muted-text,
+.project-notes-surface .muted-text {
+  padding: 12px 0;
+}
+
+.project-detail-panel .task-note-card strong {
+  font-size: 15px;
+}
+
+.project-detail-panel .task-note-card p {
+  color: rgba(51, 65, 85, 0.9);
 }
 
 @media (max-width: 1100px) {
