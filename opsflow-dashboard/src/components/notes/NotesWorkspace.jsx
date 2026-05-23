@@ -583,12 +583,12 @@ export default function NotesWorkspace({ token }) {
       {error ? <div className="form-error notes-error">{error}</div> : null}
 
       <section className="note-panel note-compose-panel">
-        <div className="note-panel-header">
-          <div>
-            <div className="dashboard-eyebrow">Notes</div>
-            <h4>Operational memory</h4>
+          <div className="note-panel-header">
+            <div>
+              <div className="dashboard-eyebrow">Notes</div>
+              <h4>Shared context</h4>
+            </div>
           </div>
-        </div>
 
         {organizations.length === 0 ? (
           <div className="org-empty-state">
@@ -698,8 +698,8 @@ export default function NotesWorkspace({ token }) {
           <div className="workspace-placeholder">Loading notes...</div>
         ) : visibleNotes.length === 0 ? (
           <div className="org-empty-state">
-            <h4>No notes found</h4>
-            <p>Operational notes and references for this organization will appear here.</p>
+            <h4>This space is quiet right now</h4>
+            <p>Notes and references for this organization will gather here.</p>
           </div>
         ) : (
           <div className="notes-list-sections">
@@ -842,7 +842,7 @@ export default function NotesWorkspace({ token }) {
 
             <details className="note-links-section">
               <summary className="note-links-header">
-                <strong>Linked Notes</strong>
+                <strong>Linked context</strong>
                 <span className="muted-text">
                   {loadingLinks
                     ? "Loading..."
@@ -902,7 +902,7 @@ export default function NotesWorkspace({ token }) {
                     <div className="muted-text">Loading linked notes...</div>
                   ) : linkedNotes.length === 0 ? (
                     <div className="muted-text">
-                      No linked notes yet
+                      No linked context yet
                     </div>
                   ) : (
                     linkedNotes.map((note) => (
@@ -1020,8 +1020,8 @@ export default function NotesWorkspace({ token }) {
           </>
         ) : (
           <div className="org-empty-state">
-            <h4>Select a note</h4>
-            <p>Note details and editing controls will appear here.</p>
+            <h4>Open a note</h4>
+            <p>Details and edits stay here while the rest of the workspace keeps moving.</p>
           </div>
         )}
       </section>

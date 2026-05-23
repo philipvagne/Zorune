@@ -661,7 +661,7 @@ export default function ProjectsWorkspace({
         <div className="project-panel-header">
           <div>
             <div className="dashboard-eyebrow">Projects</div>
-            <h4>Workspace hubs</h4>
+            <h4>Project spaces</h4>
           </div>
         </div>
 
@@ -728,8 +728,8 @@ export default function ProjectsWorkspace({
           <div className="workspace-placeholder">Loading projects...</div>
         ) : projects.length === 0 ? (
           <div className="org-empty-state">
-            <h4>No projects yet</h4>
-            <p>Projects created in this organization will appear here.</p>
+            <h4>This organization is quiet right now</h4>
+            <p>Projects created here will appear when the work is ready for them.</p>
           </div>
         ) : (
           <div className="project-card-grid">
@@ -850,7 +850,7 @@ export default function ProjectsWorkspace({
 
               {projectTasks.length === 0 ? (
                 <div className="muted-text">
-                  No active tasks in this project yet.
+                  This project is quiet right now.
                 </div>
               ) : (
                 <div className="project-task-list">
@@ -930,7 +930,7 @@ export default function ProjectsWorkspace({
 
               {projectNotes.length === 0 ? (
                 <div className="muted-text">
-                  No project notes yet.
+                  No project context yet.
                 </div>
               ) : (
                 <>
@@ -1054,8 +1054,8 @@ export default function ProjectsWorkspace({
           </>
         ) : (
           <div className="org-empty-state">
-            <h4>Select a project</h4>
-            <p>Project tasks, notes, and context will appear here.</p>
+            <h4>Open a project</h4>
+            <p>Tasks, notes, and recent context will gather here without taking over the workspace.</p>
           </div>
         )}
       </section>

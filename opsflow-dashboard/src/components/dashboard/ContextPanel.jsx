@@ -13,7 +13,7 @@ export default function ContextPanel({ children }) {
         children
       ) : (
         <div className="context-panel-empty">
-          Select a task to view details
+          Open a task, project, or note when you need context
         </div>
       )}
     </section>

@@ -89,14 +89,14 @@ export default function RecentWorkPanel({
       <RecentWorkSection
         title="Tasks"
         items={recentTasks}
-        emptyText="Recent task work will appear here."
+        emptyText="No recent task work yet."
         onSelect={onSelectTask}
       />
 
       <RecentWorkSection
         title="Projects"
         items={recentProjects}
-        emptyText="Recent project work will appear here."
+        emptyText="No recent project work yet."
         onSelect={onSelectProject}
       />
     </div>
