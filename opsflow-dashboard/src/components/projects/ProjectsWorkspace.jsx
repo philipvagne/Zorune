@@ -98,6 +98,10 @@ export default function ProjectsWorkspace({
     "opsflow.projects.selectedProjectId",
     ""
   );
+  const [activeProjectTab, setActiveProjectTab] = usePersistentState(
+    "opsflow.projects.activeTab",
+    "overview"
+  );
   const [projectDetail, setProjectDetail] = useState(null);
   const [projectTasks, setProjectTasks] = useState([]);
   const [projectNotes, setProjectNotes] = useState([]);
@@ -522,6 +526,7 @@ export default function ProjectsWorkspace({
       organizationId: selectedOrganization?.id,
       orgName: selectedOrganization?.name,
     });
+    setActiveProjectTab("overview");
     setSelectedProjectId(project.id);
   };
 
@@ -774,14 +779,54 @@ export default function ProjectsWorkspace({
                 onClick={() => setSelectedProjectId("")}
               >
                 Close
-              </button>
-            </div>
-
-            <div className="project-detail-stats">
-              <div>
-                <strong>{selectedProject.taskCounts?.totalActive || 0}</strong>
-                <span>Active</span>
+                </button>
               </div>
+
+              <div
+                className="project-surface-tabs"
+                role="tablist"
+                aria-label="Project detail tabs"
+              >
+                <button
+                  type="button"
+                  className={
+                    activeProjectTab === "overview"
+                      ? "project-surface-tab active"
+                      : "project-surface-tab"
+                  }
+                  onClick={() => setActiveProjectTab("overview")}
+                >
+                  Overview
+                </button>
+                <button
+                  type="button"
+                  className={
+                    activeProjectTab === "tasks"
+                      ? "project-surface-tab active"
+                      : "project-surface-tab"
+                  }
+                  onClick={() => setActiveProjectTab("tasks")}
+                >
+                  Tasks
+                </button>
+                <button
+                  type="button"
+                  className={
+                    activeProjectTab === "notes"
+                      ? "project-surface-tab active"
+                      : "project-surface-tab"
+                  }
+                  onClick={() => setActiveProjectTab("notes")}
+                >
+                  Notes
+                </button>
+              </div>
+
+              <div className="project-detail-stats">
+                <div>
+                  <strong>{selectedProject.taskCounts?.totalActive || 0}</strong>
+                  <span>Active</span>
+                </div>
               <div>
                 <strong>{selectedProject.taskCounts?.done || 0}</strong>
                 <span>Done</span>
