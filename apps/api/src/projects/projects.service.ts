@@ -12,6 +12,16 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 export class ProjectsService {
   constructor(private prisma: PrismaService) {}
 
+  private serializeProjectMember(projectMembership: any) {
+    return {
+      id: projectMembership.id,
+      membershipId: projectMembership.membershipId,
+      role: projectMembership.membership.role,
+      createdAt: projectMembership.createdAt,
+      user: projectMembership.membership.user,
+    };
+  }
+
   private async requireMembership(orgId: string, userId: string) {
     const membership = await this.prisma.membership.findFirst({
       where: {
@@ -75,8 +85,28 @@ export class ProjectsService {
     };
   }
 
+  private async getProjectMembers(projectId: string) {
+    const memberships = await this.prisma.projectMembership.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        membership: {
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return memberships.map((membership) => this.serializeProjectMember(membership));
+  }
+
   private async withTaskCounts(project: any) {
-    const [recentTask, recentNote] = await Promise.all([
+    const [recentTask, recentNote, members] = await Promise.all([
       this.prisma.task.findFirst({
         where: {
           projectId: project.id,
@@ -99,6 +129,7 @@ export class ProjectsService {
           updatedAt: true,
         },
       }),
+      this.getProjectMembers(project.id),
     ]);
 
     const recentActivityAtTimestamp =
@@ -111,6 +142,7 @@ export class ProjectsService {
 
     return {
       ...project,
+      members,
       taskCounts: await this.getTaskCounts(project.id),
       recentActivityAt: recentActivityAtTimestamp
         ? new Date(recentActivityAtTimestamp)
@@ -138,6 +170,11 @@ export class ProjectsService {
         name: trimmedName,
         description: description?.trim() || null,
         organizationId: orgId,
+        projectMemberships: {
+          create: {
+            membershipId: membership.id,
+          },
+        },
       },
     });
 
@@ -217,5 +254,79 @@ export class ProjectsService {
     });
 
     return this.withTaskCounts(updatedProject);
+  }
+
+  async addProjectMember(
+    projectId: string,
+    userId: string,
+    membershipId?: string,
+  ) {
+    if (!membershipId?.trim()) {
+      throw new BadRequestException('Member selection is required');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new ForbiddenException('Project not found');
+    }
+
+    const requesterMembership = await this.requireMembership(
+      project.organizationId,
+      userId,
+    );
+    this.requireProjectManager(requesterMembership.role);
+
+    const membership = await this.prisma.membership.findFirst({
+      where: {
+        id: membershipId,
+        organizationId: project.organizationId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!membership) {
+      throw new BadRequestException('Member not found in this organization');
+    }
+
+    const existingMembership = await this.prisma.projectMembership.findUnique({
+      where: {
+        projectId_membershipId: {
+          projectId,
+          membershipId,
+        },
+      },
+      include: {
+        membership: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (existingMembership) {
+      return this.serializeProjectMember(existingMembership);
+    }
+
+    const createdMembership = await this.prisma.projectMembership.create({
+      data: {
+        projectId,
+        membershipId,
+      },
+      include: {
+        membership: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return this.serializeProjectMember(createdMembership);
   }
 }

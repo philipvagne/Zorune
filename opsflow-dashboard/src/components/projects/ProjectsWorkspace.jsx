@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api, {
+  addProjectMember as addProjectMemberToProject,
   createNote,
   createProject,
   createTask as createProjectTask,
@@ -40,6 +41,8 @@ const getMemberName = (membership) =>
   "Unknown member";
 
 const getMemberEmail = (membership) => membership?.user?.email || "";
+
+const getProjectMembers = (project) => project?.members || [];
 
 const getMemberInitials = (membership) => {
   const label = getMemberName(membership).trim();
@@ -175,6 +178,8 @@ export default function ProjectsWorkspace({
     useState(false);
   const [showProjectNoteCreateForm, setShowProjectNoteCreateForm] =
     useState(false);
+  const [showProjectMemberAddForm, setShowProjectMemberAddForm] =
+    useState(false);
   const [editingProjectNoteId, setEditingProjectNoteId] = useState("");
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -187,7 +192,10 @@ export default function ProjectsWorkspace({
   const [newNoteContent, setNewNoteContent] = useState("");
   const [editNoteTitle, setEditNoteTitle] = useState("");
   const [editNoteContent, setEditNoteContent] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [selectedMembershipId, setSelectedMembershipId] = useState("");
   const [error, setError] = useState("");
+  const [addingProjectMember, setAddingProjectMember] = useState(false);
 
   const selectedOrganization = useMemo(
     () => organizations.find((org) => org.id === selectedOrgId) || null,
@@ -213,7 +221,47 @@ export default function ProjectsWorkspace({
     [projectNotes]
   );
   const currentUserId = useMemo(() => getUserIdFromToken(token), [token]);
-  const projectMembers = useMemo(() => organizationMembers, [organizationMembers]);
+  const projectMembers = useMemo(
+    () => getProjectMembers(selectedProject),
+    [selectedProject]
+  );
+  const projectMemberIds = useMemo(
+    () =>
+      new Set(
+        projectMembers
+          .map((membership) => membership.membershipId || membership.user?.id)
+          .filter(Boolean)
+      ),
+    [projectMembers]
+  );
+  const availableOrganizationMembers = useMemo(
+    () =>
+      organizationMembers.filter(
+        (membership) =>
+          !projectMemberIds.has(membership.id) &&
+          !projectMemberIds.has(membership.user?.id)
+      ),
+    [organizationMembers, projectMemberIds]
+  );
+  const filteredAvailableMembers = useMemo(() => {
+    const query = memberSearch.trim().toLowerCase();
+
+    if (!query) {
+      return availableOrganizationMembers;
+    }
+
+    return availableOrganizationMembers.filter((membership) => {
+      const name = getMemberName(membership).toLowerCase();
+      const email = getMemberEmail(membership).toLowerCase();
+      const username = membership.user?.username?.toLowerCase() || "";
+
+      return (
+        name.includes(query) ||
+        email.includes(query) ||
+        username.includes(query)
+      );
+    });
+  }, [availableOrganizationMembers, memberSearch]);
   const activeWorkspacePopup = showProjectCreateForm
     ? "create-project"
     : showProjectEditForm
@@ -222,6 +270,8 @@ export default function ProjectsWorkspace({
         ? "create-task"
         : showProjectNoteCreateForm
           ? "create-note"
+          : showProjectMemberAddForm
+            ? "add-member"
           : editingProjectNoteId && selectedProjectNote
             ? "edit-note"
             : "";
@@ -438,6 +488,7 @@ export default function ProjectsWorkspace({
   useEffect(() => {
     setShowProjectTaskCreateForm(false);
     setShowProjectNoteCreateForm(false);
+    setShowProjectMemberAddForm(false);
     setNewTaskTitle("");
     setNewTaskDescription("");
     setNewTaskDueDate("");
@@ -445,20 +496,38 @@ export default function ProjectsWorkspace({
     setNewNoteContent("");
     setShowProjectEditForm(false);
     setEditingProjectNoteId("");
+    setMemberSearch("");
+    setSelectedMembershipId("");
   }, [selectedProjectId]);
 
   useEffect(() => {
     setShowProjectCreateForm(false);
     setNewName("");
     setNewDescription("");
+    setShowProjectMemberAddForm(false);
+    setMemberSearch("");
+    setSelectedMembershipId("");
   }, [selectedOrgId]);
 
   useEffect(() => {
     setShowProjectTaskCreateForm(false);
     setShowProjectNoteCreateForm(false);
     setShowProjectEditForm(false);
+    setShowProjectMemberAddForm(false);
     setEditingProjectNoteId("");
   }, [activeProjectTab]);
+
+  useEffect(() => {
+    if (!showProjectMemberAddForm) {
+      return;
+    }
+
+    setSelectedMembershipId((currentId) =>
+      filteredAvailableMembers.some((membership) => membership.id === currentId)
+        ? currentId
+        : filteredAvailableMembers[0]?.id || ""
+    );
+  }, [filteredAvailableMembers, showProjectMemberAddForm]);
 
   useEffect(() => {
     if (!selectedProjectId || !token) {
@@ -932,11 +1001,60 @@ export default function ProjectsWorkspace({
     }
   };
 
+  const handleAddProjectMember = async (event) => {
+    event.preventDefault();
+
+    if (!selectedProject || !selectedMembershipId) {
+      setError("Choose a member to add.");
+      return;
+    }
+
+    setAddingProjectMember(true);
+    setError("");
+
+    try {
+      const res = await addProjectMemberToProject(
+        token,
+        selectedProject.id,
+        selectedMembershipId
+      );
+
+      const addedMember = res.data;
+
+      setProjectDetail((current) =>
+        current
+          ? {
+              ...current,
+              members: [...getProjectMembers(current), addedMember],
+            }
+          : current
+      );
+      setProjects((current) =>
+        current.map((project) =>
+          project.id === selectedProject.id
+            ? {
+                ...project,
+                members: [...getProjectMembers(project), addedMember],
+              }
+            : project
+        )
+      );
+      setShowProjectMemberAddForm(false);
+      setMemberSearch("");
+      setSelectedMembershipId("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not add project member.");
+    } finally {
+      setAddingProjectMember(false);
+    }
+  };
+
   const closeWorkspacePopup = () => {
     setShowProjectCreateForm(false);
     setShowProjectEditForm(false);
     setShowProjectTaskCreateForm(false);
     setShowProjectNoteCreateForm(false);
+    setShowProjectMemberAddForm(false);
     setEditingProjectNoteId("");
   };
 
@@ -1016,7 +1134,10 @@ export default function ProjectsWorkspace({
               </div>
             ) : (
               <div className="project-card-grid">
-                {projects.map((project) => (
+                {projects.map((project) => {
+                  const cardMembers = getProjectMembers(project);
+
+                  return (
                   <button
                     key={project.id}
                     type="button"
@@ -1036,14 +1157,14 @@ export default function ProjectsWorkspace({
                         <span>{project.taskCounts?.overdue || 0} overdue</span>
                       </div>
 
-                      {projectMembers.length > 0 ? (
-                        <div className="project-card-members" aria-label={`${projectMembers.length} members`}>
+                      {cardMembers.length > 0 ? (
+                        <div className="project-card-members" aria-label={`${cardMembers.length} members`}>
                           <span className="project-card-member-count">
-                            {projectMembers.length} member
-                            {projectMembers.length === 1 ? "" : "s"}
+                            {cardMembers.length} member
+                            {cardMembers.length === 1 ? "" : "s"}
                           </span>
                           <div className="project-member-avatar-stack">
-                            {projectMembers.slice(0, 2).map((membership) => (
+                            {cardMembers.slice(0, 2).map((membership) => (
                               <span
                                 key={membership.id}
                                 className="project-member-avatar"
@@ -1052,9 +1173,9 @@ export default function ProjectsWorkspace({
                                 {getMemberInitials(membership)}
                               </span>
                             ))}
-                            {projectMembers.length > 2 ? (
+                            {cardMembers.length > 2 ? (
                               <span className="project-member-avatar project-member-avatar-more">
-                                +{projectMembers.length - 2}
+                                +{cardMembers.length - 2}
                               </span>
                             ) : null}
                           </div>
@@ -1062,7 +1183,8 @@ export default function ProjectsWorkspace({
                       ) : null}
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1435,9 +1557,22 @@ export default function ProjectsWorkspace({
                       <div className="dashboard-eyebrow">Project Members</div>
                       <h5>People in this project space</h5>
                     </div>
+
+                    {canManage ? (
+                      <button
+                        type="button"
+                        className="contextual-create-button"
+                        onClick={() => {
+                          closeWorkspacePopup();
+                          setShowProjectMemberAddForm(true);
+                        }}
+                      >
+                        Add Member
+                      </button>
+                    ) : null}
                   </div>
 
-                  {loadingOrganizationMembers ? (
+                  {loadingProjectSurface ? (
                     <div className="muted-text">Loading members...</div>
                   ) : projectMembers.length === 0 ? (
                     <div className="muted-text">
@@ -1692,6 +1827,86 @@ export default function ProjectsWorkspace({
                       disabled={creatingNote}
                     >
                       {creatingNote ? "Creating..." : "Save note"}
+                    </button>
+                    <button
+                      type="button"
+                      className="ui-button ui-button-secondary"
+                      onClick={closeWorkspacePopup}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              {activeWorkspacePopup === "add-member" && selectedProject ? (
+                <form
+                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide"
+                  onSubmit={handleAddProjectMember}
+                >
+                  <div className="workspace-action-popup-header">
+                    <div className="dashboard-eyebrow">Members</div>
+                    <strong>Add member to {selectedProject.name}</strong>
+                  </div>
+
+                  <label className="form-label">
+                    Search organization members
+                    <input
+                      className="ui-input"
+                      value={memberSearch}
+                      onChange={(event) => setMemberSearch(event.target.value)}
+                      placeholder="Search by name, username, or email"
+                    />
+                  </label>
+
+                  {loadingOrganizationMembers ? (
+                    <div className="muted-text">Loading organization members...</div>
+                  ) : filteredAvailableMembers.length === 0 ? (
+                    <div className="muted-text">
+                      No additional organization members are available for this project.
+                    </div>
+                  ) : (
+                    <div className="workspace-member-picker-list" role="listbox" aria-label="Available members">
+                      {filteredAvailableMembers.map((membership) => (
+                        <label
+                          key={membership.id}
+                          className={
+                            membership.id === selectedMembershipId
+                              ? "workspace-member-picker-option active"
+                              : "workspace-member-picker-option"
+                          }
+                        >
+                          <input
+                            type="radio"
+                            name="selectedProjectMember"
+                            value={membership.id}
+                            checked={membership.id === selectedMembershipId}
+                            onChange={() => setSelectedMembershipId(membership.id)}
+                          />
+                          <span className="project-member-avatar project-member-avatar-large">
+                            {getMemberInitials(membership)}
+                          </span>
+                          <span className="workspace-member-picker-copy">
+                            <strong>{getMemberName(membership)}</strong>
+                            {getMemberEmail(membership) ? (
+                              <span>{getMemberEmail(membership)}</span>
+                            ) : null}
+                          </span>
+                          {membership.role ? (
+                            <span className="project-member-role">{membership.role}</span>
+                          ) : null}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="button-row contextual-create-actions">
+                    <button
+                      type="submit"
+                      className="ui-button ui-button-primary"
+                      disabled={addingProjectMember || !selectedMembershipId}
+                    >
+                      {addingProjectMember ? "Adding..." : "Add member"}
                     </button>
                     <button
                       type="button"

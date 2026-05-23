@@ -65,6 +65,7 @@ model Membership {
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectMemberships ProjectMembership[]
 
   @@unique([userId, organizationId])
 }
@@ -78,8 +79,22 @@ model Project {
 
   tasks Task[]
   notes Note[]
+  projectMemberships ProjectMembership[]
 
   createdAt DateTime @default(now())
+}
+
+model ProjectMembership {
+  id           String   @id @default(cuid())
+  projectId     String
+  membershipId  String
+  createdAt     DateTime @default(now())
+
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, membershipId])
+  @@index([membershipId])
 }
 
 model Note {

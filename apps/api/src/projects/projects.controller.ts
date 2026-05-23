@@ -73,4 +73,18 @@ export class ProjectsController {
       body,
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('projects/:projectId/members')
+  addProjectMember(
+    @Param('projectId') projectId: string,
+    @Req() req: any,
+    @Body() body: { membershipId?: string },
+  ) {
+    return this.projectsService.addProjectMember(
+      projectId,
+      req.user.sub,
+      body.membershipId,
+    );
+  }
 }

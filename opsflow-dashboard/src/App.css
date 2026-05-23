@@ -2433,6 +2433,81 @@ button:active:not(:disabled),
   margin-top: 12px;
 }
 
+.workspace-member-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding-right: 4px;
+}
+
+.workspace-member-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.26)),
+    rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 8px 18px rgba(15, 23, 42, 0.016);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.workspace-member-picker-option:hover {
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.3)),
+    rgba(255, 255, 255, 0.24);
+}
+
+.workspace-member-picker-option.active {
+  border-color: rgba(129, 140, 248, 0.18);
+  background:
+    linear-gradient(90deg, rgba(238, 242, 255, 0.7), rgba(255, 255, 255, 0.56));
+  box-shadow:
+    inset 2px 0 0 rgba(99, 102, 241, 0.66),
+    0 10px 22px rgba(15, 23, 42, 0.022);
+}
+
+.workspace-member-picker-option input {
+  margin: 0;
+  accent-color: #4f46e5;
+}
+
+.workspace-member-picker-copy {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.workspace-member-picker-copy strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: var(--line-tight);
+}
+
+.workspace-member-picker-copy span {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .task-note-card-actions {
   display: flex;
   flex-wrap: wrap;

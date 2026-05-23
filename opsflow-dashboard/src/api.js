@@ -53,6 +53,17 @@ export const updateProject = (token, projectId, project) =>
     },
   });
 
+export const addProjectMember = (token, projectId, membershipId) =>
+  api.post(
+    `/projects/${projectId}/members`,
+    { membershipId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
 export const getMyOrganizations = (token) =>
   api.get("/organizations/my", {
     headers: {
