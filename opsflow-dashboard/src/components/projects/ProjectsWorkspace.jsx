@@ -822,280 +822,288 @@ export default function ProjectsWorkspace({
                 </button>
               </div>
 
-              <div className="project-detail-stats">
-                <div>
-                  <strong>{selectedProject.taskCounts?.totalActive || 0}</strong>
-                  <span>Active</span>
-                </div>
-              <div>
-                <strong>{selectedProject.taskCounts?.done || 0}</strong>
-                <span>Done</span>
-              </div>
-              <div>
-                <strong>{selectedProject.taskCounts?.overdue || 0}</strong>
-                <span>Overdue</span>
-              </div>
-            </div>
-
-            <div className="project-detail-meta">
-              <span>Created {formatDate(selectedProject.createdAt)}</span>
-              {selectedProject.recentActivityAt ? (
-                <span>
-                  Recent activity {formatDate(selectedProject.recentActivityAt)}
-                </span>
-              ) : null}
-            </div>
-
-            {canManage ? (
-              <form className="project-form" onSubmit={handleUpdateProject}>
-                <label className="form-label">
-                  Name
-                  <input
-                    className="ui-input"
-                    value={editName}
-                    onChange={(event) => setEditName(event.target.value)}
-                  />
-                </label>
-                <label className="form-label">
-                  Description
-                  <textarea
-                    className="ui-textarea"
-                    value={editDescription}
-                    onChange={(event) =>
-                      setEditDescription(event.target.value)
-                    }
-                    rows={3}
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="ui-button ui-button-dark"
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Save project"}
-                </button>
-              </form>
-            ) : selectedProject.description ? (
-              <p className="project-surface-description">
-                {selectedProject.description}
-              </p>
-            ) : (
-              <p className="muted-text">
-                You can view this project. Owners and admins can edit it.
-              </p>
-            )}
-
-            <section className="project-surface-section">
-              <div className="project-surface-section-header">
-                <div>
-                  <div className="dashboard-eyebrow">Project Tasks</div>
-                  <h5>Work in this project</h5>
-                </div>
-              </div>
-
-              {projectTasks.length === 0 ? (
-                <div className="muted-text">
-                  This project is quiet right now.
-                </div>
-              ) : (
-                <div className="project-task-list">
-                  {projectTasks.map((task) => (
-                    <button
-                      key={task.id}
-                      type="button"
-                      className="project-task-row"
-                      onClick={() => onSelectTask?.(task)}
-                    >
-                      <div className="project-task-row-main">
-                        <strong>{task.title}</strong>
-                        <div className="project-task-meta">
-                          <span>{formatStatus(task.status)}</span>
-                          <span>{getTaskAssigneeLabel(task)}</span>
-                          {task.dueDate ? (
-                            <span
-                              className={
-                                isTaskOverdue(task)
-                                  ? "task-table-date overdue"
-                                  : "task-table-date"
-                              }
-                            >
-                              Due {formatDate(task.dueDate)}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      {task.unreadNoteCount > 0 ? (
-                        <span className="task-awareness-text">
-                          {task.unreadNoteCount} new note
-                          {task.unreadNoteCount > 1 ? "s" : ""}
-                        </span>
-                      ) : null}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="project-surface-section">
-              <div className="project-surface-section-header">
-                <div>
-                  <div className="dashboard-eyebrow">Project Notes</div>
-                  <h5>Context and references</h5>
-                </div>
-              </div>
-
-              <form className="project-form" onSubmit={handleCreateProjectNote}>
-                <label className="form-label">
-                  New project note
-                  <input
-                    className="ui-input"
-                    value={newNoteTitle}
-                    onChange={(event) => setNewNoteTitle(event.target.value)}
-                    placeholder="Note title"
-                  />
-                </label>
-                <label className="form-label">
-                  Content
-                  <textarea
-                    className="ui-textarea"
-                    value={newNoteContent}
-                    onChange={(event) => setNewNoteContent(event.target.value)}
-                    placeholder="Reference, decision, or operational context..."
-                    rows={3}
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="ui-button ui-button-primary"
-                  disabled={creatingNote}
-                >
-                  {creatingNote ? "Creating..." : "Create note"}
-                </button>
-              </form>
-
-              {projectNotes.length === 0 ? (
-                <div className="muted-text">
-                  No project context yet.
-                </div>
-              ) : (
-                <>
-                  <div className="project-note-list">
-                    {pinnedProjectNotes.length > 0 && (
-                      <div className="project-note-group">
-                        <div className="dashboard-eyebrow">Pinned</div>
-                        {pinnedProjectNotes.map((note) => (
-                          <button
-                            key={note.id}
-                            type="button"
-                            className={
-                              note.id === selectedProjectNoteId
-                                ? "task-note-card active"
-                                : "task-note-card"
-                            }
-                            onClick={() => setSelectedProjectNoteId(note.id)}
-                          >
-                            <div className="task-note-meta">
-                              <span className="task-note-pin-pill">Pinned</span>
-                              {note.kind === "REFERENCE" && (
-                                <span className="task-note-kind-pill">
-                                  Reference
-                                </span>
-                              )}
-                              <span>{formatDate(note.updatedAt)}</span>
-                              <span>{getNoteAuthor(note)}</span>
-                            </div>
-                            <strong>{note.title}</strong>
-                            <p>{getNotePreview(note.content)}</p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {regularProjectNotes.length > 0 && (
-                      <div className="project-note-group">
-                        <div className="dashboard-eyebrow">
-                          {pinnedProjectNotes.length > 0 ? "Notes" : "All Notes"}
-                        </div>
-                        {regularProjectNotes.map((note) => (
-                          <button
-                            key={note.id}
-                            type="button"
-                            className={
-                              note.id === selectedProjectNoteId
-                                ? "task-note-card active"
-                                : "task-note-card"
-                            }
-                            onClick={() => setSelectedProjectNoteId(note.id)}
-                          >
-                            <div className="task-note-meta">
-                              {note.kind === "REFERENCE" && (
-                                <span className="task-note-kind-pill">
-                                  Reference
-                                </span>
-                              )}
-                              <span>{formatDate(note.updatedAt)}</span>
-                              <span>{getNoteAuthor(note)}</span>
-                            </div>
-                            <strong>{note.title}</strong>
-                            <p>{getNotePreview(note.content)}</p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+            {activeProjectTab === "overview" ? (
+              <>
+                <div className="project-detail-stats">
+                  <div>
+                    <strong>{selectedProject.taskCounts?.totalActive || 0}</strong>
+                    <span>Active</span>
                   </div>
+                  <div>
+                    <strong>{selectedProject.taskCounts?.done || 0}</strong>
+                    <span>Done</span>
+                  </div>
+                  <div>
+                    <strong>{selectedProject.taskCounts?.overdue || 0}</strong>
+                    <span>Overdue</span>
+                  </div>
+                </div>
 
-                  {selectedProjectNote ? (
-                    <div className="task-note-editor project-note-editor">
-                      <label className="form-label">
-                        Title
-                        <input
-                          className="ui-input"
-                          value={editNoteTitle}
-                          onChange={(event) =>
-                            setEditNoteTitle(event.target.value)
-                          }
-                        />
-                      </label>
-
-                      <label className="form-label">
-                        Content
-                        <textarea
-                          className="ui-textarea task-note-editor-textarea"
-                          value={editNoteContent}
-                          onChange={(event) =>
-                            setEditNoteContent(event.target.value)
-                          }
-                          rows={6}
-                        />
-                      </label>
-
-                      <div className="button-row">
-                        <button
-                          type="button"
-                          className="ui-button ui-button-dark"
-                          onClick={handleSaveProjectNote}
-                          disabled={savingNote}
-                        >
-                          {savingNote ? "Saving..." : "Save note"}
-                        </button>
-                        <button
-                          type="button"
-                          className="ui-button ui-button-danger"
-                          onClick={() =>
-                            handleDeleteProjectNote(selectedProjectNote.id)
-                          }
-                          disabled={deletingNoteId === selectedProjectNote.id}
-                        >
-                          {deletingNoteId === selectedProjectNote.id
-                            ? "Deleting..."
-                            : "Delete note"}
-                        </button>
-                      </div>
-                    </div>
+                <div className="project-detail-meta">
+                  <span>Created {formatDate(selectedProject.createdAt)}</span>
+                  {selectedProject.recentActivityAt ? (
+                    <span>
+                      Recent activity {formatDate(selectedProject.recentActivityAt)}
+                    </span>
                   ) : null}
-                </>
-              )}
-            </section>
+                </div>
+
+                {canManage ? (
+                  <form className="project-form" onSubmit={handleUpdateProject}>
+                    <label className="form-label">
+                      Name
+                      <input
+                        className="ui-input"
+                        value={editName}
+                        onChange={(event) => setEditName(event.target.value)}
+                      />
+                    </label>
+                    <label className="form-label">
+                      Description
+                      <textarea
+                        className="ui-textarea"
+                        value={editDescription}
+                        onChange={(event) =>
+                          setEditDescription(event.target.value)
+                        }
+                        rows={3}
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="ui-button ui-button-dark"
+                      disabled={saving}
+                    >
+                      {saving ? "Saving..." : "Save project"}
+                    </button>
+                  </form>
+                ) : selectedProject.description ? (
+                  <p className="project-surface-description">
+                    {selectedProject.description}
+                  </p>
+                ) : (
+                  <p className="muted-text">
+                    You can view this project. Owners and admins can edit it.
+                  </p>
+                )}
+              </>
+            ) : null}
+
+            {activeProjectTab === "tasks" ? (
+              <section className="project-surface-section">
+                <div className="project-surface-section-header">
+                  <div>
+                    <div className="dashboard-eyebrow">Project Tasks</div>
+                    <h5>Work in this project</h5>
+                  </div>
+                </div>
+
+                {projectTasks.length === 0 ? (
+                  <div className="muted-text">
+                    This project is quiet right now.
+                  </div>
+                ) : (
+                  <div className="project-task-list">
+                    {projectTasks.map((task) => (
+                      <button
+                        key={task.id}
+                        type="button"
+                        className="project-task-row"
+                        onClick={() => onSelectTask?.(task)}
+                      >
+                        <div className="project-task-row-main">
+                          <strong>{task.title}</strong>
+                          <div className="project-task-meta">
+                            <span>{formatStatus(task.status)}</span>
+                            <span>{getTaskAssigneeLabel(task)}</span>
+                            {task.dueDate ? (
+                              <span
+                                className={
+                                  isTaskOverdue(task)
+                                    ? "task-table-date overdue"
+                                    : "task-table-date"
+                                }
+                              >
+                                Due {formatDate(task.dueDate)}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        {task.unreadNoteCount > 0 ? (
+                          <span className="task-awareness-text">
+                            {task.unreadNoteCount} new note
+                            {task.unreadNoteCount > 1 ? "s" : ""}
+                          </span>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {activeProjectTab === "notes" ? (
+              <section className="project-surface-section">
+                <div className="project-surface-section-header">
+                  <div>
+                    <div className="dashboard-eyebrow">Project Notes</div>
+                    <h5>Context and references</h5>
+                  </div>
+                </div>
+
+                <form className="project-form" onSubmit={handleCreateProjectNote}>
+                  <label className="form-label">
+                    New project note
+                    <input
+                      className="ui-input"
+                      value={newNoteTitle}
+                      onChange={(event) => setNewNoteTitle(event.target.value)}
+                      placeholder="Note title"
+                    />
+                  </label>
+                  <label className="form-label">
+                    Content
+                    <textarea
+                      className="ui-textarea"
+                      value={newNoteContent}
+                      onChange={(event) => setNewNoteContent(event.target.value)}
+                      placeholder="Reference, decision, or operational context..."
+                      rows={3}
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="ui-button ui-button-primary"
+                    disabled={creatingNote}
+                  >
+                    {creatingNote ? "Creating..." : "Create note"}
+                  </button>
+                </form>
+
+                {projectNotes.length === 0 ? (
+                  <div className="muted-text">
+                    No project context yet.
+                  </div>
+                ) : (
+                  <>
+                    <div className="project-note-list">
+                      {pinnedProjectNotes.length > 0 && (
+                        <div className="project-note-group">
+                          <div className="dashboard-eyebrow">Pinned</div>
+                          {pinnedProjectNotes.map((note) => (
+                            <button
+                              key={note.id}
+                              type="button"
+                              className={
+                                note.id === selectedProjectNoteId
+                                  ? "task-note-card active"
+                                  : "task-note-card"
+                              }
+                              onClick={() => setSelectedProjectNoteId(note.id)}
+                            >
+                              <div className="task-note-meta">
+                                <span className="task-note-pin-pill">Pinned</span>
+                                {note.kind === "REFERENCE" && (
+                                  <span className="task-note-kind-pill">
+                                    Reference
+                                  </span>
+                                )}
+                                <span>{formatDate(note.updatedAt)}</span>
+                                <span>{getNoteAuthor(note)}</span>
+                              </div>
+                              <strong>{note.title}</strong>
+                              <p>{getNotePreview(note.content)}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {regularProjectNotes.length > 0 && (
+                        <div className="project-note-group">
+                          <div className="dashboard-eyebrow">
+                            {pinnedProjectNotes.length > 0 ? "Notes" : "All Notes"}
+                          </div>
+                          {regularProjectNotes.map((note) => (
+                            <button
+                              key={note.id}
+                              type="button"
+                              className={
+                                note.id === selectedProjectNoteId
+                                  ? "task-note-card active"
+                                  : "task-note-card"
+                              }
+                              onClick={() => setSelectedProjectNoteId(note.id)}
+                            >
+                              <div className="task-note-meta">
+                                {note.kind === "REFERENCE" && (
+                                  <span className="task-note-kind-pill">
+                                    Reference
+                                  </span>
+                                )}
+                                <span>{formatDate(note.updatedAt)}</span>
+                                <span>{getNoteAuthor(note)}</span>
+                              </div>
+                              <strong>{note.title}</strong>
+                              <p>{getNotePreview(note.content)}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedProjectNote ? (
+                      <div className="task-note-editor project-note-editor">
+                        <label className="form-label">
+                          Title
+                          <input
+                            className="ui-input"
+                            value={editNoteTitle}
+                            onChange={(event) =>
+                              setEditNoteTitle(event.target.value)
+                            }
+                          />
+                        </label>
+
+                        <label className="form-label">
+                          Content
+                          <textarea
+                            className="ui-textarea task-note-editor-textarea"
+                            value={editNoteContent}
+                            onChange={(event) =>
+                              setEditNoteContent(event.target.value)
+                            }
+                            rows={6}
+                          />
+                        </label>
+
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            className="ui-button ui-button-dark"
+                            onClick={handleSaveProjectNote}
+                            disabled={savingNote}
+                          >
+                            {savingNote ? "Saving..." : "Save note"}
+                          </button>
+                          <button
+                            type="button"
+                            className="ui-button ui-button-danger"
+                            onClick={() =>
+                              handleDeleteProjectNote(selectedProjectNote.id)
+                            }
+                            disabled={deletingNoteId === selectedProjectNote.id}
+                          >
+                            {deletingNoteId === selectedProjectNote.id
+                              ? "Deleting..."
+                              : "Delete note"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              </section>
+            ) : null}
           </>
         ) : (
           <div className="org-empty-state">
