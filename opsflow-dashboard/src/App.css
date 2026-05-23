@@ -2020,12 +2020,72 @@ button:active:not(:disabled),
   min-height: 100%;
 }
 
+.organization-overview-surface {
+  gap: 18px;
+}
+
 .organization-opened-tab-icon {
   letter-spacing: 0.08em;
 }
 
 .organization-members-surface {
   gap: 18px;
+}
+
+.organization-projects-surface {
+  min-height: 100%;
+}
+
+.organization-project-list-shell {
+  min-height: 0;
+  overflow: auto;
+}
+
+.organization-project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.organization-project-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.organization-project-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.organization-project-row-main strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: var(--line-tight);
+}
+
+.organization-project-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.organization-project-row-note {
+  max-width: 24ch;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
 }
 
 .organization-member-form {

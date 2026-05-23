@@ -4,6 +4,7 @@ import {
   createOrganization,
   getMyOrganizations,
   getOrganizationMembers,
+  getOrganizationProjects,
 } from "../../api";
 import usePersistentState from "../../hooks/usePersistentState";
 
@@ -42,9 +43,12 @@ export default function OrganizationsWorkspace({ token }) {
     "overview"
   );
   const [members, setMembers] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [memberCountsByOrgId, setMemberCountsByOrgId] = useState({});
+  const [projectCountsByOrgId, setProjectCountsByOrgId] = useState({});
   const [loadingOrganizations, setLoadingOrganizations] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [organizationName, setOrganizationName] = useState("");
   const [organizationSlug, setOrganizationSlug] = useState("");
   const [memberLookup, setMemberLookup] = useState("");
@@ -144,6 +148,52 @@ export default function OrganizationsWorkspace({ token }) {
     };
 
     loadMembers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedOrgId, token]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProjects = async () => {
+      if (!selectedOrgId) {
+        setProjects([]);
+        return;
+      }
+
+      setLoadingProjects(true);
+      setError("");
+
+      try {
+        const res = await getOrganizationProjects(token, selectedOrgId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const nextProjects = res.data || [];
+        setProjects(nextProjects);
+        setProjectCountsByOrgId((current) => ({
+          ...current,
+          [selectedOrgId]: nextProjects.length,
+        }));
+      } catch (err) {
+        if (!isMounted) return;
+        setProjects([]);
+        setError(
+          err.response?.data?.message ||
+            "Could not load organization projects."
+        );
+      } finally {
+        if (isMounted) {
+          setLoadingProjects(false);
+        }
+      }
+    };
+
+    loadProjects();
 
     return () => {
       isMounted = false;
@@ -451,8 +501,10 @@ export default function OrganizationsWorkspace({ token }) {
                       <span>Members</span>
                     </div>
                     <div>
-                      <strong>{selectedOrganization.role}</strong>
-                      <span>Your access</span>
+                      <strong>
+                        {projectCountsByOrgId[selectedOrganization.id] ?? projects.length}
+                      </strong>
+                      <span>Projects</span>
                     </div>
                     <div>
                       <strong>{selectedOrganization.slug || "Default"}</strong>
@@ -467,6 +519,7 @@ export default function OrganizationsWorkspace({ token }) {
                         Updated {formatDate(selectedOrganization.updatedAt)}
                       </span>
                     ) : null}
+                    <span>Your role {selectedOrganization.role}</span>
                   </div>
 
                   <p className="project-surface-description">
@@ -562,7 +615,7 @@ export default function OrganizationsWorkspace({ token }) {
               ) : null}
 
               {activeOrganizationTab === "projects" ? (
-                <section className="project-surface-section organization-foundation-surface">
+                <section className="project-surface-section organization-projects-surface">
                   <div className="project-surface-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Projects</div>
@@ -570,11 +623,38 @@ export default function OrganizationsWorkspace({ token }) {
                     </div>
                   </div>
 
-                  <p className="muted-text organization-foundation-copy">
-                    Project access stays connected through this organization.
-                    Detailed project management remains in the Projects
-                    workspace.
-                  </p>
+                  {loadingProjects ? (
+                    <div className="muted-text">Loading projects...</div>
+                  ) : projects.length === 0 ? (
+                    <div className="muted-text">
+                      No projects belong to this organization yet.
+                    </div>
+                  ) : (
+                    <div className="organization-project-list-shell">
+                      <div className="organization-project-list">
+                        {projects.map((project) => (
+                          <div key={project.id} className="organization-project-row">
+                            <div className="organization-project-row-main">
+                              <strong>{project.name}</strong>
+                              <div className="organization-project-row-meta">
+                                <span>
+                                  {project.taskCounts?.totalActive || 0} active
+                                </span>
+                                <span>{project.taskCounts?.done || 0} done</span>
+                                <span>
+                                  {project.members?.length || 0} member
+                                  {(project.members?.length || 0) === 1 ? "" : "s"}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="organization-project-row-note">
+                              {project.description || "No description yet"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </section>
               ) : null}
 
