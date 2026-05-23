@@ -12,6 +12,10 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 export class ProjectsService {
   constructor(private prisma: PrismaService) {}
 
+  private isProjectManagerRole(role: Role) {
+    return role === Role.OWNER || role === Role.ADMIN;
+  }
+
   private serializeProjectMember(projectMembership: any) {
     return {
       id: projectMembership.id,
@@ -48,13 +52,47 @@ export class ProjectsService {
   }
 
   private requireProjectManager(role: Role) {
-    const projectManagerRoles: Role[] = [Role.OWNER, Role.ADMIN];
-
-    if (!projectManagerRoles.includes(role)) {
+    if (!this.isProjectManagerRole(role)) {
       throw new ForbiddenException(
         'Only organization owners or admins can manage projects',
       );
     }
+  }
+
+  private async ensureProjectMembershipRows(
+    projectId: string,
+    organizationId: string,
+  ) {
+    const existingCount = await this.prisma.projectMembership.count({
+      where: {
+        projectId,
+      },
+    });
+
+    if (existingCount > 0) {
+      return;
+    }
+
+    const organizationMemberships = await this.prisma.membership.findMany({
+      where: {
+        organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (organizationMemberships.length === 0) {
+      return;
+    }
+
+    await this.prisma.projectMembership.createMany({
+      data: organizationMemberships.map((membership) => ({
+        projectId,
+        membershipId: membership.id,
+      })),
+      skipDuplicates: true,
+    });
   }
 
   private async getTaskCounts(projectId: string) {
@@ -358,6 +396,78 @@ export class ProjectsService {
     });
 
     return this.serializeProjectMember(createdMembership);
+  }
+
+  async removeProjectMember(
+    projectId: string,
+    userId: string,
+    membershipId?: string,
+  ) {
+    if (!membershipId?.trim()) {
+      throw new BadRequestException('Project member selection is required');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new ForbiddenException('Project not found');
+    }
+
+    const requesterMembership = await this.requireMembership(
+      project.organizationId,
+      userId,
+    );
+    this.requireProjectManager(requesterMembership.role);
+
+    await this.ensureProjectMembershipRows(projectId, project.organizationId);
+
+    const projectMemberships = await this.prisma.projectMembership.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        membership: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    const targetMembership = projectMemberships.find(
+      (membership) => membership.membershipId === membershipId,
+    );
+
+    if (!targetMembership) {
+      throw new BadRequestException('Member is not part of this project');
+    }
+
+    const manageableMemberships = projectMemberships.filter((membership) =>
+      this.isProjectManagerRole(membership.membership.role),
+    );
+
+    const targetIsManager = this.isProjectManagerRole(
+      targetMembership.membership.role,
+    );
+
+    if (targetIsManager && manageableMemberships.length <= 1) {
+      throw new BadRequestException(
+        'This project needs at least one owner or admin',
+      );
+    }
+
+    await this.prisma.projectMembership.delete({
+      where: {
+        projectId_membershipId: {
+          projectId,
+          membershipId,
+        },
+      },
+    });
+
+    return this.serializeProjectMember(targetMembership);
   }
 
   async deleteProject(projectId: string, userId: string) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api, {
   addProjectMember as addProjectMemberToProject,
   createNote,
@@ -12,6 +12,7 @@ import api, {
   getOrganizationProjects,
   getProject,
   getProjectTasks,
+  removeProjectMember as removeProjectMemberFromProject,
   updateNote,
   updateProject,
 } from "../../api";
@@ -182,6 +183,8 @@ export default function ProjectsWorkspace({
   const [showProjectMemberAddForm, setShowProjectMemberAddForm] =
     useState(false);
   const [showProjectDeleteForm, setShowProjectDeleteForm] = useState(false);
+  const [showProjectMemberRemoveForm, setShowProjectMemberRemoveForm] =
+    useState(false);
   const [editingProjectNoteId, setEditingProjectNoteId] = useState("");
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -196,9 +199,12 @@ export default function ProjectsWorkspace({
   const [editNoteContent, setEditNoteContent] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedMembershipId, setSelectedMembershipId] = useState("");
+  const [selectedRemovalMembershipId, setSelectedRemovalMembershipId] =
+    useState("");
   const [error, setError] = useState("");
   const [addingProjectMember, setAddingProjectMember] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
+  const [removingProjectMember, setRemovingProjectMember] = useState(false);
 
   const selectedOrganization = useMemo(
     () => organizations.find((org) => org.id === selectedOrgId) || null,
@@ -227,6 +233,17 @@ export default function ProjectsWorkspace({
   const projectMembers = useMemo(
     () => getProjectMembers(selectedProject),
     [selectedProject]
+  );
+  const selectedProjectIdRef = useRef(selectedProjectId);
+  const selectedProjectNameRef = useRef(selectedProject?.name || "");
+  const selectedOrganizationRef = useRef(selectedOrganization);
+  const onRememberProjectRef = useRef(onRememberProject);
+  const selectedRemovalMember = useMemo(
+    () =>
+      projectMembers.find(
+        (membership) => membership.membershipId === selectedRemovalMembershipId
+      ) || null,
+    [projectMembers, selectedRemovalMembershipId]
   );
   const projectMemberIds = useMemo(
     () =>
@@ -277,9 +294,27 @@ export default function ProjectsWorkspace({
             ? "add-member"
             : showProjectDeleteForm
               ? "delete-project"
+              : showProjectMemberRemoveForm
+                ? "remove-member"
           : editingProjectNoteId && selectedProjectNote
             ? "edit-note"
             : "";
+
+  useEffect(() => {
+    selectedProjectIdRef.current = selectedProjectId;
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    selectedProjectNameRef.current = selectedProject?.name || "";
+  }, [selectedProject?.name]);
+
+  useEffect(() => {
+    selectedOrganizationRef.current = selectedOrganization;
+  }, [selectedOrganization]);
+
+  useEffect(() => {
+    onRememberProjectRef.current = onRememberProject;
+  }, [onRememberProject]);
 
   useEffect(() => {
     let active = true;
@@ -495,6 +530,7 @@ export default function ProjectsWorkspace({
     setShowProjectNoteCreateForm(false);
     setShowProjectMemberAddForm(false);
     setShowProjectDeleteForm(false);
+    setShowProjectMemberRemoveForm(false);
     setNewTaskTitle("");
     setNewTaskDescription("");
     setNewTaskDueDate("");
@@ -504,6 +540,7 @@ export default function ProjectsWorkspace({
     setEditingProjectNoteId("");
     setMemberSearch("");
     setSelectedMembershipId("");
+    setSelectedRemovalMembershipId("");
   }, [selectedProjectId]);
 
   useEffect(() => {
@@ -512,8 +549,10 @@ export default function ProjectsWorkspace({
     setNewDescription("");
     setShowProjectMemberAddForm(false);
     setShowProjectDeleteForm(false);
+    setShowProjectMemberRemoveForm(false);
     setMemberSearch("");
     setSelectedMembershipId("");
+    setSelectedRemovalMembershipId("");
   }, [selectedOrgId]);
 
   useEffect(() => {
@@ -522,6 +561,7 @@ export default function ProjectsWorkspace({
     setShowProjectEditForm(false);
     setShowProjectMemberAddForm(false);
     setShowProjectDeleteForm(false);
+    setShowProjectMemberRemoveForm(false);
     setEditingProjectNoteId("");
   }, [activeProjectTab]);
 
@@ -587,14 +627,18 @@ export default function ProjectsWorkspace({
   ]);
 
   useEffect(() => {
-    if (!selectedProjectId || !token) {
+    if (!token) {
       return;
     }
 
     const socket = createSocket(token);
 
-    socket.on("task_updated", (data) => {
-      if (data.project?.id !== selectedProjectId) {
+    const handleTaskUpdated = (data) => {
+      const currentProjectId = selectedProjectIdRef.current;
+      const currentOrganization = selectedOrganizationRef.current;
+      const currentProjectName = selectedProjectNameRef.current;
+
+      if (!currentProjectId || data.project?.id !== currentProjectId) {
         return;
       }
 
@@ -663,12 +707,12 @@ export default function ProjectsWorkspace({
             new Date(right.updatedAt || 0) - new Date(left.updatedAt || 0)
         );
       });
-      onRememberProject?.(
+      onRememberProjectRef.current?.(
         {
-          id: selectedProjectId,
-          name: selectedProject?.name,
-          organizationId: selectedOrganization?.id,
-          orgName: selectedOrganization?.name,
+          id: currentProjectId,
+          name: currentProjectName,
+          organizationId: currentOrganization?.id,
+          orgName: currentOrganization?.name,
         },
         data.recentActivityAt || data.updatedAt || new Date().toISOString()
       );
@@ -682,7 +726,7 @@ export default function ProjectsWorkspace({
       );
       setProjects((current) =>
         current.map((project) =>
-          project.id === selectedProjectId
+          project.id === currentProjectId
             ? {
                 ...project,
                 recentActivityAt:
@@ -691,20 +735,15 @@ export default function ProjectsWorkspace({
             : project
         )
       );
-    });
+    };
+
+    socket.on("task_updated", handleTaskUpdated);
 
     return () => {
-      socket.off("task_updated");
+      socket.off("task_updated", handleTaskUpdated);
       socket.disconnect();
     };
-  }, [
-    onRememberProject,
-    selectedOrganization?.id,
-    selectedOrganization?.name,
-    selectedProject?.name,
-    selectedProjectId,
-    token,
-  ]);
+  }, [token]);
 
   useEffect(() => {
     if (!activeWorkspacePopup) {
@@ -1084,6 +1123,56 @@ export default function ProjectsWorkspace({
     }
   };
 
+  const handleRemoveProjectMember = async () => {
+    if (!selectedProject || !selectedRemovalMembershipId) {
+      return;
+    }
+
+    setRemovingProjectMember(true);
+    setError("");
+
+    try {
+      await removeProjectMemberFromProject(
+        token,
+        selectedProject.id,
+        selectedRemovalMembershipId
+      );
+
+      setProjectDetail((current) =>
+        current
+          ? {
+              ...current,
+              members: getProjectMembers(current).filter(
+                (membership) =>
+                  membership.membershipId !== selectedRemovalMembershipId
+              ),
+            }
+          : current
+      );
+      setProjects((current) =>
+        current.map((project) =>
+          project.id === selectedProject.id
+            ? {
+                ...project,
+                members: getProjectMembers(project).filter(
+                  (membership) =>
+                    membership.membershipId !== selectedRemovalMembershipId
+                ),
+              }
+            : project
+        )
+      );
+      setShowProjectMemberRemoveForm(false);
+      setSelectedRemovalMembershipId("");
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Could not remove project member."
+      );
+    } finally {
+      setRemovingProjectMember(false);
+    }
+  };
+
   const closeWorkspacePopup = () => {
     setShowProjectCreateForm(false);
     setShowProjectEditForm(false);
@@ -1091,6 +1180,8 @@ export default function ProjectsWorkspace({
     setShowProjectNoteCreateForm(false);
     setShowProjectMemberAddForm(false);
     setShowProjectDeleteForm(false);
+    setShowProjectMemberRemoveForm(false);
+    setSelectedRemovalMembershipId("");
     setEditingProjectNoteId("");
   };
 
@@ -1652,6 +1743,22 @@ export default function ProjectsWorkspace({
                                 {membership.role}
                               </span>
                             ) : null}
+
+                            {canManage ? (
+                              <button
+                                type="button"
+                                className="contextual-card-action danger"
+                                onClick={() => {
+                                  closeWorkspacePopup();
+                                  setSelectedRemovalMembershipId(
+                                    membership.membershipId
+                                  );
+                                  setShowProjectMemberRemoveForm(true);
+                                }}
+                              >
+                                Remove
+                              </button>
+                            ) : null}
                           </div>
                         ))}
                       </div>
@@ -1986,6 +2093,37 @@ export default function ProjectsWorkspace({
                       disabled={deletingProject}
                     >
                       {deletingProject ? "Deleting..." : "Delete project"}
+                    </button>
+                    <button
+                      type="button"
+                      className="ui-button ui-button-secondary"
+                      onClick={closeWorkspacePopup}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeWorkspacePopup === "remove-member" &&
+              selectedProject &&
+              selectedRemovalMember ? (
+                <div className="project-form contextual-create-surface workspace-action-popup">
+                  <div className="workspace-action-popup-header">
+                    <div className="dashboard-eyebrow">Members</div>
+                    <strong>Remove {getMemberName(selectedRemovalMember)}?</strong>
+                  </div>
+                  <p className="workspace-action-popup-copy">
+                    {getMemberEmail(selectedRemovalMember) || "This member"} will lose access to {selectedProject.name}, but will remain in the organization.
+                  </p>
+                  <div className="button-row contextual-create-actions">
+                    <button
+                      type="button"
+                      className="ui-button ui-button-danger"
+                      onClick={handleRemoveProjectMember}
+                      disabled={removingProjectMember}
+                    >
+                      {removingProjectMember ? "Removing..." : "Remove member"}
                     </button>
                     <button
                       type="button"

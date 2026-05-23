@@ -64,6 +64,13 @@ export const addProjectMember = (token, projectId, membershipId) =>
     },
   );
 
+export const removeProjectMember = (token, projectId, membershipId) =>
+  api.delete(`/projects/${projectId}/members/${membershipId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
 export const deleteProject = (token, projectId) =>
   api.delete(`/projects/${projectId}`, {
     headers: {

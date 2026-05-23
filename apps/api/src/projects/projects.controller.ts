@@ -90,6 +90,20 @@ export class ProjectsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Delete('projects/:projectId/members/:membershipId')
+  removeProjectMember(
+    @Param('projectId') projectId: string,
+    @Param('membershipId') membershipId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.removeProjectMember(
+      projectId,
+      req.user.sub,
+      membershipId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete('projects/:projectId')
   deleteProject(
     @Param('projectId') projectId: string,
