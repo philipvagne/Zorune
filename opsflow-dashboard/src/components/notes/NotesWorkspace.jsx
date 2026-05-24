@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   addNoteLink,
-  createNote,
   deleteNote,
   getNoteLinks,
   getMyOrganizations,
@@ -15,6 +14,17 @@ import { subscribeToNoteCreated } from "../../lib/noteEvents";
 
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString() : "Unknown";
+
+const formatDateTime = (value) =>
+  value
+    ? new Date(value).toLocaleString([], {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Unknown";
 
 const getCreatorName = (note) =>
   note.createdBy?.fullName ||
@@ -143,6 +153,9 @@ const matchesNoteSearch = (note, search) => {
   return getSearchableText(note).includes(query);
 };
 
+const getProjectId = (note) => note.projectId || note.project?.id || "";
+const getTaskId = (note) => note.taskId || note.task?.id || "";
+
 export default function NotesWorkspace({ token }) {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = usePersistentState(
@@ -155,24 +168,23 @@ export default function NotesWorkspace({ token }) {
     "opsflow.notes.selectedNoteId",
     ""
   );
-  const [search, setSearch] = usePersistentState(
-    "opsflow.notes.search",
+  const [search, setSearch] = usePersistentState("opsflow.notes.search", "");
+  const [selectedProjectFilterId, setSelectedProjectFilterId] =
+    usePersistentState("opsflow.notes.projectFilterId", "");
+  const [selectedTaskFilterId, setSelectedTaskFilterId] = usePersistentState(
+    "opsflow.notes.taskFilterId",
     ""
   );
-  const [newTitle, setNewTitle] = useState("");
-  const [newContent, setNewContent] = useState("");
-  const [newProjectId, setNewProjectId] = useState("");
-  const [newKind, setNewKind] = useState("NOTE");
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editProjectId, setEditProjectId] = useState("");
   const [editKind, setEditKind] = useState("NOTE");
+  const [isEditingNote, setIsEditingNote] = useState(false);
   const [linkedNotes, setLinkedNotes] = useState([]);
   const [linkQuery, setLinkQuery] = useState("");
   const [loadingOrganizations, setLoadingOrganizations] = useState(true);
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [loadingLinks, setLoadingLinks] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pinningNoteId, setPinningNoteId] = useState(null);
@@ -181,6 +193,12 @@ export default function NotesWorkspace({ token }) {
   const [error, setError] = useState("");
   const [linkError, setLinkError] = useState("");
 
+  const selectedOrganization = useMemo(
+    () =>
+      organizations.find((organization) => organization.id === selectedOrgId) ||
+      null,
+    [organizations, selectedOrgId]
+  );
   const selectedNote = useMemo(
     () => organizationNotes.find((note) => note.id === selectedNoteId) || null,
     [organizationNotes, selectedNoteId]
@@ -189,19 +207,73 @@ export default function NotesWorkspace({ token }) {
     () => [...organizationNotes].sort(compareNotes),
     [organizationNotes]
   );
+  const projectOptions = useMemo(
+    () =>
+      [...projects].sort((left, right) =>
+        (left.name || "").localeCompare(right.name || "")
+      ),
+    [projects]
+  );
+  const taskOptions = useMemo(() => {
+    const tasks = new Map();
+
+    organizationNotes.forEach((note) => {
+      const taskId = getTaskId(note);
+
+      if (!taskId) {
+        return;
+      }
+
+      const projectId = getProjectId(note);
+
+      if (selectedProjectFilterId && projectId !== selectedProjectFilterId) {
+        return;
+      }
+
+      if (!tasks.has(taskId)) {
+        tasks.set(taskId, {
+          id: taskId,
+          title: note.task?.title || "Untitled task",
+          projectId,
+        });
+      }
+    });
+
+    return Array.from(tasks.values()).sort((left, right) =>
+      left.title.localeCompare(right.title)
+    );
+  }, [organizationNotes, selectedProjectFilterId]);
   const visibleNotes = useMemo(() => {
-    return sortedNotes.filter((note) => matchesNoteSearch(note, search));
-  }, [search, sortedNotes]);
+    return sortedNotes.filter((note) => {
+      if (!matchesNoteSearch(note, search)) {
+        return false;
+      }
+
+      if (
+        selectedProjectFilterId &&
+        getProjectId(note) !== selectedProjectFilterId
+      ) {
+        return false;
+      }
+
+      if (selectedTaskFilterId && getTaskId(note) !== selectedTaskFilterId) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [search, selectedProjectFilterId, selectedTaskFilterId, sortedNotes]);
   const pinnedNotes = useMemo(
     () => visibleNotes.filter((note) => note.isPinned),
     [visibleNotes]
   );
-  const regularNotes = useMemo(
+  const recentNotes = useMemo(
     () => visibleNotes.filter((note) => !note.isPinned),
     [visibleNotes]
   );
   const linkableNotes = useMemo(() => {
     const linkedIds = new Set(linkedNotes.map((note) => note.id));
+
     return organizationNotes
       .filter((note) => note.id !== selectedNoteId)
       .filter((note) => !linkedIds.has(note.id))
@@ -275,6 +347,9 @@ export default function NotesWorkspace({ token }) {
       setProjects([]);
       setOrganizationNotes([]);
       setSelectedNoteId("");
+      setSelectedProjectFilterId("");
+      setSelectedTaskFilterId("");
+      setIsEditingNote(false);
     };
 
     if (!selectedOrgId) {
@@ -326,28 +401,43 @@ export default function NotesWorkspace({ token }) {
     return () => {
       active = false;
     };
-  }, [selectedOrgId, setSelectedNoteId, token]);
+  }, [
+    selectedOrgId,
+    setSelectedNoteId,
+    setSelectedProjectFilterId,
+    setSelectedTaskFilterId,
+    token,
+  ]);
 
   useEffect(() => {
-    const syncSelectedNoteState = () => {
-      setEditTitle(selectedNote?.title || "");
-      setEditContent(selectedNote?.content || "");
-      setEditProjectId(selectedNote?.projectId || "");
-      setEditKind(selectedNote?.kind || "NOTE");
-      setLinkQuery("");
-      setLinkError("");
-    };
+    setSelectedProjectFilterId((currentId) =>
+      currentId && projectOptions.some((project) => project.id === currentId)
+        ? currentId
+        : ""
+    );
+  }, [projectOptions, setSelectedProjectFilterId]);
 
-    syncSelectedNoteState();
+  useEffect(() => {
+    setSelectedTaskFilterId((currentId) =>
+      currentId && taskOptions.some((task) => task.id === currentId)
+        ? currentId
+        : ""
+    );
+  }, [setSelectedTaskFilterId, taskOptions]);
+
+  useEffect(() => {
+    setEditTitle(selectedNote?.title || "");
+    setEditContent(selectedNote?.content || "");
+    setEditProjectId(selectedNote?.projectId || "");
+    setEditKind(selectedNote?.kind || "NOTE");
+    setLinkQuery("");
+    setLinkError("");
+    setIsEditingNote(false);
   }, [selectedNote]);
 
   useEffect(() => {
-    const clearLinkedNoteState = () => {
-      setLinkedNotes([]);
-    };
-
     if (!selectedNoteId) {
-      clearLinkedNoteState();
+      setLinkedNotes([]);
       return;
     }
 
@@ -397,47 +487,9 @@ export default function NotesWorkspace({ token }) {
   const updateNoteInState = (noteId, updater) => {
     setOrganizationNotes((current) =>
       current
-        .map((note) =>
-          note.id === noteId ? updater(note) : note
-        )
+        .map((note) => (note.id === noteId ? updater(note) : note))
         .sort(compareNotes)
     );
-  };
-
-  const handleCreateNote = async (event) => {
-    event.preventDefault();
-
-    const title = newTitle.trim();
-
-    if (!title || !selectedOrgId) {
-      setError("Note title and organization are required.");
-      return;
-    }
-
-    setCreating(true);
-    setError("");
-
-    try {
-      const res = await createNote(token, {
-        title,
-        content: newContent,
-        organizationId: selectedOrgId,
-        projectId: newProjectId || undefined,
-        kind: newKind,
-      });
-
-      const createdNote = res.data;
-      upsertOrganizationNote(createdNote);
-      setSelectedNoteId(createdNote.id);
-      setNewTitle("");
-      setNewContent("");
-      setNewProjectId("");
-      setNewKind("NOTE");
-    } catch (err) {
-      setError(err.response?.data?.message || "Could not create note.");
-    } finally {
-      setCreating(false);
-    }
   };
 
   const handleUpdateNote = async (event) => {
@@ -465,6 +517,7 @@ export default function NotesWorkspace({ token }) {
 
       const updatedNote = res.data;
       upsertOrganizationNote(updatedNote);
+      setIsEditingNote(false);
     } catch (err) {
       setError(err.response?.data?.message || "Could not save note.");
     } finally {
@@ -484,6 +537,7 @@ export default function NotesWorkspace({ token }) {
         current.filter((note) => note.id !== selectedNote.id)
       );
       setSelectedNoteId("");
+      setIsEditingNote(false);
     } catch (err) {
       setError(err.response?.data?.message || "Could not delete note.");
     } finally {
@@ -493,9 +547,7 @@ export default function NotesWorkspace({ token }) {
 
   const handleTogglePin = async (note) => {
     const nextPinned = !note.isPinned;
-    const optimisticPinnedAt = nextPinned
-      ? new Date().toISOString()
-      : null;
+    const optimisticPinnedAt = nextPinned ? new Date().toISOString() : null;
 
     setPinningNoteId(note.id);
     setError("");
@@ -536,9 +588,10 @@ export default function NotesWorkspace({ token }) {
       const res = await addNoteLink(token, selectedNoteId, linkedNote.id);
       const { linkedNote: linkedNoteState, sourceNote } = res.data;
       setLinkedNotes((current) =>
-        [...current.filter((note) => note.id !== linkedNoteState.id), linkedNoteState].sort(
-          compareNotes
-        )
+        [
+          ...current.filter((note) => note.id !== linkedNoteState.id),
+          linkedNoteState,
+        ].sort(compareNotes)
       );
       upsertOrganizationNotes(sourceNote, linkedNoteState);
       setLinkQuery("");
@@ -570,10 +623,6 @@ export default function NotesWorkspace({ token }) {
     }
   };
 
-  const handleSelectLinkedNote = (linkedNote) => {
-    setSelectedNoteId(linkedNote.id);
-  };
-
   if (loadingOrganizations) {
     return <div className="workspace-placeholder">Loading notes...</div>;
   }
@@ -582,267 +631,299 @@ export default function NotesWorkspace({ token }) {
     <div className="notes-workspace">
       {error ? <div className="form-error notes-error">{error}</div> : null}
 
-      <section className="note-panel note-compose-panel">
-          <div className="note-panel-header">
-            <div>
-              <div className="dashboard-eyebrow">Notes</div>
-              <h4>Shared context</h4>
-            </div>
+      <section className="note-panel notes-collection-pane">
+        <div className="note-panel-header">
+          <div>
+            <div className="dashboard-eyebrow">Notes</div>
+            <h4>Operational memory</h4>
           </div>
+        </div>
 
         {organizations.length === 0 ? (
           <div className="org-empty-state">
             <h4>No organization yet</h4>
-            <p>Create an organization before writing shared notes.</p>
+            <p>Create an organization before shared notes can gather here.</p>
           </div>
         ) : (
           <>
-            <label className="form-label">
-              Organization
-              <select
-                className="ui-input"
-                value={selectedOrgId}
-                onChange={(event) => setSelectedOrgId(event.target.value)}
-              >
-                {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
-                    {organization.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-label">
-              Search notes
-              <input
-                className="ui-input"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Decision, reference, procedure..."
-              />
-            </label>
-
-            <div className="notes-search-summary">
-              {matchingCount === 0
-                ? "No matching operational notes"
-                : `${matchingCount} matching ${
-                    matchingCount === 1 ? "note" : "notes"
-                  }`}
-              {!selectedNoteVisible && selectedNote ? " - current note still open" : ""}
-            </div>
-
-            <form className="note-form" onSubmit={handleCreateNote}>
+            <div className="notes-collection-controls">
               <label className="form-label">
-                New note
-                <input
-                  className="ui-input"
-                  value={newTitle}
-                  onChange={(event) => setNewTitle(event.target.value)}
-                  placeholder="Note title"
-                />
-              </label>
-
-              <label className="form-label">
-                Link project
+                Organization
                 <select
                   className="ui-input"
-                  value={newProjectId}
-                  onChange={(event) => setNewProjectId(event.target.value)}
+                  value={selectedOrgId}
+                  onChange={(event) => setSelectedOrgId(event.target.value)}
                 >
-                  <option value="">No project</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
+                  {organizations.map((organization) => (
+                    <option key={organization.id} value={organization.id}>
+                      {organization.name}
                     </option>
                   ))}
                 </select>
               </label>
 
               <label className="form-label">
-                Content
-                <textarea
-                  className="ui-textarea"
-                  value={newContent}
-                  onChange={(event) => setNewContent(event.target.value)}
-                  placeholder="Decision, procedure, reference, or context..."
-                  rows={5}
+                Search notes
+                <input
+                  className="ui-input"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Decision, reference, handoff..."
                 />
               </label>
 
-              <label className="form-label">
-                Type
-                <select
-                  className="ui-input"
-                  value={newKind}
-                  onChange={(event) => setNewKind(event.target.value)}
-                >
-                  <option value="NOTE">Note</option>
-                  <option value="REFERENCE">Reference</option>
-                </select>
-              </label>
+              <div className="notes-filter-grid">
+                <label className="form-label">
+                  Project
+                  <select
+                    className="ui-input"
+                    value={selectedProjectFilterId}
+                    onChange={(event) => setSelectedProjectFilterId(event.target.value)}
+                  >
+                    <option value="">All projects</option>
+                    {projectOptions.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <button
-                type="submit"
-                className="ui-button ui-button-primary"
-                disabled={creating || !selectedOrgId}
-              >
-                {creating ? "Creating..." : "Create note"}
-              </button>
-            </form>
+                <label className="form-label">
+                  Task
+                  <select
+                    className="ui-input"
+                    value={selectedTaskFilterId}
+                    onChange={(event) => setSelectedTaskFilterId(event.target.value)}
+                  >
+                    <option value="">All tasks</option>
+                    {taskOptions.map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="notes-search-summary">
+                {matchingCount === 0
+                  ? "No matching notes"
+                  : `${matchingCount} matching ${matchingCount === 1 ? "note" : "notes"}`}
+                {!selectedNoteVisible && selectedNote
+                  ? " - current note remains open"
+                  : ""}
+              </div>
+            </div>
+
+            <div className="notes-list-shell">
+              {loadingNotes ? (
+                <div className="workspace-placeholder">Loading notes...</div>
+              ) : visibleNotes.length === 0 ? (
+                <div className="org-empty-state notes-inline-empty">
+                  <h4>No notes match this view</h4>
+                  <p>Try another organization, project, task, or search term.</p>
+                </div>
+              ) : (
+                <div className="notes-list-sections">
+                  {pinnedNotes.length > 0 ? (
+                    <div className="notes-list-section">
+                      <div className="notes-section-heading">
+                        <span className="dashboard-eyebrow">Pinned Notes</span>
+                        <span>{pinnedNotes.length}</span>
+                      </div>
+                      <div className="note-list">
+                        {pinnedNotes.map((note) => (
+                          <article
+                            key={note.id}
+                            className={
+                              note.id === selectedNoteId
+                                ? `note-list-item ${
+                                    note.kind === "REFERENCE"
+                                      ? "reference selected"
+                                      : "selected"
+                                  }`
+                                : note.kind === "REFERENCE"
+                                  ? "note-list-item reference"
+                                  : "note-list-item"
+                            }
+                          >
+                            <button
+                              type="button"
+                              className="note-list-item-main"
+                              onClick={() => setSelectedNoteId(note.id)}
+                            >
+                              <div className="note-list-item-header">
+                                <span>{note.project?.name || "General note"}</span>
+                                <span>{formatDate(note.updatedAt)}</span>
+                              </div>
+                              <strong>
+                                {renderHighlightedText(note.title, search)}
+                              </strong>
+                              <p>
+                                {renderHighlightedText(getSnippet(note.content), search)}
+                              </p>
+                              <div className="note-list-item-footer">
+                                <span>{getCreatorName(note)}</span>
+                                {note.task?.title ? <span>{note.task.title}</span> : null}
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              className="note-pin-button"
+                              disabled={pinningNoteId === note.id}
+                              onClick={() => handleTogglePin(note)}
+                            >
+                              {note.isPinned ? "Unpin" : "Pin"}
+                            </button>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="notes-list-section">
+                    <div className="notes-section-heading">
+                      <span className="dashboard-eyebrow">
+                        {pinnedNotes.length > 0 ? "Recent Notes" : "Notes"}
+                      </span>
+                      <span>{recentNotes.length}</span>
+                    </div>
+                    <div className="note-list">
+                      {recentNotes.map((note) => (
+                        <article
+                          key={note.id}
+                          className={
+                            note.id === selectedNoteId
+                              ? `note-list-item ${
+                                  note.kind === "REFERENCE"
+                                    ? "reference selected"
+                                    : "selected"
+                                }`
+                              : note.kind === "REFERENCE"
+                                ? "note-list-item reference"
+                                : "note-list-item"
+                          }
+                        >
+                          <button
+                            type="button"
+                            className="note-list-item-main"
+                            onClick={() => setSelectedNoteId(note.id)}
+                          >
+                            <div className="note-list-item-header">
+                              <span>{note.project?.name || "General note"}</span>
+                              <span>{formatDate(note.updatedAt)}</span>
+                            </div>
+                            <strong>
+                              {renderHighlightedText(note.title, search)}
+                            </strong>
+                            <p>
+                              {renderHighlightedText(getSnippet(note.content), search)}
+                            </p>
+                            <div className="note-list-item-footer">
+                              <span>{getCreatorName(note)}</span>
+                              {note.task?.title ? <span>{note.task.title}</span> : null}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            className="note-pin-button"
+                            disabled={pinningNoteId === note.id}
+                            onClick={() => handleTogglePin(note)}
+                          >
+                            {note.isPinned ? "Unpin" : "Pin"}
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
       </section>
 
-      <section className="note-panel note-list-panel">
-        {loadingNotes ? (
-          <div className="workspace-placeholder">Loading notes...</div>
-        ) : visibleNotes.length === 0 ? (
-          <div className="org-empty-state">
-            <h4>This space is quiet right now</h4>
-            <p>Notes and references for this organization will gather here.</p>
-          </div>
-        ) : (
-          <div className="notes-list-sections">
-            {pinnedNotes.length > 0 && (
-              <div className="notes-list-section">
-                <div className="dashboard-eyebrow">Pinned</div>
-                <div className="note-card-grid">
-                  {pinnedNotes.map((note) => (
-                    <article
-                      key={note.id}
-                      className={
-                        note.id === selectedNoteId
-                          ? `note-card ${note.kind === "REFERENCE" ? "reference active" : "active"}`
-                          : note.kind === "REFERENCE"
-                            ? "note-card reference"
-                            : "note-card"
-                      }
-                    >
-                      <div className="note-card-actions">
-                        {note.kind === "REFERENCE" && (
-                          <span className="note-kind-pill reference">
-                            Reference
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          className="note-pin-button"
-                          disabled={pinningNoteId === note.id}
-                          onClick={() => handleTogglePin(note)}
-                        >
-                          {note.isPinned ? "Unpin" : "Pin"}
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="note-card-main"
-                        onClick={() => setSelectedNoteId(note.id)}
-                      >
-                        <div className="note-card-topline">
-                          <span>{note.project?.name || "General"}</span>
-                          <span>{formatDate(note.updatedAt)}</span>
-                        </div>
-                        <strong>{renderHighlightedText(note.title, search)}</strong>
-                        <p>{renderHighlightedText(getSnippet(note.content), search)}</p>
-                        <div className="note-card-footer">
-                          By {getCreatorName(note)}
-                        </div>
-                      </button>
-                    </article>
-                  ))}
+      <section className="note-panel notes-detail-pane">
+        {selectedNote ? (
+          <div className="notes-detail-shell">
+            <div className="note-panel-header notes-detail-header">
+              <div>
+                <div className="dashboard-eyebrow">Opened Note</div>
+                <h4>{selectedNote.title}</h4>
+                <div className="notes-detail-subtitle">
+                  {selectedOrganization?.name || "Organization memory"}
                 </div>
               </div>
-            )}
 
-            <div className="notes-list-section">
-              <div className="dashboard-eyebrow">
-                {pinnedNotes.length > 0 ? "Notes" : "All Notes"}
+              <div className="note-reader-actions">
+                <button
+                  type="button"
+                  className="note-pin-button"
+                  disabled={pinningNoteId === selectedNote.id}
+                  onClick={() => handleTogglePin(selectedNote)}
+                >
+                  {selectedNote.isPinned ? "Unpin note" : "Pin note"}
+                </button>
+                <button
+                  type="button"
+                  className="ui-button ui-button-secondary"
+                  onClick={() => setIsEditingNote((current) => !current)}
+                >
+                  {isEditingNote ? "Close Edit" : "Edit Note"}
+                </button>
               </div>
-              <div className="note-card-grid">
-                {regularNotes.map((note) => (
-                  <article
-                    key={note.id}
-                    className={
-                      note.id === selectedNoteId
-                        ? `note-card ${note.kind === "REFERENCE" ? "reference active" : "active"}`
-                        : note.kind === "REFERENCE"
-                          ? "note-card reference"
-                          : "note-card"
-                    }
-                  >
-                    <div className="note-card-actions">
-                      {note.kind === "REFERENCE" && (
-                        <span className="note-kind-pill reference">
-                          Reference
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        className="note-pin-button"
-                        disabled={pinningNoteId === note.id}
-                        onClick={() => handleTogglePin(note)}
-                      >
-                        {note.isPinned ? "Unpin" : "Pin"}
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="note-card-main"
-                      onClick={() => setSelectedNoteId(note.id)}
-                    >
-                      <div className="note-card-topline">
-                        <span>{note.project?.name || "General"}</span>
-                        <span>{formatDate(note.updatedAt)}</span>
-                      </div>
-                      <strong>{renderHighlightedText(note.title, search)}</strong>
-                      <p>{renderHighlightedText(getSnippet(note.content), search)}</p>
-                      <div className="note-card-footer">
-                        By {getCreatorName(note)}
-                      </div>
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="note-panel note-detail-panel">
-        {selectedNote ? (
-          <>
-            <div className="note-panel-header">
-              <div>
-                <div className="dashboard-eyebrow">Note</div>
-                <h4>{selectedNote.title}</h4>
-              </div>
-
-              <button
-                type="button"
-                className="note-pin-button"
-                disabled={pinningNoteId === selectedNote.id}
-                onClick={() => handleTogglePin(selectedNote)}
-              >
-                {selectedNote.isPinned ? "Unpin note" : "Pin note"}
-              </button>
             </div>
 
             <div className="note-detail-meta">
-              {selectedNote.isPinned && <span>Pinned</span>}
-              {selectedNote.kind === "REFERENCE" && <span>Reference</span>}
-              <span>{selectedNote.project?.name || "General note"}</span>
+              {selectedNote.isPinned ? <span>Pinned</span> : null}
+              <span>{selectedNote.kind === "REFERENCE" ? "Reference" : "Note"}</span>
+              <span>{selectedNote.project?.name || "No linked project"}</span>
               {selectedNote.task?.title ? (
                 <span>Task: {selectedNote.task.title}</span>
               ) : null}
-              <span>Updated {formatDate(selectedNote.updatedAt)}</span>
+              <span>Updated {formatDateTime(selectedNote.updatedAt)}</span>
               <span>By {getCreatorName(selectedNote)}</span>
             </div>
 
+            <article className="note-reader-surface">
+              <div className="note-reader-context-grid">
+                <div className="note-reader-context-card">
+                  <span className="dashboard-eyebrow">Project</span>
+                  <strong>{selectedNote.project?.name || "General context"}</strong>
+                  <p>
+                    {selectedNote.project?.description ||
+                      "This note is not attached to a specific project."}
+                  </p>
+                </div>
+
+                <div className="note-reader-context-card">
+                  <span className="dashboard-eyebrow">Task</span>
+                  <strong>{selectedNote.task?.title || "No linked task"}</strong>
+                  <p>
+                    {selectedNote.task?.description ||
+                      "Task-linked context will show here when a note belongs to active work."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="note-reader-content">
+                {selectedNote.content?.trim() ? (
+                  selectedNote.content
+                    .trim()
+                    .split(/\n{2,}/)
+                    .map((paragraph, index) => <p key={index}>{paragraph}</p>)
+                ) : (
+                  <p className="muted-text">
+                    This note does not have content yet.
+                  </p>
+                )}
+              </div>
+            </article>
+
             <details className="note-links-section">
               <summary className="note-links-header">
-                <strong>Linked context</strong>
+                <strong>Connected notes</strong>
                 <span className="muted-text">
                   {loadingLinks
                     ? "Loading..."
@@ -901,16 +982,14 @@ export default function NotesWorkspace({ token }) {
                   {loadingLinks ? (
                     <div className="muted-text">Loading linked notes...</div>
                   ) : linkedNotes.length === 0 ? (
-                    <div className="muted-text">
-                      No linked context yet
-                    </div>
+                    <div className="muted-text">No linked context yet</div>
                   ) : (
                     linkedNotes.map((note) => (
                       <div key={note.id} className="linked-note-card">
                         <button
                           type="button"
                           className="linked-note-main"
-                          onClick={() => handleSelectLinkedNote(note)}
+                          onClick={() => setSelectedNoteId(note.id)}
                         >
                           <div className="note-card-topline">
                             <span>{note.project?.name || "General"}</span>
@@ -930,11 +1009,11 @@ export default function NotesWorkspace({ token }) {
                         </button>
 
                         <div className="linked-note-actions">
-                          {note.kind === "REFERENCE" && (
+                          {note.kind === "REFERENCE" ? (
                             <span className="note-kind-pill reference">
                               Reference
                             </span>
-                          )}
+                          ) : null}
                           <button
                             type="button"
                             className="note-pin-button"
@@ -951,81 +1030,107 @@ export default function NotesWorkspace({ token }) {
               </div>
             </details>
 
-            <form className="note-form" onSubmit={handleUpdateNote}>
-              <label className="form-label">
-                Title
-                <input
-                  className="ui-input"
-                  value={editTitle}
-                  onChange={(event) => setEditTitle(event.target.value)}
-                />
-              </label>
+            {isEditingNote ? (
+              <form className="note-form note-editor-shell" onSubmit={handleUpdateNote}>
+                <div className="note-editor-header">
+                  <div>
+                    <div className="dashboard-eyebrow">Edit Note</div>
+                    <strong>{selectedNote.title}</strong>
+                  </div>
+                </div>
 
-              <label className="form-label">
-                Type
-                <select
-                  className="ui-input"
-                  value={editKind}
-                  onChange={(event) => setEditKind(event.target.value)}
-                >
-                  <option value="NOTE">Note</option>
-                  <option value="REFERENCE">Reference</option>
-                </select>
-              </label>
+                <label className="form-label">
+                  Title
+                  <input
+                    className="ui-input"
+                    value={editTitle}
+                    onChange={(event) => setEditTitle(event.target.value)}
+                  />
+                </label>
 
-              <label className="form-label">
-                Project link
-                <select
-                  className="ui-input"
-                  value={editProjectId}
-                  onChange={(event) => setEditProjectId(event.target.value)}
-                >
-                  <option value="">No project</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <div className="notes-filter-grid">
+                  <label className="form-label">
+                    Type
+                    <select
+                      className="ui-input"
+                      value={editKind}
+                      onChange={(event) => setEditKind(event.target.value)}
+                    >
+                      <option value="NOTE">Note</option>
+                      <option value="REFERENCE">Reference</option>
+                    </select>
+                  </label>
 
-              <label className="form-label">
-                Content
-                <textarea
-                  className="ui-textarea note-content-editor"
-                  value={editContent}
-                  onChange={(event) => setEditContent(event.target.value)}
-                  rows={10}
-                />
-              </label>
+                  <label className="form-label">
+                    Project link
+                    <select
+                      className="ui-input"
+                      value={editProjectId}
+                      onChange={(event) => setEditProjectId(event.target.value)}
+                    >
+                      <option value="">No project</option>
+                      {projectOptions.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
 
-              <div className="button-row">
-                <button
-                  type="submit"
-                  className="ui-button ui-button-dark"
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Save note"}
-                </button>
-                <button
-                  type="button"
-                  className="ui-button ui-button-danger"
-                  disabled={deleting}
-                  onClick={handleDeleteNote}
-                >
-                  {deleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            </form>
-          </>
+                <label className="form-label">
+                  Content
+                  <textarea
+                    className="ui-textarea note-content-editor"
+                    value={editContent}
+                    onChange={(event) => setEditContent(event.target.value)}
+                    rows={10}
+                  />
+                </label>
+
+                <div className="button-row">
+                  <button
+                    type="button"
+                    className="ui-button ui-button-secondary"
+                    onClick={() => {
+                      setEditTitle(selectedNote.title || "");
+                      setEditContent(selectedNote.content || "");
+                      setEditProjectId(selectedNote.projectId || "");
+                      setEditKind(selectedNote.kind || "NOTE");
+                      setIsEditingNote(false);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="ui-button ui-button-dark"
+                    disabled={saving}
+                  >
+                    {saving ? "Saving..." : "Save note"}
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button-danger"
+                    disabled={deleting}
+                    onClick={handleDeleteNote}
+                  >
+                    {deleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </form>
+            ) : null}
+          </div>
         ) : (
-          <div className="org-empty-state">
+          <div className="org-empty-state notes-detail-empty">
             <h4>Open a note</h4>
-            <p>Details and edits stay here while the rest of the workspace keeps moving.</p>
+            <p>
+              Search across pinned, recent, project-linked, and task-linked notes
+              from the left side to keep context close to the work.
+            </p>
           </div>
         )}
       </section>
     </div>
   );
 }
-

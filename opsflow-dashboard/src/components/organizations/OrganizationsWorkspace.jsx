@@ -252,7 +252,7 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
     setShowOrganizationDeleteForm(false);
     setShowOrganizationMemberAddForm(false);
     setShowOrganizationMemberRemoveForm(false);
-    setSelectedRemovalMembershipId("");
+    resetOrganizationPopupState();
   }, [selectedOrgId, activeOrganizationTab]);
 
   useEffect(() => {
@@ -509,13 +509,23 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
     }
   };
 
+  const resetOrganizationPopupState = () => {
+    setOrganizationName("");
+    setOrganizationSlug("");
+    setEditOrganizationName(selectedOrganization?.name || "");
+    setEditOrganizationSlug(selectedOrganization?.slug || "");
+    setMemberLookup("");
+    setMemberRole("MEMBER");
+    setSelectedRemovalMembershipId("");
+  };
+
   const closeOrganizationPopup = () => {
     setShowOrganizationCreateForm(false);
     setShowOrganizationEditForm(false);
     setShowOrganizationDeleteForm(false);
     setShowOrganizationMemberAddForm(false);
     setShowOrganizationMemberRemoveForm(false);
-    setSelectedRemovalMembershipId("");
+    resetOrganizationPopupState();
   };
 
   const handleSelectOrganization = (organizationId) => {
@@ -951,6 +961,8 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
                         className="contextual-create-button"
                         onClick={() => {
                           closeOrganizationPopup();
+                          setEditOrganizationName(selectedOrganization.name);
+                          setEditOrganizationSlug(selectedOrganization.slug || "");
                           setShowOrganizationEditForm(true);
                         }}
                       >
