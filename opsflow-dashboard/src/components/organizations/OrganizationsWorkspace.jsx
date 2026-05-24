@@ -85,6 +85,22 @@ const formatProjectDueDate = (date) => {
   return parsed.toLocaleDateString();
 };
 
+const formatMembershipJoinedDate = (membership) => {
+  const value = membership?.joinedAt || membership?.createdAt || "";
+
+  if (!value) {
+    return "";
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return parsed.toLocaleDateString();
+};
+
 const getProjectStatusState = (project) => {
   const rawStatus = String(project?.status || "").toUpperCase();
   const dueDate = project?.dueDate ? new Date(project.dueDate) : null;
@@ -976,8 +992,19 @@ export default function OrganizationsWorkspace({
                   <div className="project-surface-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Team Members</div>
-                      <h5>People on this team</h5>
                     </div>
+                    {canManageSelectedOrganization ? (
+                      <button
+                        type="button"
+                        className="contextual-create-button"
+                        onClick={() => {
+                          closeOrganizationPopup();
+                          setShowOrganizationMemberAddForm(true);
+                        }}
+                      >
+                        Add Member
+                      </button>
+                    ) : null}
                   </div>
 
                   {loadingMembers ? (
@@ -1006,23 +1033,11 @@ export default function OrganizationsWorkspace({
                         >
                           {memberRoleOptions.map((role) => (
                             <option key={role} value={role}>
-                              {role === "ALL" ? "All roles" : role}
+                          {role === "ALL" ? "All roles" : role}
                             </option>
                           ))}
                         </select>
                       </label>
-                      {canManageSelectedOrganization ? (
-                        <button
-                          type="button"
-                          className="contextual-create-button"
-                          onClick={() => {
-                            closeOrganizationPopup();
-                            setShowOrganizationMemberAddForm(true);
-                          }}
-                        >
-                          Add Member
-                        </button>
-                      ) : null}
                     </div>
                   )}
 
@@ -1033,41 +1048,63 @@ export default function OrganizationsWorkspace({
                       </div>
                     ) : (
                     <div className="project-members-list-shell">
+                      <div className="organization-members-registry-head" aria-hidden="true">
+                        <span>Member</span>
+                        <span>Role</span>
+                        <span>Joined</span>
+                        <span />
+                      </div>
                       <div className="project-members-list">
                         {filteredMembers.map((membership) => (
-                          <div key={membership.id} className="project-member-row">
-                            <span className="project-member-avatar project-member-avatar-large">
-                              {getOrganizationInitials({
-                                name: displayUserName(membership.user),
-                              })}
-                            </span>
+                          <div key={membership.id} className="project-member-row organization-member-row">
+                            <div className="organization-member-primary">
+                              <span className="project-member-avatar project-member-avatar-large organization-member-avatar-large">
+                                {getOrganizationInitials({
+                                  name: displayUserName(membership.user),
+                                })}
+                              </span>
 
-                            <div className="project-member-copy">
-                              <strong>{displayUserName(membership.user)}</strong>
-                              {membership.user?.email ? (
-                                <span>{membership.user.email}</span>
+                              <div className="project-member-copy organization-member-copy">
+                                <strong>{displayUserName(membership.user)}</strong>
+                                {membership.user?.email ? (
+                                  <span>{membership.user.email}</span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="organization-member-meta organization-member-role-cell">
+                              {membership.role ? (
+                                <span className="project-member-role organization-member-role">
+                                  {membership.role}
+                                </span>
                               ) : null}
                             </div>
 
-                            {membership.role ? (
-                              <span className="project-member-role">
-                                {membership.role}
-                              </span>
-                            ) : null}
+                            <div className="organization-member-joined-cell">
+                              {formatMembershipJoinedDate(membership) ? (
+                                <span className="organization-member-joined">
+                                  {formatMembershipJoinedDate(membership)}
+                                </span>
+                              ) : null}
+                            </div>
 
-                            {canManageSelectedOrganization ? (
-                              <button
-                                type="button"
-                                className="contextual-card-action danger"
-                                onClick={() => {
-                                  closeOrganizationPopup();
-                                  setSelectedRemovalMembershipId(membership.id);
-                                  setShowOrganizationMemberRemoveForm(true);
-                                }}
-                              >
-                                Remove
-                              </button>
-                            ) : null}
+                            <div className="organization-member-actions">
+                              {canManageSelectedOrganization ? (
+                                <button
+                                  type="button"
+                                  className="contextual-card-action organization-member-action-menu"
+                                  aria-label={`Member actions for ${displayUserName(membership.user)}`}
+                                  title={`Remove ${displayUserName(membership.user)}`}
+                                  onClick={() => {
+                                    closeOrganizationPopup();
+                                    setSelectedRemovalMembershipId(membership.id);
+                                    setShowOrganizationMemberRemoveForm(true);
+                                  }}
+                                >
+                                  ...
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
                         ))}
                       </div>
