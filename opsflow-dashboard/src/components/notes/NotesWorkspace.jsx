@@ -85,21 +85,23 @@ const getSearchableText = (note) => {
 };
 
 const renderHighlightedText = (text, query) => {
+  const safeText = typeof text === "string" ? text : text ? String(text) : "";
+
   if (!query.trim()) {
-    return text;
+    return safeText;
   }
 
   const normalizedQuery = query.trim().toLowerCase();
-  const normalizedText = text.toLowerCase();
+  const normalizedText = safeText.toLowerCase();
   const index = normalizedText.indexOf(normalizedQuery);
 
   if (index === -1) {
-    return text;
+    return safeText;
   }
 
-  const before = text.slice(0, index);
-  const match = text.slice(index, index + query.trim().length);
-  const after = text.slice(index + query.trim().length);
+  const before = safeText.slice(0, index);
+  const match = safeText.slice(index, index + query.trim().length);
+  const after = safeText.slice(index + query.trim().length);
 
   return (
     <>
@@ -380,7 +382,7 @@ export default function NotesWorkspace({ token }) {
         setSelectedNoteId((currentId) =>
           nextOrganizationNotes.some((note) => note.id === currentId)
             ? currentId
-            : nextOrganizationNotes[0]?.id || ""
+            : ""
         );
       } catch {
         if (active) {
@@ -434,6 +436,16 @@ export default function NotesWorkspace({ token }) {
     setLinkError("");
     setIsEditingNote(false);
   }, [selectedNote]);
+
+  useEffect(() => {
+    if (
+      selectedNoteId &&
+      organizationNotes.length > 0 &&
+      !organizationNotes.some((note) => note.id === selectedNoteId)
+    ) {
+      setSelectedNoteId("");
+    }
+  }, [organizationNotes, selectedNoteId, setSelectedNoteId]);
 
   useEffect(() => {
     if (!selectedNoteId) {
