@@ -1001,10 +1001,10 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
       </section>
 
       {activeOrganizationPopup ? (
-        <div className="project-workspace-popup-layer" role="presentation">
+        <div className="project-workspace-popup-layer workspace-floating-window-layer" role="presentation">
           <button
             type="button"
-            className="project-workspace-popup-backdrop"
+            className="project-workspace-popup-backdrop workspace-floating-window-backdrop"
             onMouseDown={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -1018,7 +1018,7 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
           />
 
           <div
-            className="project-workspace-popup-shell"
+            className="project-workspace-popup-shell workspace-floating-window-shell"
             onMouseDown={(event) => {
               event.stopPropagation();
             }}
@@ -1028,12 +1028,22 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
           >
             {activeOrganizationPopup === "create-organization" ? (
               <form
-                className="project-form contextual-create-surface workspace-action-popup"
+                className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
                 onSubmit={handleCreateOrganization}
               >
-                <div className="workspace-action-popup-header">
-                  <div className="dashboard-eyebrow">Create</div>
-                  <strong>New Organization</strong>
+                <div className="workspace-action-popup-header workspace-floating-window-header">
+                  <div className="workspace-floating-window-title">
+                    <div className="dashboard-eyebrow">Create</div>
+                    <strong>New Organization</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="workspace-floating-window-close"
+                    onClick={closeOrganizationPopup}
+                    aria-label="Close window"
+                  >
+                    ×
+                  </button>
                 </div>
                 <label className="form-label">
                   Organization name
@@ -1055,7 +1065,7 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
                   />
                 </label>
 
-                <div className="button-row contextual-create-actions">
+                <div className="button-row contextual-create-actions workspace-floating-window-actions">
                   <button
                     type="submit"
                     className="ui-button ui-button-primary"
@@ -1076,12 +1086,22 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
 
             {activeOrganizationPopup === "add-member" ? (
               <form
-                className="project-form contextual-create-surface workspace-action-popup"
+                className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
                 onSubmit={handleAddMember}
               >
-                <div className="workspace-action-popup-header">
-                  <div className="dashboard-eyebrow">Members</div>
-                  <strong>Add member to {selectedOrganization?.name}</strong>
+                <div className="workspace-action-popup-header workspace-floating-window-header">
+                  <div className="workspace-floating-window-title">
+                    <div className="dashboard-eyebrow">Members</div>
+                    <strong>Add member to {selectedOrganization?.name}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="workspace-floating-window-close"
+                    onClick={closeOrganizationPopup}
+                    aria-label="Close window"
+                  >
+                    ×
+                  </button>
                 </div>
 
                 <label className="form-label">
@@ -1107,7 +1127,7 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
                   </select>
                 </label>
 
-                <div className="button-row contextual-create-actions">
+                <div className="button-row contextual-create-actions workspace-floating-window-actions">
                   <button
                     type="submit"
                     className="ui-button ui-button-primary"
@@ -1129,12 +1149,22 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
             {activeOrganizationPopup === "edit-organization" &&
             selectedOrganization ? (
               <form
-                className="project-form contextual-create-surface workspace-action-popup"
+                className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
                 onSubmit={handleUpdateOrganization}
               >
-                <div className="workspace-action-popup-header">
-                  <div className="dashboard-eyebrow">Edit</div>
-                  <strong>{selectedOrganization.name}</strong>
+                <div className="workspace-action-popup-header workspace-floating-window-header">
+                  <div className="workspace-floating-window-title">
+                    <div className="dashboard-eyebrow">Edit</div>
+                    <strong>{selectedOrganization.name}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="workspace-floating-window-close"
+                    onClick={closeOrganizationPopup}
+                    aria-label="Close window"
+                  >
+                    ×
+                  </button>
                 </div>
                 <label className="form-label">
                   Organization name
@@ -1156,7 +1186,7 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
                   />
                 </label>
 
-                <div className="button-row contextual-create-actions">
+                <div className="button-row contextual-create-actions workspace-floating-window-actions">
                   <button
                     type="submit"
                     className="ui-button ui-button-primary"
@@ -1177,17 +1207,27 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
 
             {activeOrganizationPopup === "delete-organization" &&
             selectedOrganization ? (
-              <div className="project-form contextual-create-surface workspace-action-popup">
-                <div className="workspace-action-popup-header">
-                  <div className="dashboard-eyebrow">Delete</div>
-                  <strong>Delete {selectedOrganization.name}?</strong>
+              <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+                <div className="workspace-action-popup-header workspace-floating-window-header">
+                  <div className="workspace-floating-window-title">
+                    <div className="dashboard-eyebrow">Delete</div>
+                    <strong>Delete {selectedOrganization.name}?</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="workspace-floating-window-close"
+                    onClick={closeOrganizationPopup}
+                    aria-label="Close window"
+                  >
+                    ×
+                  </button>
                 </div>
                 <p className="workspace-action-popup-copy">
                   This will permanently remove the organization and its related
                   projects, members, and workspace context. Your user account
                   will stay intact.
                 </p>
-                <div className="button-row contextual-create-actions">
+                <div className="button-row contextual-create-actions workspace-floating-window-actions">
                   <button
                     type="button"
                     className="ui-button ui-button-danger"
@@ -1210,19 +1250,29 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
             {activeOrganizationPopup === "remove-member" &&
             selectedOrganization &&
             selectedRemovalMember ? (
-              <div className="project-form contextual-create-surface workspace-action-popup">
-                <div className="workspace-action-popup-header">
-                  <div className="dashboard-eyebrow">Members</div>
-                  <strong>
-                    Remove {displayUserName(selectedRemovalMember.user)}?
-                  </strong>
+              <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+                <div className="workspace-action-popup-header workspace-floating-window-header">
+                  <div className="workspace-floating-window-title">
+                    <div className="dashboard-eyebrow">Members</div>
+                    <strong>
+                      Remove {displayUserName(selectedRemovalMember.user)}?
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="workspace-floating-window-close"
+                    onClick={closeOrganizationPopup}
+                    aria-label="Close window"
+                  >
+                    ×
+                  </button>
                 </div>
                 <p className="workspace-action-popup-copy">
                   {selectedRemovalMember.user?.email || "This member"} will lose
                   access to {selectedOrganization.name}, but their user account
                   will remain untouched.
                 </p>
-                <div className="button-row contextual-create-actions">
+                <div className="button-row contextual-create-actions workspace-floating-window-actions">
                   <button
                     type="button"
                     className="ui-button ui-button-danger"

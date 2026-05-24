@@ -1803,10 +1803,10 @@ export default function ProjectsWorkspace({
         )}
 
         {activeWorkspacePopup ? (
-          <div className="project-workspace-popup-layer" role="presentation">
+          <div className="project-workspace-popup-layer workspace-floating-window-layer" role="presentation">
             <button
               type="button"
-              className="project-workspace-popup-backdrop"
+              className="project-workspace-popup-backdrop workspace-floating-window-backdrop"
               onMouseDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -1820,7 +1820,7 @@ export default function ProjectsWorkspace({
             />
 
             <div
-              className="project-workspace-popup-shell"
+              className="project-workspace-popup-shell workspace-floating-window-shell"
               onMouseDown={(event) => {
                 event.stopPropagation();
               }}
@@ -1830,12 +1830,22 @@ export default function ProjectsWorkspace({
             >
               {activeWorkspacePopup === "create-project" ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup"
+                  className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
                   onSubmit={handleCreateProject}
                 >
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Create</div>
-                    <strong>New Project</strong>
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Create</div>
+                      <strong>New Project</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <label className="form-label">
                     Project name
@@ -1856,7 +1866,7 @@ export default function ProjectsWorkspace({
                       rows={3}
                     />
                   </label>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="submit"
                       className="ui-button ui-button-primary"
@@ -1877,12 +1887,22 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "edit-project" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup"
+                  className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
                   onSubmit={handleUpdateProject}
                 >
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Edit</div>
-                    <strong>Project Details</strong>
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Edit</div>
+                      <strong>Project Details</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <label className="form-label">
                     Name
@@ -1901,7 +1921,7 @@ export default function ProjectsWorkspace({
                       rows={3}
                     />
                   </label>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="submit"
                       className="ui-button ui-button-dark"
@@ -1922,12 +1942,22 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "create-task" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-compact"
+                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-compact workspace-floating-window"
                   onSubmit={handleCreateProjectTask}
                 >
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Create</div>
-                    <strong>Task in {selectedProject.name}</strong>
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Create</div>
+                      <strong>Task in {selectedProject.name}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <label className="form-label">
                     Task title
@@ -1957,7 +1987,7 @@ export default function ProjectsWorkspace({
                       onChange={(event) => setNewTaskDueDate(event.target.value)}
                     />
                   </label>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="submit"
                       className="ui-button ui-button-primary"
@@ -1978,12 +2008,22 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "create-note" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-compact"
+                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-compact workspace-floating-window"
                   onSubmit={handleCreateProjectNote}
                 >
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Create</div>
-                    <strong>Project Note</strong>
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Create</div>
+                      <strong>Project Note</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <label className="form-label">
                     Note title
@@ -2004,7 +2044,7 @@ export default function ProjectsWorkspace({
                       rows={3}
                     />
                   </label>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="submit"
                       className="ui-button ui-button-primary"
@@ -2025,12 +2065,22 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "add-member" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide"
+                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide workspace-floating-window"
                   onSubmit={handleAddProjectMember}
                 >
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Members</div>
-                    <strong>Add member to {selectedProject.name}</strong>
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Members</div>
+                      <strong>Add member to {selectedProject.name}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
 
                   <label className="form-label">
@@ -2084,7 +2134,7 @@ export default function ProjectsWorkspace({
                     </div>
                   )}
 
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="submit"
                       className="ui-button ui-button-primary"
@@ -2104,15 +2154,25 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeWorkspacePopup === "delete-project" && selectedProject ? (
-                <div className="project-form contextual-create-surface workspace-action-popup">
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Delete</div>
-                    <strong>Delete {selectedProject.name}?</strong>
+                <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Delete</div>
+                      <strong>Delete {selectedProject.name}?</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <p className="workspace-action-popup-copy">
                     This will permanently remove the project and its task workspace. Organization access and other projects will stay untouched.
                   </p>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="button"
                       className="ui-button ui-button-danger"
@@ -2135,15 +2195,25 @@ export default function ProjectsWorkspace({
               {activeWorkspacePopup === "remove-member" &&
               selectedProject &&
               selectedRemovalMember ? (
-                <div className="project-form contextual-create-surface workspace-action-popup">
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Members</div>
-                    <strong>Remove {getMemberName(selectedRemovalMember)}?</strong>
+                <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Members</div>
+                      <strong>Remove {getMemberName(selectedRemovalMember)}?</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <p className="workspace-action-popup-copy">
                     {getMemberEmail(selectedRemovalMember) || "This member"} will lose access to {selectedProject.name}, but will remain in the organization.
                   </p>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="button"
                       className="ui-button ui-button-danger"
@@ -2165,15 +2235,25 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "edit-note" && selectedProjectNote ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide"
+                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide workspace-floating-window"
                   onSubmit={(event) => {
                     event.preventDefault();
                     handleSaveProjectNote();
                   }}
                 >
-                  <div className="workspace-action-popup-header">
-                    <div className="dashboard-eyebrow">Edit</div>
-                    <strong>{selectedProjectNote.title}</strong>
+                  <div className="workspace-action-popup-header workspace-floating-window-header">
+                    <div className="workspace-floating-window-title">
+                      <div className="dashboard-eyebrow">Edit</div>
+                      <strong>{selectedProjectNote.title}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="workspace-floating-window-close"
+                      onClick={closeWorkspacePopup}
+                      aria-label="Close window"
+                    >
+                      ×
+                    </button>
                   </div>
                   <label className="form-label">
                     Title
@@ -2192,7 +2272,7 @@ export default function ProjectsWorkspace({
                       rows={6}
                     />
                   </label>
-                  <div className="button-row contextual-create-actions">
+                  <div className="button-row contextual-create-actions workspace-floating-window-actions">
                     <button
                       type="submit"
                       className="ui-button ui-button-dark"
