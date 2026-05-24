@@ -158,7 +158,12 @@ const matchesNoteSearch = (note, search) => {
 const getProjectId = (note) => note.projectId || note.project?.id || "";
 const getTaskId = (note) => note.taskId || note.task?.id || "";
 
-export default function NotesWorkspace({ token, onOpenProject, onOpenTask }) {
+export default function NotesWorkspace({
+  token,
+  onOpenProject,
+  onOpenTask,
+  onRememberNote,
+}) {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = usePersistentState(
     "opsflow.notes.selectedOrgId",
@@ -286,6 +291,37 @@ export default function NotesWorkspace({ token, onOpenProject, onOpenTask }) {
   const selectedNoteVisible = Boolean(
     selectedNoteId && visibleNotes.some((note) => note.id === selectedNoteId)
   );
+
+  useEffect(() => {
+    if (!selectedNote) {
+      return;
+    }
+
+    onRememberNote?.({
+      ...selectedNote,
+      organizationId:
+        selectedNote.organizationId ||
+        selectedOrganization?.id ||
+        selectedOrgId ||
+        "",
+    });
+  }, [onRememberNote, selectedNote, selectedOrganization, selectedOrgId]);
+
+  const handleSelectNote = (note) => {
+    if (!note?.id) {
+      return;
+    }
+
+    onRememberNote?.({
+      ...note,
+      noteId: note.id,
+      organizationId:
+        note.organizationId || selectedOrganization?.id || selectedOrgId || "",
+      projectId: note.projectId || note.project?.id || "",
+      taskId: note.taskId || note.task?.id || "",
+    });
+    setSelectedNoteId(note.id);
+  };
 
   const handleOpenProjectFromNote = (note) => {
     const projectId = getProjectId(note);
@@ -806,7 +842,7 @@ export default function NotesWorkspace({ token, onOpenProject, onOpenTask }) {
                             <button
                               type="button"
                               className="note-list-item-main"
-                              onClick={() => setSelectedNoteId(note.id)}
+                              onClick={() => handleSelectNote(note)}
                             >
                               <div className="note-list-item-header">
                                 <span>{note.project?.name || "General note"}</span>
@@ -863,7 +899,7 @@ export default function NotesWorkspace({ token, onOpenProject, onOpenTask }) {
                           <button
                             type="button"
                             className="note-list-item-main"
-                            onClick={() => setSelectedNoteId(note.id)}
+                            onClick={() => handleSelectNote(note)}
                           >
                             <div className="note-list-item-header">
                               <span>{note.project?.name || "General note"}</span>
@@ -1084,7 +1120,7 @@ export default function NotesWorkspace({ token, onOpenProject, onOpenTask }) {
                         <button
                           type="button"
                           className="linked-note-main"
-                          onClick={() => setSelectedNoteId(note.id)}
+                          onClick={() => handleSelectNote(note)}
                         >
                           <div className="note-card-topline">
                             <span>{note.project?.name || "General"}</span>

@@ -336,6 +336,22 @@ export default function ProjectsWorkspace({
   }, [onRememberProject]);
 
   useEffect(() => {
+    if (!selectedProject?.id) {
+      return;
+    }
+
+    onRememberProject?.({
+      id: selectedProject.id,
+      projectId: selectedProject.id,
+      name: selectedProject.name,
+      title: selectedProject.name,
+      organizationId: selectedOrganization?.id || selectedProject.organizationId,
+      orgId: selectedOrganization?.id || selectedProject.organizationId,
+      orgName: selectedOrganization?.name,
+    });
+  }, [onRememberProject, selectedOrganization?.id, selectedOrganization?.name, selectedProject]);
+
+  useEffect(() => {
     let active = true;
 
     const loadOrganizations = async () => {

@@ -115,10 +115,21 @@ export default function Dashboard({ token, onLogout }) {
     "opsflow.recentProjects",
     []
   );
+  const [recentOrganizationHistory, setRecentOrganizationHistory] =
+    usePersistentState("opsflow.recentOrganizations", []);
+  const [recentNoteHistory, setRecentNoteHistory] = usePersistentState(
+    "opsflow.recentNotes",
+    []
+  );
   const [recentWorkOpen, setRecentWorkOpen] = usePersistentState(
     "opsflow.recentWorkOpen",
     false
   );
+  const [workspaceRenderNonce, setWorkspaceRenderNonce] = useState({
+    organizations: 0,
+    projects: 0,
+    notes: 0,
+  });
   const [contextMode, setContextMode] = useState(
     selectedTaskId ? "details" : activeView === "tasks" ? "empty" : "workspace"
   );
@@ -209,9 +220,71 @@ export default function Dashboard({ token, onLogout }) {
     setRecentProjectHistory((current) =>
       rememberRecentEntry(current, {
         id: project.id,
+        type: "project",
+        projectId: project.id,
+        organizationId: project.organizationId || project.orgId || "",
         orgId: project.organizationId || project.orgId || "",
         title: project.name || project.title || "Project",
         label: project.orgName || "Project",
+        recentAt,
+      })
+    );
+  };
+
+  const rememberOrganization = (
+    organization,
+    recentAt = new Date().toISOString()
+  ) => {
+    const organizationId = organization?.organizationId || organization?.id;
+
+    if (!organizationId) {
+      return;
+    }
+
+    setRecentOrganizationHistory((current) =>
+      rememberRecentEntry(current, {
+        id: organizationId,
+        type: "organization",
+        organizationId,
+        title: organization.name || organization.title || "Organization",
+        label: "Organization",
+        meta: [
+          organization.slug ? `@${organization.slug}` : "",
+          typeof organization.memberCount === "number"
+            ? `${organization.memberCount} member${
+                organization.memberCount === 1 ? "" : "s"
+              }`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" - "),
+        recentAt,
+      })
+    );
+  };
+
+  const rememberNote = (note, recentAt = new Date().toISOString()) => {
+    if (!note?.id) {
+      return;
+    }
+
+    setRecentNoteHistory((current) =>
+      rememberRecentEntry(current, {
+        id: note.id,
+        type: "note",
+        noteId: note.id,
+        organizationId: note.organizationId || "",
+        orgId: note.organizationId || "",
+        projectId: note.projectId || note.project?.id || "",
+        taskId: note.taskId || note.task?.id || "",
+        title: note.title || "Untitled note",
+        label: note.project?.name || "Note",
+        meta: [
+          note.kind === "REFERENCE" ? "Reference" : "Note",
+          note.task?.title ? `Task: ${note.task.title}` : "",
+        ]
+          .filter(Boolean)
+          .join(" - "),
         recentAt,
       })
     );
@@ -399,6 +472,11 @@ export default function Dashboard({ token, onLogout }) {
       })),
     [recentProjectHistory]
   );
+  const recentWorkOrganizations = useMemo(
+    () => recentOrganizationHistory,
+    [recentOrganizationHistory]
+  );
+  const recentWorkNotes = useMemo(() => recentNoteHistory, [recentNoteHistory]);
 
   const filteredTasks = useMemo(() => {
     const today = startOfToday();
@@ -522,35 +600,93 @@ export default function Dashboard({ token, onLogout }) {
     window.localStorage.removeItem("opsflow.projects.selectedOrgId");
     window.localStorage.removeItem("opsflow.projects.selectedProjectId");
     window.localStorage.removeItem("opsflow.recentProjects");
+    window.localStorage.removeItem("opsflow.organizations.selectedOrgId");
+    window.localStorage.removeItem("opsflow.organizations.activeTab");
+    window.localStorage.removeItem("opsflow.recentOrganizations");
     window.localStorage.removeItem("opsflow.recentWorkOpen");
     window.localStorage.removeItem("opsflow.notes.selectedOrgId");
     window.localStorage.removeItem("opsflow.notes.selectedNoteId");
     window.localStorage.removeItem("opsflow.notes.search");
+    window.localStorage.removeItem("opsflow.notes.projectFilterId");
+    window.localStorage.removeItem("opsflow.notes.taskFilterId");
+    window.localStorage.removeItem("opsflow.recentNotes");
     setActiveView("tasks");
     setActiveTaskLayout("kanban");
     setTaskFilters(defaultTaskFilters);
     setRecentTaskHistory([]);
     setRecentProjectHistory([]);
+    setRecentOrganizationHistory([]);
+    setRecentNoteHistory([]);
     setRecentWorkOpen(false);
     setSelectedTaskId(null);
     setContextMode("empty");
   };
 
   const openRecentProject = (project) => {
-    if (!project?.id) {
+    const projectId = project?.projectId || project?.id;
+    const organizationId =
+      project?.organizationId || project?.orgId || "";
+
+    if (!projectId) {
       return;
     }
 
     rememberProject(project);
 
-    if (project.orgId) {
-      persistWorkspaceValue("opsflow.projects.selectedOrgId", project.orgId);
+    if (organizationId) {
+      persistWorkspaceValue("opsflow.projects.selectedOrgId", organizationId);
     }
 
-    persistWorkspaceValue("opsflow.projects.selectedProjectId", project.id);
+    persistWorkspaceValue("opsflow.projects.selectedProjectId", projectId);
     setSelectedTaskId(null);
     setActiveView("projects");
     setContextMode("workspace");
+    setWorkspaceRenderNonce((current) => ({
+      ...current,
+      projects: current.projects + 1,
+    }));
+  };
+
+  const openRecentOrganization = (organization) => {
+    const organizationId = organization?.organizationId || organization?.id;
+
+    if (!organizationId) {
+      return;
+    }
+
+    rememberOrganization(organization);
+    persistWorkspaceValue("opsflow.organizations.selectedOrgId", organizationId);
+    setSelectedTaskId(null);
+    setActiveView("organizations");
+    setContextMode("workspace");
+    setWorkspaceRenderNonce((current) => ({
+      ...current,
+      organizations: current.organizations + 1,
+    }));
+  };
+
+  const openRecentNote = (note) => {
+    const noteId = note?.noteId || note?.id;
+    const organizationId = note?.organizationId || note?.orgId || "";
+
+    if (!noteId) {
+      return;
+    }
+
+    rememberNote(note);
+
+    if (organizationId) {
+      persistWorkspaceValue("opsflow.notes.selectedOrgId", organizationId);
+    }
+
+    persistWorkspaceValue("opsflow.notes.selectedNoteId", noteId);
+    setSelectedTaskId(null);
+    setActiveView("notes");
+    setContextMode("workspace");
+    setWorkspaceRenderNonce((current) => ({
+      ...current,
+      notes: current.notes + 1,
+    }));
   };
 
   const renderActiveTasks = () => {
@@ -648,8 +784,10 @@ export default function Dashboard({ token, onLogout }) {
       if (activeView === "organizations") {
         return (
           <OrganizationsWorkspace
+            key={`organizations-${workspaceRenderNonce.organizations}`}
             token={token}
             onOpenProject={openRecentProject}
+            onRememberOrganization={rememberOrganization}
           />
         );
       }
@@ -657,6 +795,7 @@ export default function Dashboard({ token, onLogout }) {
       if (activeView === "projects") {
         return (
           <ProjectsWorkspace
+            key={`projects-${workspaceRenderNonce.projects}`}
             token={token}
             onSelectTask={selectTask}
             onRememberProject={rememberProject}
@@ -667,9 +806,11 @@ export default function Dashboard({ token, onLogout }) {
       if (activeView === "notes") {
         return (
           <NotesWorkspace
+            key={`notes-${workspaceRenderNonce.notes}`}
             token={token}
             onOpenProject={openRecentProject}
             onOpenTask={selectTask}
+            onRememberNote={rememberNote}
           />
         );
       }
@@ -1038,9 +1179,13 @@ return (
               .filter(Boolean)
               .join(" - "),
           }))}
+          recentOrganizations={recentWorkOrganizations}
           recentProjects={recentWorkProjects}
+          recentNotes={recentWorkNotes}
+          onSelectOrganization={openRecentOrganization}
           onSelectTask={selectTask}
           onSelectProject={openRecentProject}
+          onSelectNote={openRecentNote}
         />
       </aside>
 

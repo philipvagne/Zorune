@@ -47,7 +47,7 @@ function RecentWorkSection({
         <div className="recent-work-list">
           {items.map((item) => (
             <button
-              key={item.id}
+              key={`${item.type || title}-${item.id}`}
               type="button"
               className="recent-work-item"
               onClick={() => onSelect?.(item)}
@@ -70,10 +70,14 @@ function RecentWorkSection({
 
 export default function RecentWorkPanel({
   isOpen,
+  recentOrganizations,
   recentTasks,
   recentProjects,
+  recentNotes,
+  onSelectOrganization,
   onSelectTask,
   onSelectProject,
+  onSelectNote,
 }) {
   if (!isOpen) {
     return null;
@@ -86,19 +90,35 @@ export default function RecentWorkPanel({
         <span>Quiet continuity</span>
       </div>
 
-      <RecentWorkSection
-        title="Tasks"
-        items={recentTasks}
-        emptyText="No recent task work yet."
-        onSelect={onSelectTask}
-      />
+      <div className="recent-work-panel-body">
+        <RecentWorkSection
+          title="Organizations"
+          items={recentOrganizations}
+          emptyText="No recent organization context yet."
+          onSelect={onSelectOrganization}
+        />
 
-      <RecentWorkSection
-        title="Projects"
-        items={recentProjects}
-        emptyText="No recent project work yet."
-        onSelect={onSelectProject}
-      />
+        <RecentWorkSection
+          title="Tasks"
+          items={recentTasks}
+          emptyText="No recent task work yet."
+          onSelect={onSelectTask}
+        />
+
+        <RecentWorkSection
+          title="Projects"
+          items={recentProjects}
+          emptyText="No recent project work yet."
+          onSelect={onSelectProject}
+        />
+
+        <RecentWorkSection
+          title="Notes"
+          items={recentNotes}
+          emptyText="No recent notes yet."
+          onSelect={onSelectNote}
+        />
+      </div>
     </div>
   );
 }

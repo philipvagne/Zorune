@@ -44,7 +44,11 @@ const getMemberRoleRank = (role) => {
   return 4;
 };
 
-export default function OrganizationsWorkspace({ token, onOpenProject }) {
+export default function OrganizationsWorkspace({
+  token,
+  onOpenProject,
+  onRememberOrganization,
+}) {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = usePersistentState(
     "opsflow.organizations.selectedOrgId",
@@ -164,6 +168,28 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
       null,
     [members, selectedRemovalMembershipId]
   );
+
+  useEffect(() => {
+    if (!selectedOrganization) {
+      return;
+    }
+
+    onRememberOrganization?.({
+      ...selectedOrganization,
+      memberCount:
+        memberCountsByOrgId[selectedOrganization.id] ??
+        selectedOrganization.memberCount,
+      projectCount:
+        projectCountsByOrgId[selectedOrganization.id] ??
+        selectedOrganization.projectCount,
+    });
+  }, [
+    memberCountsByOrgId,
+    onRememberOrganization,
+    projectCountsByOrgId,
+    selectedOrganization,
+  ]);
+
   const activeOrganizationPopup = showOrganizationCreateForm
     ? "create-organization"
     : showOrganizationEditForm
