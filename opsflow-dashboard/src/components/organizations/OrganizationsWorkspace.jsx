@@ -639,6 +639,10 @@ export default function OrganizationsWorkspace({
                     organization.memberCount ??
                     memberCountsByOrgId[organization.id] ??
                     null;
+                  const projectCount =
+                    organization.projectCount ??
+                    projectCountsByOrgId[organization.id] ??
+                    null;
 
                   return (
                     <button
@@ -658,12 +662,21 @@ export default function OrganizationsWorkspace({
                         <div className="organization-card-copy">
                           <strong>{organization.name}</strong>
                           <span>{organization.slug || "Operational workspace"}</span>
+                          <div className="organization-card-meta">
+                            <span className="organization-card-role">
+                              {organization.role}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       <div className="project-card-footer organization-card-footer">
                         <div className="project-count-row organization-count-row">
-                          <span>{organization.role}</span>
+                          {projectCount !== null ? (
+                            <span>
+                              {projectCount} project{projectCount === 1 ? "" : "s"}
+                            </span>
+                          ) : null}
                           {memberCount !== null ? (
                             <span>
                               {memberCount} member{memberCount === 1 ? "" : "s"}

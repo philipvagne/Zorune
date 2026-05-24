@@ -1957,17 +1957,18 @@ button:active:not(:disabled),
   flex: 1;
   min-height: 0;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .organization-collection-controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  padding-bottom: 2px;
 }
 
 .organization-create-block {
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
 .organization-create-form {
@@ -1982,38 +1983,49 @@ button:active:not(:disabled),
   flex: 1;
   min-height: 0;
   flex-direction: column;
+  padding-top: 2px;
 }
 
 .organization-card-grid {
   min-height: 0;
+  gap: 10px;
+  padding-top: 2px;
+  padding-right: 4px;
 }
 
 .organization-card {
-  gap: 12px;
+  gap: 10px;
+  border-color: rgba(148, 163, 184, 0.06);
+  border-radius: 20px;
+  padding: 13px 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.14)),
+    rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 
 .organization-card-head {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 11px;
 }
 
 .organization-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   background:
-    linear-gradient(135deg, rgba(224, 231, 255, 0.95), rgba(255, 255, 255, 0.9));
+    linear-gradient(135deg, rgba(224, 231, 255, 0.9), rgba(255, 255, 255, 0.82));
   color: #4f46e5;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.06);
 }
 
 .organization-card-copy {
@@ -2027,18 +2039,41 @@ button:active:not(:disabled),
 }
 
 .organization-card-copy span {
-  margin-top: 4px;
+  margin-top: 3px;
   color: var(--text-muted);
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.4;
+}
+
+.organization-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.organization-card-role {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: rgba(71, 85, 105, 0.82);
+  background: rgba(248, 250, 252, 0.72);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .organization-card-footer {
   align-items: center;
+  margin-top: 8px;
 }
 
 .organization-count-row {
   flex-wrap: wrap;
+  gap: 6px;
 }
 
 .organization-detail-content {
@@ -2189,6 +2224,31 @@ button:active:not(:disabled),
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     0 16px 32px rgba(15, 23, 42, 0.022);
+}
+
+.organization-card:hover {
+  border-color: rgba(148, 163, 184, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.18)),
+    rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.018);
+}
+
+.organization-card.active {
+  border-color: rgba(129, 140, 248, 0.12);
+  background:
+    linear-gradient(90deg, rgba(238, 242, 255, 0.4), rgba(255, 255, 255, 0.3));
+  box-shadow:
+    inset 2px 0 0 rgba(99, 102, 241, 0.58),
+    0 10px 22px rgba(15, 23, 42, 0.016);
+}
+
+.organization-count-row span {
+  padding: 3px 7px;
+  color: rgba(100, 116, 139, 0.84);
+  background: rgba(248, 250, 252, 0.66);
+  font-size: 10px;
+  font-weight: 650;
 }
 
 .organization-detail-panel,
