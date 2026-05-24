@@ -44,7 +44,7 @@ const getMemberRoleRank = (role) => {
   return 4;
 };
 
-export default function OrganizationsWorkspace({ token }) {
+export default function OrganizationsWorkspace({ token, onOpenProject }) {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = usePersistentState(
     "opsflow.organizations.selectedOrgId",
@@ -878,7 +878,24 @@ export default function OrganizationsWorkspace({ token }) {
                     <div className="organization-project-list-shell">
                       <div className="organization-project-list">
                         {projects.map((project) => (
-                          <div key={project.id} className="organization-project-row">
+                          <button
+                            key={project.id}
+                            type="button"
+                            className="organization-project-row"
+                            onClick={() =>
+                              onOpenProject?.({
+                                id: project.id,
+                                orgId:
+                                  project.organizationId || selectedOrganization.id,
+                                organizationId:
+                                  project.organizationId || selectedOrganization.id,
+                                name: project.name,
+                                title: project.name,
+                                orgName: selectedOrganization.name,
+                                label: selectedOrganization.name,
+                              })
+                            }
+                          >
                             <div className="organization-project-row-main">
                               <strong>{project.name}</strong>
                               <div className="organization-project-row-meta">
@@ -895,7 +912,7 @@ export default function OrganizationsWorkspace({ token }) {
                             <span className="organization-project-row-note">
                               {project.description || "No description yet"}
                             </span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>

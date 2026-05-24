@@ -646,7 +646,12 @@ export default function Dashboard({ token, onLogout }) {
       }
 
       if (activeView === "organizations") {
-        return <OrganizationsWorkspace token={token} />;
+        return (
+          <OrganizationsWorkspace
+            token={token}
+            onOpenProject={openRecentProject}
+          />
+        );
       }
 
       if (activeView === "projects") {
