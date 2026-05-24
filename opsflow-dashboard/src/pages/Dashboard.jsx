@@ -665,6 +665,25 @@ export default function Dashboard({ token, onLogout }) {
     }));
   };
 
+  const openProjectsWorkspaceForOrganization = (organization) => {
+    const organizationId = organization?.organizationId || organization?.id;
+
+    if (!organizationId) {
+      return;
+    }
+
+    rememberOrganization(organization);
+    persistWorkspaceValue("opsflow.projects.selectedOrgId", organizationId);
+    persistWorkspaceValue("opsflow.projects.selectedProjectId", "");
+    setSelectedTaskId(null);
+    setActiveView("projects");
+    setContextMode("workspace");
+    setWorkspaceRenderNonce((current) => ({
+      ...current,
+      projects: current.projects + 1,
+    }));
+  };
+
   const openRecentNote = (note) => {
     const noteId = note?.noteId || note?.id;
     const organizationId = note?.organizationId || note?.orgId || "";
@@ -787,6 +806,7 @@ export default function Dashboard({ token, onLogout }) {
             key={`organizations-${workspaceRenderNonce.organizations}`}
             token={token}
             onOpenProject={openRecentProject}
+            onOpenProjectsWorkspace={openProjectsWorkspaceForOrganization}
             onRememberOrganization={rememberOrganization}
           />
         );

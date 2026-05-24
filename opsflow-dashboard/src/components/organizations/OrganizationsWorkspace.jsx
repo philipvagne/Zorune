@@ -17,9 +17,6 @@ const memberRoleOptions = ["ALL", "OWNER", "ADMIN", "MEMBER", "VIEWER"];
 const displayUserName = (user) =>
   user?.fullName || user?.username || user?.email || "Unknown user";
 
-const formatDate = (date) =>
-  date ? new Date(date).toLocaleDateString() : "Unknown";
-
 const getOrganizationInitials = (organization) => {
   const label = organization?.name?.trim() || "";
 
@@ -36,6 +33,87 @@ const getOrganizationInitials = (organization) => {
   return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
 };
 
+const getOrganizationPreviewMembers = (organization, fallbackMembers = []) => {
+  const directMembers = Array.isArray(organization?.members)
+    ? organization.members
+    : [];
+  const memberPreview = Array.isArray(organization?.memberPreview)
+    ? organization.memberPreview
+    : [];
+  const memberships = Array.isArray(organization?.memberships)
+    ? organization.memberships
+        .map((membership) => membership?.user || membership)
+        .filter(Boolean)
+    : [];
+
+  const source = directMembers.length
+    ? directMembers
+    : memberPreview.length
+      ? memberPreview
+      : memberships.length
+        ? memberships
+        : fallbackMembers;
+
+  return source
+    .map((member) => member?.user || member)
+    .filter(Boolean);
+};
+
+const formatProjectStatus = (status) => {
+  if (!status) return "";
+
+  const normalized = String(status).toUpperCase();
+
+  if (normalized === "IN_PROGRESS") return "In Progress";
+  if (normalized === "DONE") return "Done";
+  if (normalized === "TODO") return "Todo";
+
+  return String(status)
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const formatProjectDueDate = (date) => {
+  if (!date) return "";
+  const parsed = new Date(date);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return parsed.toLocaleDateString();
+};
+
+const getProjectStatusState = (project) => {
+  const rawStatus = String(project?.status || "").toUpperCase();
+  const dueDate = project?.dueDate ? new Date(project.dueDate) : null;
+  const isValidDueDate =
+    dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+  const isDone = ["DONE", "COMPLETED", "ARCHIVED", "CLOSED"].includes(rawStatus);
+
+  if (!isDone && isValidDueDate && dueDate.getTime() < Date.now()) {
+    return { label: "Overdue", tone: "overdue" };
+  }
+
+  if (rawStatus === "DONE" || rawStatus === "COMPLETED") {
+    return { label: "Done", tone: "done" };
+  }
+
+  if (rawStatus === "IN_PROGRESS") {
+    return { label: "In Progress", tone: "in-progress" };
+  }
+
+  if (rawStatus === "TODO") {
+    return { label: "Todo", tone: "todo" };
+  }
+
+  return {
+    label: formatProjectStatus(project?.status) || "Active",
+    tone: "neutral",
+  };
+};
+
 const getMemberRoleRank = (role) => {
   if (role === "OWNER") return 0;
   if (role === "ADMIN") return 1;
@@ -47,6 +125,7 @@ const getMemberRoleRank = (role) => {
 export default function OrganizationsWorkspace({
   token,
   onOpenProject,
+  onOpenProjectsWorkspace,
   onRememberOrganization,
 }) {
   const [organizations, setOrganizations] = useState([]);
@@ -119,6 +198,19 @@ export default function OrganizationsWorkspace({
         selectedOrganization?.name || project.organization?.name || "Team",
     });
   };
+  const handleOpenProjectsWorkspace = () => {
+    if (!selectedOrganization) {
+      return;
+    }
+
+    onOpenProjectsWorkspace?.({
+      id: selectedOrganization.id,
+      organizationId: selectedOrganization.id,
+      name: selectedOrganization.name,
+      title: selectedOrganization.name,
+      label: selectedOrganization.name,
+    });
+  };
 
   const canManageSelectedOrganization =
     selectedOrganization &&
@@ -168,6 +260,49 @@ export default function OrganizationsWorkspace({
       null,
     [members, selectedRemovalMembershipId]
   );
+  const selectedOrganizationMemberCount = selectedOrganization
+    ? memberCountsByOrgId[selectedOrganization.id] ?? members.length
+    : 0;
+  const selectedOrganizationProjectCount = selectedOrganization
+    ? projectCountsByOrgId[selectedOrganization.id] ?? projects.length
+    : 0;
+  const organizationOverviewStats = useMemo(() => {
+    const now = Date.now();
+    let activeProjectCount = 0;
+    let doneProjectCount = 0;
+    let overdueProjectCount = 0;
+
+    projects.forEach((project) => {
+      const status = String(project?.status || "").toUpperCase();
+      const activeTasks = Number(project?.taskCounts?.totalActive || 0);
+      const doneTasks = Number(project?.taskCounts?.done || 0);
+      const dueDate = project?.dueDate ? new Date(project.dueDate) : null;
+      const hasValidDueDate =
+        dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+      const isDone = status
+        ? ["DONE", "COMPLETED", "ARCHIVED", "CLOSED"].includes(status)
+        : activeTasks === 0 && doneTasks > 0;
+      const isActive = status ? !isDone : !isDone;
+
+      if (isDone) {
+        doneProjectCount += 1;
+      }
+
+      if (isActive) {
+        activeProjectCount += 1;
+      }
+
+      if (isActive && hasValidDueDate && dueDate.getTime() < now) {
+        overdueProjectCount += 1;
+      }
+    });
+
+    return {
+      activeProjectCount,
+      doneProjectCount,
+      overdueProjectCount,
+    };
+  }, [projects]);
 
   useEffect(() => {
     if (!selectedOrganization) {
@@ -591,42 +726,27 @@ export default function OrganizationsWorkspace({
       {error ? <div className="form-error org-error">{error}</div> : null}
 
       <section className="project-panel organization-collection-pane">
-        <div className="project-panel-header project-collection-header">
-          <div>
-            <div className="dashboard-eyebrow">Teams</div>
-            <h4>Operational teams</h4>
-          </div>
-        </div>
-
         <div className="organization-collection-body">
-          <div className="organization-collection-controls">
-            <div className="organization-create-block">
-              <div className="dashboard-eyebrow">Create</div>
-              <div className="contextual-create-block">
-                <button
-                  className="contextual-create-button"
-                  type="button"
-                  onClick={() => {
-                    setShowOrganizationCreateForm(true);
-                  }}
-                >
-                  + Create Team
-                </button>
-              </div>
+          <div className="organization-collection-topbar">
+            <div>
+              <h4>Your Teams</h4>
+              <p>Switch between shared team workspaces.</p>
             </div>
+            <button
+              className="contextual-create-button"
+              type="button"
+              onClick={() => {
+                setShowOrganizationCreateForm(true);
+              }}
+            >
+              + Create Team
+            </button>
           </div>
 
           <div className="project-list-panel organization-list-panel">
-            <div className="project-panel-header project-list-header">
-              <div>
-                <div className="dashboard-eyebrow">Collection</div>
-                <h4>Your teams</h4>
-              </div>
-            </div>
-
             {organizations.length === 0 ? (
               <div className="org-empty-state">
-                <h4>No team yet</h4>
+                <h4>No teams yet</h4>
                 <p>
                   Create a team to group members, projects, and shared
                   workspaces.
@@ -643,6 +763,15 @@ export default function OrganizationsWorkspace({
                     organization.projectCount ??
                     projectCountsByOrgId[organization.id] ??
                     null;
+                  const previewMembers = getOrganizationPreviewMembers(
+                    organization,
+                    organization.id === selectedOrgId ? members : []
+                  );
+                  const visiblePreviewMembers = previewMembers.slice(0, 2);
+                  const remainingPreviewCount = Math.max(
+                    0,
+                    (memberCount ?? previewMembers.length) - visiblePreviewMembers.length
+                  );
 
                   return (
                     <button
@@ -655,31 +784,39 @@ export default function OrganizationsWorkspace({
                       }
                       onClick={() => handleSelectOrganization(organization.id)}
                     >
-                      <div className="organization-card-head">
+                      <div className="organization-card-head organization-card-main">
                         <span className="organization-avatar">
                           {getOrganizationInitials(organization)}
                         </span>
                         <div className="organization-card-copy">
                           <strong>{organization.name}</strong>
-                          <span>{organization.slug || "Operational workspace"}</span>
-                          <div className="organization-card-meta">
-                            <span className="organization-card-role">
-                              {organization.role}
-                            </span>
+                          <div className="project-count-row organization-count-row">
+                            {projectCount !== null ? (
+                              <span>
+                                {projectCount} project{projectCount === 1 ? "" : "s"}
+                              </span>
+                            ) : null}
+                            {memberCount !== null ? (
+                              <span>
+                                {memberCount} member{memberCount === 1 ? "" : "s"}
+                              </span>
+                            ) : null}
                           </div>
                         </div>
-                      </div>
-
-                      <div className="project-card-footer organization-card-footer">
-                        <div className="project-count-row organization-count-row">
-                          {projectCount !== null ? (
-                            <span>
-                              {projectCount} project{projectCount === 1 ? "" : "s"}
+                        <div className="project-member-avatar-stack organization-member-avatar-stack">
+                          {visiblePreviewMembers.map((member, index) => (
+                            <span
+                              key={`${organization.id}-member-preview-${member.id || member.email || index}`}
+                              className="project-member-avatar organization-member-avatar"
+                            >
+                              {getOrganizationInitials({
+                                name: displayUserName(member),
+                              })}
                             </span>
-                          ) : null}
-                          {memberCount !== null ? (
-                            <span>
-                              {memberCount} member{memberCount === 1 ? "" : "s"}
+                          ))}
+                          {remainingPreviewCount > 0 ? (
+                            <span className="project-member-avatar project-member-avatar-more organization-member-avatar">
+                              +{remainingPreviewCount}
                             </span>
                           ) : null}
                         </div>
@@ -706,9 +843,6 @@ export default function OrganizationsWorkspace({
                     {getOrganizationInitials(selectedOrganization)}
                   </span>
                   <div className="project-opened-tab-copy">
-                    <span className="project-opened-tab-label">
-                      Opened Team
-                    </span>
                     <strong>{selectedOrganization.name}</strong>
                   </div>
                 </div>
@@ -722,17 +856,6 @@ export default function OrganizationsWorkspace({
                   Close
                 </button>
               </div>
-            </div>
-
-            <div className="project-panel-header project-detail-header">
-              <div>
-                <div className="dashboard-eyebrow">Workspace Surface</div>
-                <h4>{selectedOrganization.name}</h4>
-                <div className="workspace-surface-subtitle">
-                  {selectedOrganization.slug || "Team workspace"}
-                </div>
-              </div>
-              <span className="role-pill">{selectedOrganization.role}</span>
             </div>
 
             <div
@@ -789,40 +912,62 @@ export default function OrganizationsWorkspace({
             <div className="project-detail-content organization-detail-content">
               {activeOrganizationTab === "overview" ? (
                 <div className="project-overview-surface organization-overview-surface">
-                  <div className="project-detail-stats">
-                    <div>
-                      <strong>
-                        {memberCountsByOrgId[selectedOrganization.id] ?? members.length}
-                      </strong>
-                      <span>Members</span>
+                  <div className="organization-overview-summary">
+                    <div className="organization-overview-copy">
+                      <h5>{selectedOrganization.name}</h5>
+                      <div className="organization-overview-context">
+                        <span>{selectedOrganizationMemberCount} members</span>
+                        <span>{selectedOrganizationProjectCount} projects</span>
+                      </div>
+                      <p className="project-surface-description">
+                        This team surface keeps your people, project access,
+                        and shared workspace structure in one calmer operational
+                        layer.
+                      </p>
+
+                      {canManageSelectedOrganization ? (
+                        <div className="project-overview-actions organization-overview-actions">
+                          <button
+                            type="button"
+                            className="contextual-create-button"
+                            onClick={() => {
+                              closeOrganizationPopup();
+                              setEditOrganizationName(selectedOrganization.name);
+                              setEditOrganizationSlug(selectedOrganization.slug || "");
+                              setShowOrganizationEditForm(true);
+                            }}
+                          >
+                            Edit Team
+                          </button>
+                          <button
+                            type="button"
+                            className="contextual-create-button contextual-create-button-danger"
+                            onClick={() => {
+                              closeOrganizationPopup();
+                              setShowOrganizationDeleteForm(true);
+                            }}
+                          >
+                            Delete Team
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
-                    <div>
-                      <strong>
-                        {projectCountsByOrgId[selectedOrganization.id] ?? projects.length}
-                      </strong>
-                      <span>Projects</span>
-                    </div>
-                    <div>
-                      <strong>{selectedOrganization.slug || "Default"}</strong>
-                      <span>Slug</span>
+
+                    <div className="project-detail-stats organization-overview-stats">
+                      <div>
+                        <strong>{organizationOverviewStats.activeProjectCount}</strong>
+                        <span>Active projects</span>
+                      </div>
+                      <div>
+                        <strong>{organizationOverviewStats.doneProjectCount}</strong>
+                        <span>Done projects</span>
+                      </div>
+                      <div>
+                        <strong>{organizationOverviewStats.overdueProjectCount}</strong>
+                        <span>Overdue projects</span>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="project-detail-meta">
-                    <span>Created {formatDate(selectedOrganization.createdAt)}</span>
-                    {selectedOrganization.updatedAt ? (
-                      <span>
-                        Updated {formatDate(selectedOrganization.updatedAt)}
-                      </span>
-                    ) : null}
-                    <span>Your role {selectedOrganization.role}</span>
-                  </div>
-
-                  <p className="project-surface-description">
-                    This team surface keeps your people, project access,
-                    and shared workspace structure in one calmer operational
-                    layer.
-                  </p>
                 </div>
               ) : null}
 
@@ -937,8 +1082,20 @@ export default function OrganizationsWorkspace({
                   <div className="project-surface-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Projects</div>
-                      <h5>Connected project spaces</h5>
+                      <h5>Project spaces on this team</h5>
+                      <p className="organization-projects-helper">
+                        Open a project space to move straight into its active work.
+                      </p>
                     </div>
+                    {canManageSelectedOrganization ? (
+                      <button
+                        type="button"
+                        className="contextual-create-button"
+                        onClick={handleOpenProjectsWorkspace}
+                      >
+                        Add Project
+                      </button>
+                    ) : null}
                   </div>
 
                   {loadingProjects ? (
@@ -949,31 +1106,136 @@ export default function OrganizationsWorkspace({
                     </div>
                   ) : (
                     <div className="organization-project-list-shell">
+                      <div className="organization-project-registry-head" aria-hidden="true">
+                        <span>Project</span>
+                        <span>Status</span>
+                        <span>Owner</span>
+                        <span>Members</span>
+                        <span>Due date</span>
+                      </div>
+
                       <div className="organization-project-list">
                         {projects.map((project) => (
-                          <button
-                            key={project.id}
-                            type="button"
-                            className="organization-project-row"
-                            onClick={() => handleOpenProjectWorkspace(project)}
-                          >
-                            <div className="organization-project-row-main">
-                              <strong>{project.name}</strong>
-                              <div className="organization-project-row-meta">
-                                <span>
-                                  {project.taskCounts?.totalActive || 0} active
-                                </span>
-                                <span>{project.taskCounts?.done || 0} done</span>
-                                <span>
-                                  {project.members?.length || 0} member
-                                  {(project.members?.length || 0) === 1 ? "" : "s"}
-                                </span>
-                              </div>
-                            </div>
-                            <span className="organization-project-row-note">
-                              {project.description || "No description yet"}
-                            </span>
-                          </button>
+                          (() => {
+                            const previewMembers = (project.members || [])
+                              .map((member) => member?.user || member)
+                              .filter(Boolean);
+                            const visibleMembers = previewMembers.slice(0, 3);
+                            const memberCount = previewMembers.length;
+                            const remainingMembers = Math.max(
+                              0,
+                              memberCount - visibleMembers.length
+                            );
+                            const ownerUser =
+                              project.owner ||
+                              project.assignee ||
+                              null;
+                            const projectOwner = ownerUser
+                              ? displayUserName(ownerUser)
+                              : "";
+                            const projectStatus = getProjectStatusState(project);
+                            const dueDate = formatProjectDueDate(project.dueDate);
+
+                            return (
+                              <button
+                                key={project.id}
+                                type="button"
+                                className="organization-project-row"
+                                onClick={() => handleOpenProjectWorkspace(project)}
+                              >
+                                <div className="organization-project-cell organization-project-cell-primary organization-project-row-main">
+                                  <span className="organization-project-mobile-label">
+                                    Project
+                                  </span>
+                                  <div className="organization-project-row-heading">
+                                    <strong>{project.name}</strong>
+                                  </div>
+
+                                  {project.description ? (
+                                    <p className="organization-project-row-description">
+                                      {project.description}
+                                    </p>
+                                  ) : null}
+                                </div>
+
+                                <div className="organization-project-cell organization-project-cell-status">
+                                  <span className="organization-project-mobile-label">
+                                    Status
+                                  </span>
+                                  <span className={`organization-project-status-pill ${projectStatus.tone}`}>
+                                    {projectStatus.label}
+                                  </span>
+                                </div>
+
+                                <div className="organization-project-cell organization-project-cell-owner">
+                                  <span className="organization-project-mobile-label">
+                                    Owner
+                                  </span>
+                                  {projectOwner ? (
+                                    <div className="organization-project-owner">
+                                      <span className="organization-project-owner-avatar">
+                                        {getOrganizationInitials({ name: projectOwner })}
+                                      </span>
+                                      <span className="organization-project-owner-name">
+                                        {projectOwner}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="organization-project-empty-value">
+                                      No owner
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="organization-project-cell organization-project-cell-members">
+                                  <span className="organization-project-mobile-label">
+                                    Members
+                                  </span>
+                                  {memberCount > 0 ? (
+                                    <div className="organization-project-members">
+                                      <div
+                                        className="project-member-avatar-stack organization-project-avatar-stack"
+                                        aria-label={`${memberCount} members`}
+                                      >
+                                        {visibleMembers.map((member, index) => (
+                                          <span
+                                            key={`${project.id}-member-${member.id || member.email || index}`}
+                                            className="project-member-avatar organization-project-avatar"
+                                            title={displayUserName(member)}
+                                          >
+                                            {getOrganizationInitials({
+                                              name: displayUserName(member),
+                                            })}
+                                          </span>
+                                        ))}
+                                        {remainingMembers > 0 ? (
+                                          <span className="project-member-avatar project-member-avatar-more organization-project-avatar">
+                                            +{remainingMembers}
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                      <span className="organization-project-member-count">
+                                        {memberCount}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="organization-project-empty-value">
+                                      No members
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="organization-project-cell organization-project-cell-due">
+                                  <span className="organization-project-mobile-label">
+                                    Due date
+                                  </span>
+                                  <span className="organization-project-due">
+                                    {dueDate || "No due date"}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })()
                         ))}
                       </div>
                     </div>
