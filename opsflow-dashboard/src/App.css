@@ -683,6 +683,7 @@ button:active:not(:disabled),
   font: inherit;
   font-size: var(--font-meta);
   text-align: left;
+  position: relative;
   transition:
     background-color var(--transition-fast),
     box-shadow var(--transition-fast),
@@ -701,6 +702,18 @@ button:active:not(:disabled),
   background: rgba(238, 242, 255, 0.92);
   box-shadow: 0 10px 22px rgba(91, 92, 246, 0.08);
   font-weight: 700;
+}
+
+.rail-nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 4px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(109, 94, 252, 0.92);
+  transform: translateY(-50%);
 }
 
 .rail-nav-icon {
@@ -3090,6 +3103,14 @@ button:active:not(:disabled),
   line-height: 1.15;
 }
 
+.workspace-surface-subtitle,
+.notes-detail-subtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: var(--font-meta);
+  line-height: 1.5;
+}
+
 .project-detail-content {
   flex: 1;
   min-height: 0;
@@ -3729,11 +3750,13 @@ button:active:not(:disabled),
   flex-shrink: 0;
 }
 
-.notes-detail-subtitle {
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-size: var(--font-meta);
-  line-height: 1.5;
+.notes-detail-header .dashboard-eyebrow {
+  margin-bottom: 6px;
+}
+
+.notes-detail-header h4 {
+  font-size: 20px;
+  line-height: 1.15;
 }
 
 .search-highlight {

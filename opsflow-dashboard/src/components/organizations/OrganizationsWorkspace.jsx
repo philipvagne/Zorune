@@ -666,8 +666,11 @@ export default function OrganizationsWorkspace({ token, onOpenProject }) {
 
             <div className="project-panel-header project-detail-header">
               <div>
-                <div className="dashboard-eyebrow">Organization Surface</div>
+                <div className="dashboard-eyebrow">Workspace Surface</div>
                 <h4>{selectedOrganization.name}</h4>
+                <div className="workspace-surface-subtitle">
+                  {selectedOrganization.slug || "Organization workspace"}
+                </div>
               </div>
               <span className="role-pill">{selectedOrganization.role}</span>
             </div>

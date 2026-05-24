@@ -1375,8 +1375,11 @@ export default function ProjectsWorkspace({
 
             <div className="project-panel-header project-detail-header">
               <div>
-                <div className="dashboard-eyebrow">Project Surface</div>
+                <div className="dashboard-eyebrow">Workspace Surface</div>
                 <h4>{selectedProject.name}</h4>
+                <div className="workspace-surface-subtitle">
+                  {selectedOrganization?.name || "Project workspace"}
+                </div>
               </div>
             </div>
 

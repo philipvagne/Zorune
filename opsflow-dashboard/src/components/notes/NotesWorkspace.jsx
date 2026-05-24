@@ -859,11 +859,33 @@ export default function NotesWorkspace({ token }) {
       <section className="note-panel notes-detail-pane">
         {selectedNote ? (
           <div className="notes-detail-shell">
+            <div className="project-opened-strip">
+              <div className="project-opened-tab" aria-label="Opened note">
+                <div className="project-opened-tab-main">
+                  <span className="project-opened-tab-icon" aria-hidden="true">
+                    N
+                  </span>
+                  <div className="project-opened-tab-copy">
+                    <span className="project-opened-tab-label">Opened Note</span>
+                    <strong>{selectedNote.title}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="project-opened-tab-close"
+                  onClick={() => setSelectedNoteId("")}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
             <div className="note-panel-header notes-detail-header">
               <div>
-                <div className="dashboard-eyebrow">Opened Note</div>
+                <div className="dashboard-eyebrow">Workspace Surface</div>
                 <h4>{selectedNote.title}</h4>
-                <div className="notes-detail-subtitle">
+                <div className="workspace-surface-subtitle">
                   {selectedOrganization?.name || "Organization memory"}
                 </div>
               </div>
