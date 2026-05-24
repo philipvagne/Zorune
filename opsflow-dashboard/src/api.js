@@ -92,6 +92,20 @@ export const createOrganization = (token, organization) =>
     },
   });
 
+export const updateOrganization = (token, orgId, organization) =>
+  api.patch(`/organizations/${orgId}`, organization, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+export const deleteOrganization = (token, orgId) =>
+  api.delete(`/organizations/${orgId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
 export const getOrganizationMembers = (token, orgId) =>
   api.get(`/organizations/${orgId}/members`, {
     headers: {

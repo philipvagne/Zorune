@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -33,6 +34,20 @@ export class OrganizationsController {
       req.user.sub,
       body.name,
       body.slug,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':orgId')
+  updateOrganization(
+    @Req() req: any,
+    @Param('orgId') orgId: string,
+    @Body() body: { name?: string; slug?: string },
+  ) {
+    return this.organizationsService.updateOrganization(
+      req.user.sub,
+      orgId,
+      body,
     );
   }
 
@@ -69,6 +84,12 @@ export class OrganizationsController {
       orgId,
       membershipId,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':orgId')
+  deleteOrganization(@Req() req: any, @Param('orgId') orgId: string) {
+    return this.organizationsService.deleteOrganization(req.user.sub, orgId);
   }
 
   @UseGuards(JwtAuthGuard)

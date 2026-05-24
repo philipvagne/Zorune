@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   addOrganizationMember,
   createOrganization,
+  deleteOrganization as deleteOrganizationApi,
   getMyOrganizations,
   getOrganizationMembers,
   getOrganizationProjects,
   removeOrganizationMember,
+  updateOrganization as updateOrganizationApi,
 } from "../../api";
 import usePersistentState from "../../hooks/usePersistentState";
 
@@ -61,6 +63,8 @@ export default function OrganizationsWorkspace({ token }) {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [organizationName, setOrganizationName] = useState("");
   const [organizationSlug, setOrganizationSlug] = useState("");
+  const [editOrganizationName, setEditOrganizationName] = useState("");
+  const [editOrganizationSlug, setEditOrganizationSlug] = useState("");
   const [memberLookup, setMemberLookup] = useState("");
   const [memberRole, setMemberRole] = useState("MEMBER");
   const [memberSearch, setMemberSearch] = useState("");
@@ -68,7 +72,13 @@ export default function OrganizationsWorkspace({ token }) {
   const [creatingOrganization, setCreatingOrganization] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
   const [removingMember, setRemovingMember] = useState(false);
+  const [savingOrganization, setSavingOrganization] = useState(false);
+  const [deletingOrganization, setDeletingOrganization] = useState(false);
   const [showOrganizationCreateForm, setShowOrganizationCreateForm] =
+    useState(false);
+  const [showOrganizationEditForm, setShowOrganizationEditForm] =
+    useState(false);
+  const [showOrganizationDeleteForm, setShowOrganizationDeleteForm] =
     useState(false);
   const [showOrganizationMemberAddForm, setShowOrganizationMemberAddForm] =
     useState(false);
@@ -135,6 +145,10 @@ export default function OrganizationsWorkspace({ token }) {
   );
   const activeOrganizationPopup = showOrganizationCreateForm
     ? "create-organization"
+    : showOrganizationEditForm
+      ? "edit-organization"
+      : showOrganizationDeleteForm
+        ? "delete-organization"
     : showOrganizationMemberAddForm
       ? "add-member"
       : showOrganizationMemberRemoveForm && selectedRemovalMember
@@ -228,7 +242,14 @@ export default function OrganizationsWorkspace({ token }) {
   }, [selectedOrgId, token]);
 
   useEffect(() => {
+    setEditOrganizationName(selectedOrganization?.name || "");
+    setEditOrganizationSlug(selectedOrganization?.slug || "");
+  }, [selectedOrganization]);
+
+  useEffect(() => {
     setShowOrganizationCreateForm(false);
+    setShowOrganizationEditForm(false);
+    setShowOrganizationDeleteForm(false);
     setShowOrganizationMemberAddForm(false);
     setShowOrganizationMemberRemoveForm(false);
     setSelectedRemovalMembershipId("");
@@ -381,6 +402,78 @@ export default function OrganizationsWorkspace({ token }) {
     }
   };
 
+  const handleUpdateOrganization = async (event) => {
+    event.preventDefault();
+
+    if (!selectedOrganization) {
+      return;
+    }
+
+    const trimmedName = editOrganizationName.trim();
+
+    if (!trimmedName) {
+      setError("Organization name is required.");
+      return;
+    }
+
+    setSavingOrganization(true);
+    setError("");
+
+    try {
+      const res = await updateOrganizationApi(token, selectedOrganization.id, {
+        name: trimmedName,
+        slug: editOrganizationSlug,
+      });
+
+      const updatedOrganization = res.data;
+
+      setOrganizations((current) =>
+        current.map((organization) =>
+          organization.id === updatedOrganization.id
+            ? {
+                ...organization,
+                ...updatedOrganization,
+              }
+            : organization
+        )
+      );
+      closeOrganizationPopup();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Could not update organization."
+      );
+    } finally {
+      setSavingOrganization(false);
+    }
+  };
+
+  const handleDeleteOrganization = async () => {
+    if (!selectedOrganization) {
+      return;
+    }
+
+    setDeletingOrganization(true);
+    setError("");
+
+    try {
+      await deleteOrganizationApi(token, selectedOrganization.id);
+
+      setOrganizations((current) =>
+        current.filter((organization) => organization.id !== selectedOrganization.id)
+      );
+      setMembers([]);
+      setProjects([]);
+      setSelectedOrgId("");
+      closeOrganizationPopup();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Could not delete organization."
+      );
+    } finally {
+      setDeletingOrganization(false);
+    }
+  };
+
   const handleRemoveMember = async () => {
     if (!selectedOrgId || !selectedRemovalMembershipId) {
       return;
@@ -418,6 +511,8 @@ export default function OrganizationsWorkspace({ token }) {
 
   const closeOrganizationPopup = () => {
     setShowOrganizationCreateForm(false);
+    setShowOrganizationEditForm(false);
+    setShowOrganizationDeleteForm(false);
     setShowOrganizationMemberAddForm(false);
     setShowOrganizationMemberRemoveForm(false);
     setSelectedRemovalMembershipId("");
@@ -832,9 +927,34 @@ export default function OrganizationsWorkspace({ token }) {
                     </div>
                   </div>
 
+                  {canManageSelectedOrganization ? (
+                    <div className="organization-settings-actions">
+                      <button
+                        type="button"
+                        className="contextual-create-button"
+                        onClick={() => {
+                          closeOrganizationPopup();
+                          setShowOrganizationEditForm(true);
+                        }}
+                      >
+                        Edit Organization
+                      </button>
+                      <button
+                        type="button"
+                        className="contextual-create-button contextual-create-button-danger"
+                        onClick={() => {
+                          closeOrganizationPopup();
+                          setShowOrganizationDeleteForm(true);
+                        }}
+                      >
+                        Delete Organization
+                      </button>
+                    </div>
+                  ) : null}
+
                   <p className="muted-text organization-foundation-copy">
-                    Organization editing is not currently supported in this
-                    workspace, so settings stay read-first for now.
+                    Organization settings stay calm and read-first until you
+                    intentionally choose to update or remove this workspace.
                   </p>
                 </section>
               ) : null}
@@ -975,6 +1095,87 @@ export default function OrganizationsWorkspace({ token }) {
                   </button>
                 </div>
               </form>
+            ) : null}
+
+            {activeOrganizationPopup === "edit-organization" &&
+            selectedOrganization ? (
+              <form
+                className="project-form contextual-create-surface workspace-action-popup"
+                onSubmit={handleUpdateOrganization}
+              >
+                <div className="workspace-action-popup-header">
+                  <div className="dashboard-eyebrow">Edit</div>
+                  <strong>{selectedOrganization.name}</strong>
+                </div>
+                <label className="form-label">
+                  Organization name
+                  <input
+                    className="ui-input"
+                    value={editOrganizationName}
+                    onChange={(event) => setEditOrganizationName(event.target.value)}
+                    placeholder="Organization name"
+                  />
+                </label>
+
+                <label className="form-label">
+                  Slug
+                  <input
+                    className="ui-input"
+                    value={editOrganizationSlug}
+                    onChange={(event) => setEditOrganizationSlug(event.target.value)}
+                    placeholder="organization-slug"
+                  />
+                </label>
+
+                <div className="button-row contextual-create-actions">
+                  <button
+                    type="submit"
+                    className="ui-button ui-button-primary"
+                    disabled={savingOrganization}
+                  >
+                    {savingOrganization ? "Saving..." : "Save organization"}
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button-secondary"
+                    onClick={closeOrganizationPopup}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : null}
+
+            {activeOrganizationPopup === "delete-organization" &&
+            selectedOrganization ? (
+              <div className="project-form contextual-create-surface workspace-action-popup">
+                <div className="workspace-action-popup-header">
+                  <div className="dashboard-eyebrow">Delete</div>
+                  <strong>Delete {selectedOrganization.name}?</strong>
+                </div>
+                <p className="workspace-action-popup-copy">
+                  This will permanently remove the organization and its related
+                  projects, members, and workspace context. Your user account
+                  will stay intact.
+                </p>
+                <div className="button-row contextual-create-actions">
+                  <button
+                    type="button"
+                    className="ui-button ui-button-danger"
+                    onClick={handleDeleteOrganization}
+                    disabled={deletingOrganization}
+                  >
+                    {deletingOrganization ? "Deleting..." : "Delete organization"}
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-button ui-button-secondary"
+                    onClick={closeOrganizationPopup}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             ) : null}
 
             {activeOrganizationPopup === "remove-member" &&

@@ -47,6 +47,27 @@ export class OrganizationsService {
     return slug;
   }
 
+  private async getAvailableSlugExcluding(
+    baseSlug: string,
+    organizationId: string,
+  ) {
+    let slug = baseSlug;
+    let suffix = 2;
+
+    while (true) {
+      const existingOrganization = await this.prisma.organization.findUnique({
+        where: { slug },
+      });
+
+      if (!existingOrganization || existingOrganization.id === organizationId) {
+        return slug;
+      }
+
+      slug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+  }
+
   private async requireMembership(userId: string, orgId: string) {
     const membership = await this.prisma.membership.findFirst({
       where: {
@@ -71,6 +92,14 @@ export class OrganizationsService {
       username: true,
       fullName: true,
     } as const;
+  }
+
+  private requireManageableRole(role: Role) {
+    if (!this.manageableRoles.includes(role)) {
+      throw new ForbiddenException(
+        'Only organization owners or admins can manage this organization',
+      );
+    }
   }
 
   async getMyOrganizations(userId: string) {
@@ -143,11 +172,7 @@ export class OrganizationsService {
 
     const membership = await this.requireMembership(userId, orgId);
 
-    if (!this.manageableRoles.includes(membership.role)) {
-      throw new ForbiddenException(
-        'Only organization owners or admins can add members',
-      );
-    }
+    this.requireManageableRole(membership.role);
 
     const normalizedRole = role as Role;
 
@@ -218,12 +243,7 @@ export class OrganizationsService {
     }
 
     const requesterMembership = await this.requireMembership(userId, orgId);
-
-    if (!this.manageableRoles.includes(requesterMembership.role)) {
-      throw new ForbiddenException(
-        'Only organization owners or admins can manage members',
-      );
-    }
+    this.requireManageableRole(requesterMembership.role);
 
     const memberships = await this.prisma.membership.findMany({
       where: {
@@ -272,6 +292,135 @@ export class OrganizationsService {
       createdAt: targetMembership.createdAt,
       user: targetMembership.user,
     };
+  }
+
+  async updateOrganization(
+    userId: string,
+    orgId: string,
+    body: { name?: string; slug?: string },
+  ) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+    });
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    const membership = await this.requireMembership(userId, orgId);
+    this.requireManageableRole(membership.role);
+
+    const data: { name?: string; slug?: string } = {};
+
+    if (body.name !== undefined) {
+      const trimmedName = body.name.trim();
+
+      if (!trimmedName) {
+        throw new BadRequestException('Organization name is required');
+      }
+
+      data.name = trimmedName;
+    }
+
+    if (body.slug !== undefined) {
+      const baseSlug = this.slugify(
+        body.slug.trim() || body.name?.trim() || organization.name,
+      );
+      data.slug = await this.getAvailableSlugExcluding(baseSlug, orgId);
+    }
+
+    const updatedOrganization = await this.prisma.organization.update({
+      where: { id: orgId },
+      data,
+    });
+
+    return {
+      ...updatedOrganization,
+      role: membership.role,
+    };
+  }
+
+  async deleteOrganization(userId: string, orgId: string) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+    });
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    const membership = await this.requireMembership(userId, orgId);
+    this.requireManageableRole(membership.role);
+
+    const projects = await this.prisma.project.findMany({
+      where: {
+        organizationId: orgId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const projectIds = projects.map((project) => project.id);
+
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        projectId: {
+          in: projectIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const taskIds = tasks.map((task) => task.id);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (taskIds.length > 0) {
+        await tx.activityLog.deleteMany({
+          where: {
+            taskId: {
+              in: taskIds,
+            },
+          },
+        });
+
+        await tx.notification.deleteMany({
+          where: {
+            taskId: {
+              in: taskIds,
+            },
+          },
+        });
+
+        await tx.task.deleteMany({
+          where: {
+            id: {
+              in: taskIds,
+            },
+          },
+        });
+      }
+
+      if (projectIds.length > 0) {
+        await tx.project.deleteMany({
+          where: {
+            id: {
+              in: projectIds,
+            },
+          },
+        });
+      }
+
+      await tx.organization.delete({
+        where: {
+          id: orgId,
+        },
+      });
+    });
+
+    return { id: orgId };
   }
 
   async createOrganization(
