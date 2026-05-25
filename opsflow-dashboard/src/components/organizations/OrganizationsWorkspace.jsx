@@ -101,6 +101,20 @@ const formatMembershipJoinedDate = (membership) => {
   return parsed.toLocaleDateString();
 };
 
+const formatOrganizationDate = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return parsed.toLocaleDateString();
+};
+
 const getProjectStatusState = (project) => {
   const rawStatus = String(project?.status || "").toUpperCase();
   const dueDate = project?.dueDate ? new Date(project.dueDate) : null;
@@ -185,6 +199,7 @@ export default function OrganizationsWorkspace({
     useState(false);
   const [selectedRemovalMembershipId, setSelectedRemovalMembershipId] =
     useState("");
+  const [copiedOrganizationId, setCopiedOrganizationId] = useState(false);
   const [error, setError] = useState("");
 
   const selectedOrganization = useMemo(
@@ -844,6 +859,22 @@ export default function OrganizationsWorkspace({
     setSelectedRemovalMembershipId("");
   };
 
+  const handleCopyOrganizationId = async () => {
+    if (!selectedOrganization?.id || !navigator?.clipboard?.writeText) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(selectedOrganization.id);
+      setCopiedOrganizationId(true);
+      window.setTimeout(() => {
+        setCopiedOrganizationId(false);
+      }, 1600);
+    } catch {
+      setCopiedOrganizationId(false);
+    }
+  };
+
   const closeOrganizationPopup = () => {
     setShowOrganizationCreateForm(false);
     setShowOrganizationEditForm(false);
@@ -854,6 +885,7 @@ export default function OrganizationsWorkspace({
   };
 
   const handleSelectOrganization = (organizationId) => {
+    setCopiedOrganizationId(false);
     setSelectedOrgId(organizationId);
     setActiveOrganizationTab("overview");
   };
@@ -1412,56 +1444,79 @@ export default function OrganizationsWorkspace({
                   <div className="project-surface-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Team Settings</div>
-                      <h5>Team configuration</h5>
+                      <h5>General team information</h5>
                     </div>
                   </div>
 
-                  <div className="organization-settings-summary">
-                    <div className="organization-settings-row">
-                      <span>Name</span>
-                      <strong>{selectedOrganization.name}</strong>
+                  <div className="organization-settings-surface">
+                    <div className="organization-settings-summary">
+                      <div className="organization-settings-row">
+                        <span className="organization-settings-row-label">Team Name</span>
+                        <strong className="organization-settings-row-value">
+                          {selectedOrganization.name}
+                        </strong>
+                      </div>
+
+                      {selectedOrganization.slug ? (
+                        <div className="organization-settings-row">
+                          <span className="organization-settings-row-label">Team Slug</span>
+                          <strong className="organization-settings-row-value">
+                            {selectedOrganization.slug}
+                          </strong>
+                        </div>
+                      ) : null}
+
+                      <div className="organization-settings-row organization-settings-row-id">
+                        <span className="organization-settings-row-label">Team ID</span>
+                        <div className="organization-settings-row-trailing">
+                          <strong className="organization-settings-row-value">
+                            {selectedOrganization.id}
+                          </strong>
+                          <button
+                            type="button"
+                            className="organization-settings-copy"
+                            onClick={handleCopyOrganizationId}
+                          >
+                            {copiedOrganizationId ? "Copied" : "Copy"}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="organization-settings-row">
+                        <span className="organization-settings-row-label">Your Team Role</span>
+                        <strong className="organization-settings-row-value organization-settings-row-role">
+                          {selectedOrganization.role}
+                        </strong>
+                      </div>
                     </div>
-                    <div className="organization-settings-row">
-                      <span>Slug</span>
-                      <strong>{selectedOrganization.slug || "Default"}</strong>
-                    </div>
-                    <div className="organization-settings-row">
-                      <span>Your role</span>
-                      <strong>{selectedOrganization.role}</strong>
-                    </div>
+
+                    {canManageSelectedOrganization ? (
+                      <div className="organization-settings-actions">
+                        <button
+                          type="button"
+                          className="contextual-create-button"
+                          onClick={() => {
+                            closeOrganizationPopup();
+                            setEditOrganizationName(selectedOrganization.name);
+                            setEditOrganizationSlug(selectedOrganization.slug || "");
+                            setShowOrganizationEditForm(true);
+                          }}
+                        >
+                          Edit Team
+                        </button>
+                        <button
+                          type="button"
+                          className="contextual-create-button contextual-create-button-danger"
+                          onClick={() => {
+                            closeOrganizationPopup();
+                            setShowOrganizationDeleteForm(true);
+                          }}
+                        >
+                          Delete Team
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-
-                  {canManageSelectedOrganization ? (
-                    <div className="organization-settings-actions">
-                      <button
-                        type="button"
-                        className="contextual-create-button"
-                        onClick={() => {
-                          closeOrganizationPopup();
-                          setEditOrganizationName(selectedOrganization.name);
-                          setEditOrganizationSlug(selectedOrganization.slug || "");
-                          setShowOrganizationEditForm(true);
-                        }}
-                      >
-                        Edit Team
-                      </button>
-                      <button
-                        type="button"
-                        className="contextual-create-button contextual-create-button-danger"
-                        onClick={() => {
-                          closeOrganizationPopup();
-                          setShowOrganizationDeleteForm(true);
-                        }}
-                      >
-                        Delete Team
-                      </button>
-                    </div>
-                  ) : null}
-
-                  <p className="muted-text organization-foundation-copy">
-                    Team settings stay calm and read-first until you
-                    intentionally choose to update or remove this workspace.
-                  </p>
                 </section>
               ) : null}
             </div>
