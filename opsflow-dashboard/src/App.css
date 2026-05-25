@@ -1963,7 +1963,7 @@ button:active:not(:disabled),
   flex: 1;
   min-height: 0;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .organization-collection-topbar {
@@ -1971,7 +1971,7 @@ button:active:not(:disabled),
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .organization-collection-topbar h4 {
@@ -1983,10 +1983,10 @@ button:active:not(:disabled),
 }
 
 .organization-collection-topbar p {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   color: rgba(100, 116, 139, 0.9);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .organization-create-form {
@@ -2006,7 +2006,7 @@ button:active:not(:disabled),
 
 .organization-card-grid {
   min-height: 0;
-  gap: 8px;
+  gap: 9px;
   padding-top: 0;
   padding-right: 4px;
 }
@@ -2015,7 +2015,7 @@ button:active:not(:disabled),
   gap: 0;
   border-color: rgba(148, 163, 184, 0.06);
   border-radius: 18px;
-  padding: 12px 13px;
+  padding: 11px 13px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.16)),
     rgba(255, 255, 255, 0.12);
@@ -2075,7 +2075,7 @@ button:active:not(:disabled),
 }
 
 .organization-detail-panel .project-opened-strip {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   padding-top: 0;
 }
 
@@ -2116,7 +2116,7 @@ button:active:not(:disabled),
 
 .organization-detail-panel .project-surface-tabs {
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   padding: 0 0 6px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.62);
   border-radius: 0;
@@ -2125,11 +2125,11 @@ button:active:not(:disabled),
 }
 
 .organization-detail-panel .project-surface-tab {
-  min-height: 34px;
-  padding: 8px 2px 11px;
+  min-height: 32px;
+  padding: 7px 2px 10px;
   border-radius: 0;
   color: rgba(100, 116, 139, 0.96);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   box-shadow: inset 0 -2px 0 transparent;
 }
@@ -2150,6 +2150,20 @@ button:active:not(:disabled),
   padding: 2px 2px 2px;
 }
 
+.organization-detail-panel .project-surface-section-header {
+  margin-bottom: 10px;
+}
+
+.organization-detail-panel .project-surface-section-header h5 {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.organization-detail-panel .dashboard-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.07em;
+}
+
 .organization-detail-content > .project-surface-section,
 .organization-detail-content > .organization-overview-surface,
 .organization-detail-content > .organization-foundation-surface {
@@ -2163,7 +2177,7 @@ button:active:not(:disabled),
 
 .organization-overview-surface {
   flex: 1;
-  gap: 18px;
+  gap: 16px;
   overflow-y: auto;
   padding-right: 2px;
 }
@@ -2186,32 +2200,34 @@ button:active:not(:disabled),
 }
 
 .organization-overview-copy h5 {
-  margin: 0 0 8px;
+  margin: 0 0 7px;
   color: var(--text-primary);
-  font-size: 24px;
-  line-height: 1.12;
+  font-size: 22px;
+  line-height: 1.14;
   letter-spacing: -0.02em;
 }
 
 .organization-overview-context {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 7px;
+  margin-bottom: 10px;
 }
 
 .organization-overview-context span {
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 4px 9px;
   color: rgba(100, 116, 139, 0.88);
   background: rgba(248, 250, 252, 0.7);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 650;
 }
 
 .organization-overview-copy .project-surface-description {
   max-width: 54ch;
   color: rgba(71, 85, 105, 0.94);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .organization-overview-stats {
@@ -2223,7 +2239,7 @@ button:active:not(:disabled),
 }
 
 .organization-overview-actions {
-  padding-top: 14px;
+  padding-top: 10px;
 }
 
 .organization-opened-tab-icon {
@@ -2231,7 +2247,7 @@ button:active:not(:disabled),
 }
 
 .organization-members-surface {
-  gap: 14px;
+  gap: 12px;
   flex: 1;
   min-height: 0;
 }
@@ -2241,7 +2257,7 @@ button:active:not(:disabled),
   flex-wrap: wrap;
   align-items: end;
   gap: 8px 10px;
-  padding: 0 0 2px;
+  padding: 0;
 }
 
 .organization-members-control {
@@ -2261,10 +2277,10 @@ button:active:not(:disabled),
 
 .organization-members-toolbar .ui-input,
 .organization-members-toolbar select {
-  min-height: 34px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  font-size: 13px;
+  min-height: 32px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 12px;
 }
 
 .organization-members-control-compact {
@@ -2275,8 +2291,8 @@ button:active:not(:disabled),
   display: grid;
   grid-template-columns: minmax(0, 2.8fr) minmax(136px, 0.8fr) 132px 36px;
   align-items: center;
-  gap: 24px;
-  padding: 2px 22px 10px;
+  gap: 22px;
+  padding: 2px 20px 9px;
   color: rgba(100, 116, 139, 0.76);
   font-size: 10px;
   font-weight: 700;
@@ -2298,17 +2314,17 @@ button:active:not(:disabled),
 .organization-members-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .organization-member-row {
   display: grid;
   grid-template-columns: minmax(0, 2.8fr) minmax(136px, 0.8fr) 132px 36px;
   align-items: center;
-  gap: 24px;
-  padding: 18px 22px;
+  gap: 22px;
+  padding: 16px 20px;
   border: 1px solid rgba(148, 163, 184, 0.08);
-  border-radius: 20px;
+  border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.24)),
     rgba(255, 255, 255, 0.18);
@@ -2339,13 +2355,13 @@ button:active:not(:disabled),
 }
 
 .organization-member-copy strong {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   line-height: var(--line-tight);
 }
 
 .organization-member-copy span {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(100, 116, 139, 0.92);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2378,7 +2394,7 @@ button:active:not(:disabled),
 
 .organization-member-joined {
   color: rgba(100, 116, 139, 0.88);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2401,7 +2417,7 @@ button:active:not(:disabled),
 .organization-projects-surface {
   flex: 1;
   min-height: 0;
-  gap: 18px;
+  gap: 14px;
 }
 
 .organization-project-list-shell {
@@ -2415,9 +2431,9 @@ button:active:not(:disabled),
 .organization-project-registry-head {
   display: grid;
   grid-template-columns: minmax(0, 2.1fr) minmax(110px, 0.7fr) minmax(150px, 1fr) minmax(130px, 0.9fr) minmax(120px, 0.7fr);
-  gap: 18px;
+  gap: 16px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding: 0 16px;
   color: rgba(100, 116, 139, 0.82);
   font-size: 10px;
@@ -2440,8 +2456,8 @@ button:active:not(:disabled),
   display: grid;
   grid-template-columns: minmax(0, 2.1fr) minmax(110px, 0.7fr) minmax(150px, 1fr) minmax(130px, 0.9fr) minmax(120px, 0.7fr);
   align-items: center;
-  gap: 18px;
-  padding: 14px 16px;
+  gap: 16px;
+  padding: 13px 16px;
   border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.18)),
@@ -2484,15 +2500,15 @@ button:active:not(:disabled),
 .organization-project-row-main strong {
   display: block;
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   line-height: var(--line-tight);
 }
 
 .organization-project-row-description {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   color: rgba(100, 116, 139, 0.94);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
   max-width: 46ch;
 }
@@ -2515,7 +2531,7 @@ button:active:not(:disabled),
 
 .organization-project-member-count {
   color: rgba(100, 116, 139, 0.86);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -2523,12 +2539,12 @@ button:active:not(:disabled),
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
-  padding: 0 10px;
+  min-height: 22px;
+  padding: 0 9px;
   border-radius: 999px;
   color: #4f46e5;
   background: rgba(224, 231, 255, 0.72);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2556,9 +2572,9 @@ button:active:not(:disabled),
 }
 
 .organization-projects-helper {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   color: rgba(100, 116, 139, 0.92);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   max-width: 44ch;
 }
@@ -2589,7 +2605,7 @@ button:active:not(:disabled),
 .organization-project-owner-name {
   overflow: hidden;
   color: rgba(51, 65, 85, 0.94);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2608,7 +2624,7 @@ button:active:not(:disabled),
 .organization-project-due,
 .organization-project-empty-value {
   color: rgba(100, 116, 139, 0.9);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -2623,7 +2639,7 @@ button:active:not(:disabled),
 .organization-settings-surface {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .organization-settings-summary {
@@ -2737,6 +2753,16 @@ button:active:not(:disabled),
   flex-wrap: wrap;
   gap: 8px;
   padding-top: 0;
+}
+
+.organization-collection-topbar .contextual-create-button,
+.organization-members-surface .contextual-create-button,
+.organization-projects-surface .contextual-create-button,
+.organization-overview-actions .contextual-create-button,
+.organization-settings-actions .contextual-create-button {
+  min-height: 32px;
+  padding: 7px 12px;
+  font-size: 12px;
 }
 
 .organization-settings-row {
