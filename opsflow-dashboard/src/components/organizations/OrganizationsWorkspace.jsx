@@ -903,9 +903,8 @@ export default function OrganizationsWorkspace({
       <section className="project-panel organization-collection-pane">
         <div className="organization-collection-body">
           <div className="organization-collection-topbar">
-            <div>
+            <div className="organization-collection-heading">
               <h4>Your Teams</h4>
-              <p>Switch between shared team workspaces.</p>
             </div>
             <button
               className="contextual-create-button"
@@ -947,6 +946,16 @@ export default function OrganizationsWorkspace({
                     0,
                     (memberCount ?? previewMembers.length) - visiblePreviewMembers.length
                   );
+                  const metadataCopy = [
+                    projectCount !== null
+                      ? `${projectCount} project${projectCount === 1 ? "" : "s"}`
+                      : null,
+                    memberCount !== null
+                      ? `${memberCount} member${memberCount === 1 ? "" : "s"}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ");
 
                   return (
                     <button
@@ -959,41 +968,40 @@ export default function OrganizationsWorkspace({
                       }
                       onClick={() => handleSelectOrganization(organization.id)}
                     >
-                      <div className="organization-card-head organization-card-main">
-                        <span className="organization-avatar">
-                          {getOrganizationInitials(organization)}
-                        </span>
-                        <div className="organization-card-copy">
-                          <strong>{organization.name}</strong>
-                          <div className="project-count-row organization-count-row">
-                            {projectCount !== null ? (
-                              <span>
-                                {projectCount} project{projectCount === 1 ? "" : "s"}
-                              </span>
-                            ) : null}
-                            {memberCount !== null ? (
-                              <span>
-                                {memberCount} member{memberCount === 1 ? "" : "s"}
-                              </span>
+                      <div className="organization-card-main">
+                        <div className="organization-card-identity">
+                          <span className="organization-avatar">
+                            {getOrganizationInitials(organization)}
+                          </span>
+                          <div className="organization-card-copy">
+                            <strong>{organization.name}</strong>
+                            {metadataCopy ? (
+                              <div className="project-count-row organization-count-row">
+                                <span>{metadataCopy}</span>
+                              </div>
                             ) : null}
                           </div>
                         </div>
-                        <div className="project-member-avatar-stack organization-member-avatar-stack">
-                          {visiblePreviewMembers.map((member, index) => (
-                            <span
-                              key={`${organization.id}-member-preview-${member.id || member.email || index}`}
-                              className="project-member-avatar organization-member-avatar"
-                            >
-                              {getOrganizationInitials({
-                                name: displayUserName(member),
-                              })}
-                            </span>
-                          ))}
-                          {remainingPreviewCount > 0 ? (
-                            <span className="project-member-avatar project-member-avatar-more organization-member-avatar">
-                              +{remainingPreviewCount}
-                            </span>
-                          ) : null}
+                        <div className="organization-card-side">
+                          <div className="organization-card-presence" aria-hidden="true">
+                            <div className="project-member-avatar-stack organization-member-avatar-stack">
+                              {visiblePreviewMembers.map((member, index) => (
+                                <span
+                                  key={`${organization.id}-member-preview-${member.id || member.email || index}`}
+                                  className="project-member-avatar organization-member-avatar"
+                                >
+                                  {getOrganizationInitials({
+                                    name: displayUserName(member),
+                                  })}
+                                </span>
+                              ))}
+                              {remainingPreviewCount > 0 ? (
+                                <span className="project-member-avatar project-member-avatar-more organization-member-avatar">
+                                  +{remainingPreviewCount}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </button>

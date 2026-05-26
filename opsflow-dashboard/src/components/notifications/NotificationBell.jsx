@@ -65,6 +65,9 @@ export default function NotificationBell({
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  showTrigger = true,
+  showPanel = true,
+  embedded = false,
 }) {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const unreadCount = notifications.filter(
@@ -88,20 +91,25 @@ export default function NotificationBell({
 
   return (
     <div className="notification-shell">
-      <button
-        className="ui-button ui-button-secondary notification-trigger"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpenNotifications((prev) => !prev);
-        }}
-      >
-        Notifications{" "}
-        {unreadCount > 0 && `(${unreadCount})`}
-      </button>
+      {showTrigger ? (
+        <button
+          className="ui-button ui-button-secondary notification-trigger"
+          data-count={unreadCount > 0 ? unreadCount : ""}
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+          title="Notifications"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenNotifications((prev) => !prev);
+          }}
+        >
+          Notifications{" "}
+          {unreadCount > 0 && `(${unreadCount})`}
+        </button>
+      ) : null}
 
-      {openNotifications && (
+      {showPanel && openNotifications && (
         <div
-          className="notification-menu"
+          className={embedded ? "notification-menu notification-menu-embedded" : "notification-menu"}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="notification-menu-header">

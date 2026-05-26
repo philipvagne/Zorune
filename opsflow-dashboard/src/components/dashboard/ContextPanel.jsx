@@ -1,9 +1,13 @@
-export default function ContextPanel({ children }) {
+export default function ContextPanel({ children, className = "" }) {
   const hasDetails = Boolean(children);
 
   if (!hasDetails) {
     return null;
   }
 
-  return <section className="dashboard-context-panel">{children}</section>;
+  const panelClassName = ["dashboard-context-panel", className]
+    .filter(Boolean)
+    .join(" ");
+
+  return <section className={panelClassName}>{children}</section>;
 }

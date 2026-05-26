@@ -1,195 +1,236 @@
 # OpsFlow
 
-OpsFlow is a real-time operational workspace for teams that need tasks, context, presence, and coordination in the same environment.
+OpsFlow is a real-time operational workspace for small teams that need tasks, project context, notes, team coordination, and presence in the same environment.
 
 The product is intentionally moving away from stacked dashboard pages and toward a persistent workspace model:
 
-- Active Tasks stays visible as the main execution surface.
-- Secondary workspaces open inside the shared context area.
-- Projects and Organizations behave like focused operational surfaces instead of separate mini-products.
-- Notes capture the "why", "how", and "what to remember" behind work.
+- tasks remain the main execution surface
+- deeper work opens inside a shared workspace area
+- teams, projects, and notes behave like focused operational surfaces
+- context is read-first and actions appear on demand
 
-## What OpsFlow Is Today
+## Product Direction
 
-OpsFlow currently combines:
+OpsFlow is being shaped as a calmer operational canvas rather than a collection of disconnected admin pages.
 
-- a NestJS backend
-- Prisma ORM with PostgreSQL
-- a React 19 + Vite frontend
-- JWT authentication
-- Socket.IO realtime updates
-- workspace persistence through `localStorage`
-- organizations, projects, tasks, notes, notifications, and lightweight presence
+Core principles:
 
-## Product Model
+- show information first
+- show actions only when needed
+- preserve context while moving between tasks, teams, projects, and notes
+- keep scrolling local to the active surface whenever possible
+- maintain workspace memory so users can return to where they were
 
-OpsFlow is organized around one main execution layer and several contextual workspaces.
+## What Exists Today
 
-### Main Workspace
+The current app includes:
 
-The main workspace is the live tasks surface. It supports:
+- JWT-based authentication
+- a real-time task workspace
+- team management
+- project management
+- linked notes across teams, projects, and tasks
+- lightweight presence
+- notifications
+- recent work memory
+- command palette search/open flows
+
+## Workspace Model
+
+OpsFlow has one primary work area and several contextual workspaces.
+
+### Main Task Surface
+
+The top work area is the live task execution surface. It supports:
 
 - Kanban
 - Table
-- Calendar agenda view
-- filtering
-- sorting
+- Calendar
 - task creation
-- task detail
-- realtime task updates
+- task editing
+- assignment
+- due dates
+- archive and restore
+- real-time updates
 
 ### Context Workspaces
 
-The lower context workspace can open:
+The lower shared workspace area can open:
 
-- Archived Tasks
+- Teams
 - Projects
 - Notes
-- Organizations
-- Settings
+- Archived Tasks
 - Profile
+- Settings
 
-Each workspace is evolving toward the same design philosophy:
+These workspaces are converging on the same interaction model:
 
-- read-first
-- action-on-demand
-- calmer two-pane surfaces
-- internal scrolling instead of long dashboard pages
-- persistent selection and tab memory
+- persistent shell
+- local tab memory
+- two-pane or read-first layouts
+- lightweight floating action windows
+- internal scrolling inside the active surface
 
-## Current Workspace Areas
+## Current Workspace Surfaces
+
+### Teams Workspace
+
+The Teams workspace is the current foundation for organization-level work. In the UI, the product uses the word `Team`, while the backend and schema still use `Organization`.
+
+Current behavior includes:
+
+- shared workspace shell
+- left team collection pane
+- right opened team surface
+- tabs for `Overview`, `Projects`, `Members`, and `Settings`
+- team creation
+- team editing and deletion
+- add and remove existing members
+- member search and role filtering
+- deep-open from Team Projects into the Projects workspace
+- selected team persistence
+- selected team tab persistence
 
 ### Projects Workspace
 
-The Projects workspace is the most mature contextual surface right now. It includes:
+The Projects workspace is the most mature contextual workspace.
+
+Current behavior includes:
 
 - two-pane layout
-- left collection pane for organizations and project list
+- left pane for team selection and project list
 - right opened project surface
 - opened-project header
 - tabs for `Overview`, `Tasks`, `Notes`, and `Members`
+- project create, edit, and delete
+- project-specific membership management
 - project-scoped task creation
 - project note creation and editing
-- project member add/remove
-- project edit and delete
-- centered local popup interactions
+- task deep-open from project tasks
 - selected project persistence
 - selected project tab persistence
 
-### Organizations Workspace
-
-The Organizations workspace now follows the same operational pattern. It includes:
-
-- two-pane layout
-- left organization collection pane
-- right opened organization surface
-- tabs for `Overview`, `Members`, `Projects`, and `Settings`
-- organization creation through centered popup
-- organization member add/remove
-- organization search and role filter in Members
-- organization edit and delete from Settings
-- deep-open from organization project list into the Projects workspace
-- selected organization persistence
-- selected organization tab persistence
-
 ### Notes Workspace
 
-The Notes workspace supports:
+The Notes workspace is designed as operational memory, not a standalone document product.
 
-- organization-scoped notes
+Current behavior includes:
+
+- note search
+- note filtering by team, project, and task
+- pinned and recent notes
+- opened note reader surface
 - project-linked notes
 - task-linked notes
-- note search
 - note editing
-- note linking
+- deep-open back into project or task context when available
 
 ### Archived Tasks
 
-Archived tasks are soft-deleted through `archivedAt` and can be restored.
+Archived tasks are soft-deleted through `archivedAt` and can be restored into active work.
+
+## Cross-Workspace Continuity
+
+OpsFlow now supports continuity between workspace surfaces.
+
+Examples:
+
+- Team -> Project deep-open
+- Note -> Project deep-open
+- Note -> Task deep-open
+- Recent Work reopening tasks, teams, projects, and notes
+
+Workspace state is persisted defensively:
+
+- invalid selections are cleared
+- deleted items should not reopen after refresh
+- the app attempts to restore users to the last useful context safely
 
 ## Core Features
 
 ### Authentication
 
-- user registration with full name, username, email, and password
+- register with email, password, username, and optional full name
 - login with JWT
-- protected backend routes
-- socket authentication with JWT
+- protected API routes
+- protected socket connections
 - logout flow
-- users can exist before joining an organization
 
-### Organizations
+### Teams
 
-- create organizations
-- creator becomes `OWNER`
-- view organizations the current user belongs to
-- read-first organization workspace
-- add existing users by email or username
-- remove organization members safely
-- update organization name and slug
-- delete organizations safely
-- membership-based access control
+UI terminology uses `Team`, but internal data still uses `Organization`.
+
+Supported today:
+
+- create team
+- view teams the current user belongs to
+- edit team
+- delete team
+- add existing users to a team
+- remove team members safely
+- owner/admin-aware controls
+- team member search and role filtering
 
 ### Projects
 
-- projects belong to organizations
-- create projects inside an organization
-- edit and delete projects
-- project member management through `ProjectMembership`
-- project task counts
+- projects belong to teams
+- create project inside a team
+- edit and delete project
+- assign project members through `ProjectMembership`
+- project overview with counts and operational summary
+- project task list
 - project notes
-- project-scoped task creation
-- selected project memory
 
 ### Tasks
 
 - create tasks inside projects
-- multi-assignee tasks
+- assign multiple users
 - task status flow: `TODO`, `IN_PROGRESS`, `DONE`
 - due dates
-- overdue highlighting
+- overdue awareness
 - archive and restore
 - drag-and-drop Kanban
-- realtime updates
-- task activity and progress updates
+- real-time task synchronization
+- task updates / progress entries
 
 ### Notes
 
-- organization notes
+- team-level notes
 - project-linked notes
 - task-linked notes
 - note editing and deletion
 - note links
+- task note read-state tracking
 - project note pinning
-- task note awareness
 
 ### Notifications
 
-- realtime toast notifications
-- notification dropdown
-- unread count
-- notification filters
-- mark one as read
-- mark all as read
-- delete notification
+- real-time notification delivery
+- notification menu
+- unread counts
+- filtering
+- mark read
+- mark all read
+- delete read notifications
 
 ### Presence
 
-- online users
-- lightweight task viewer presence
-- shared task viewer list in the task panel
+- online user presence
+- task viewer presence
+- lightweight shared awareness for currently viewed tasks
 
 ### Command Palette
 
-Keyboard shortcut:
+Keyboard shortcuts:
 
 - `Ctrl+K` on Windows/Linux
 - `Cmd+K` on macOS
 
-Current actions:
+Current command palette coverage includes:
 
-- jump between workspace views
 - open tasks
+- open workspace views
 - create a task
 
 ## Tech Stack
@@ -209,26 +250,40 @@ Current actions:
 - Prisma ORM
 - PostgreSQL
 - Socket.IO
-- JWT authentication
+- Passport JWT
+- bcrypt
 
 ## Repository Structure
 
 ```txt
 opsflow/
 |-- apps/
-|   `-- api/                     # NestJS backend
-|       |-- prisma/              # Prisma schema and migrations
-|       `-- src/                 # API modules
-|-- opsflow-dashboard/           # React frontend
-|-- packages/                    # Reserved shared package area
-|-- docker-compose.yml           # Local PostgreSQL
+|   `-- api/                  # NestJS backend
+|       |-- prisma/           # Prisma schema and migrations
+|       `-- src/              # API modules
+|-- opsflow-dashboard/        # React frontend
+|-- packages/                 # reserved shared package area
+|-- docker-compose.yml        # local PostgreSQL
 `-- README.md
 ```
 
-There is no root application package to run directly. Day-to-day work happens in:
+Daily work mainly happens in:
 
 - `apps/api`
 - `opsflow-dashboard`
+
+## Backend Modules
+
+Current backend modules include:
+
+- `auth`
+- `users`
+- `organizations`
+- `projects`
+- `tasks`
+- `notes`
+- `notifications`
+- `prisma`
 
 ## Data Model
 
@@ -248,59 +303,53 @@ Important Prisma models currently include:
 - `NoteLink`
 - `TaskNoteReadState`
 
-Key modeling choices:
+Important modeling decisions:
 
-- `Membership` controls organization-level access.
-- `ProjectMembership` controls project membership while preserving organization access.
-- `TaskUpdate` is separate from `ActivityLog`.
-- `Task` uses `archivedAt` for soft archive behavior.
-- `Note` belongs to an organization and can optionally link to a project and a task.
+- `Membership` controls team/organization-level access
+- `ProjectMembership` controls project membership without removing team-level access
+- `Task` uses `archivedAt` for archive behavior
+- `Note` belongs to an organization and can optionally link to a project and a task
+- `TaskUpdate` is separate from `ActivityLog`
+- `TaskNoteReadState` is used for unread note awareness on tasks
+
+### Enums In Use
+
+```txt
+Role: OWNER, ADMIN, MEMBER, VIEWER
+TaskStatus: TODO, IN_PROGRESS, DONE
+NoteKind: NOTE, REFERENCE
+```
 
 ## Realtime Architecture
 
-OpsFlow separates realtime task state, notifications, updates, and presence.
+OpsFlow uses Socket.IO for real-time coordination.
 
-### Task Synchronization
+### Main Events
 
-`task_updated` is used for:
+Task synchronization:
 
-- status changes
-- due date changes
-- assignment changes
-- archive and restore changes
-- keeping open task detail synchronized
-- updating project task lists without full refetch
+- `task_updated`
 
-### Task Progress Updates
+Task progress / updates:
 
-`task_update_created` is used for:
+- `task_update_created`
 
-- user-written task progress updates
-- appending updates to open task panels
-- collaborative task progress visibility
+Notifications:
 
-### Notifications
+- `notification`
 
-`notification` is used for:
+Presence:
 
-- toast popups
-- dropdown updates
-- unread count updates
+- `presence_online_users`
+- `task_viewing_join`
+- `task_viewing_leave`
+- `task_viewers_updated`
 
-### Presence Events
-
-```txt
-presence_online_users
-task_viewing_join
-task_viewing_leave
-task_viewers_updated
-```
-
-Presence is intentionally lightweight and in-memory for now.
+The current presence layer is intentionally lightweight and in-memory.
 
 ## API Overview
 
-This is a practical overview of the main routes the frontend currently relies on.
+This is a practical frontend-facing view of the routes currently used by the app.
 
 ### Auth
 
@@ -318,14 +367,14 @@ GET /users/me
 GET /users/search?q=
 ```
 
-### Organizations
+### Organizations / Teams
 
 ```txt
 GET    /organizations/my
 POST   /organizations
+GET    /organizations/:orgId
 PATCH  /organizations/:orgId
 DELETE /organizations/:orgId
-GET    /organizations/:orgId
 GET    /organizations/:orgId/members
 POST   /organizations/:orgId/members
 DELETE /organizations/:orgId/members/:membershipId
@@ -376,7 +425,7 @@ POST   /notes/:noteId/links
 DELETE /notes/:noteId/links/:linkedNoteId
 ```
 
-Supported note filters:
+Supported note query patterns:
 
 ```txt
 GET /notes?organizationId=...
@@ -394,21 +443,6 @@ DELETE /notifications/:id
 PATCH  /tasks/notifications/mark-all-read
 ```
 
-## Notification Types
-
-Current notification coverage includes:
-
-```txt
-TASK_ASSIGNED
-TASK_UNASSIGNED
-TASK_STATUS_CHANGED
-TASK_UPDATE_POSTED
-TASK_DUE_DATE_ADDED
-TASK_DUE_DATE_CHANGED
-TASK_DUE_DATE_CLEARED
-TASK_ARCHIVED
-```
-
 ## Local Development
 
 ## 1. Start PostgreSQL
@@ -419,16 +453,17 @@ From the repository root:
 docker compose up -d
 ```
 
-Default local database:
+Default database values:
 
 ```txt
-localhost:5432
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=opsflow
+host: localhost
+port: 5432
+user: postgres
+password: postgres
+database: opsflow
 ```
 
-## 2. Backend Setup
+## 2. Start the Backend
 
 ```bash
 cd apps/api
@@ -443,7 +478,7 @@ JWT_SECRET=your_secret_here
 PORT=3000
 ```
 
-Run migrations and start the backend:
+Then run:
 
 ```bash
 npx prisma migrate dev
@@ -457,7 +492,7 @@ Backend URL:
 http://localhost:3000
 ```
 
-## 3. Frontend Setup
+## 3. Start the Frontend
 
 ```bash
 cd opsflow-dashboard
@@ -479,6 +514,7 @@ http://localhost:5173
 cd apps/api
 npm run build
 npm run test
+npm run test:e2e
 npx prisma studio
 ```
 
@@ -488,6 +524,7 @@ npx prisma studio
 cd opsflow-dashboard
 npm run build
 npm run lint
+npm run preview
 ```
 
 If PowerShell blocks `npm`, use:
@@ -498,125 +535,144 @@ npm.cmd run build
 
 ## Workspace Persistence
 
-OpsFlow persists key workspace state in `localStorage`.
+OpsFlow stores important workspace state in `localStorage`.
 
-Examples include:
+Examples:
 
 - active workspace view
-- active task layout
+- active task view
 - task filters
 - selected task
-- selected organization in Projects
+- selected team in Projects
 - selected project
 - selected project tab
-- selected organization in Organizations
-- selected organization tab
-- recent work panels and history
+- selected team in Teams
+- selected team tab
+- selected note
+- note search and note filters
+- recent work history
+- recent work panel open state
 
-This persistence is best-effort and defensive:
+The persistence layer is intentionally defensive:
 
-- invalid selections are cleared when the underlying item no longer exists
-- deleted projects and organizations should not reopen after refresh
+- invalid IDs are cleared
+- deleted projects, notes, and teams should not reopen
+- deep-open flows update the same stored keys used by the target workspace
+
+## Recent Work
+
+Recent Work is a local continuity feature, not an analytics system.
+
+It currently tracks:
+
+- tasks
+- teams
+- projects
+- notes
+
+Deep-open behavior from Recent Work:
+
+- team -> opens Teams workspace
+- project -> opens Projects workspace
+- task -> opens task detail
+- note -> opens Notes workspace
+
+## UI Terminology
+
+The frontend currently uses friendlier product language:
+
+- `Team` instead of `Organization`
+- `Teams` instead of `Organizations`
+
+Important:
+
+- backend modules still use organization naming
+- Prisma models still use organization naming
+- storage keys and API routes still use organization naming where already established
 
 ## Manual Testing Checklist
 
 ### Authentication
 
-1. Register a new user.
-2. Log in and confirm the dashboard loads.
-3. Log out and log back in.
-4. Confirm a user with no organizations does not crash the app.
+1. Register a user.
+2. Log in.
+3. Confirm the dashboard loads without errors.
+4. Log out and back in.
 
-### Organizations
+### Teams
 
-1. Create an organization.
+1. Create a team.
 2. Confirm the creator becomes `OWNER`.
-3. Open the Organizations workspace and confirm the organization appears in the left pane.
-4. Edit the organization name and slug.
-5. Add an existing user by email or username.
-6. Search and filter members by role.
-7. Remove a member and confirm the list updates immediately.
+3. Open the Teams workspace and select different teams.
+4. Edit a team.
+5. Add an existing user to a team.
+6. Search/filter members.
+7. Remove a member.
 8. Confirm the last owner/admin cannot be removed.
-9. Delete a test organization and confirm it disappears cleanly.
+9. Delete a test team and confirm it disappears cleanly.
 
 ### Projects
 
-1. Open Projects and create a project inside an organization.
-2. Confirm the project appears in the organization project list and the Projects workspace.
+1. Create a project inside a team.
+2. Open it in the Projects workspace.
 3. Edit the project.
 4. Add and remove project members.
-5. Delete a test project and confirm it disappears without reopening after refresh.
-6. Open a project from Organizations -> Projects and confirm the Projects workspace opens that exact project.
+5. Open a project from Teams -> Projects and confirm deep-open works.
+6. Delete a test project and confirm it does not reopen after refresh.
 
 ### Tasks
 
 1. Create a task in a project.
-2. Move it between Kanban columns with drag and drop.
+2. Move it between Kanban columns.
 3. Switch between Kanban, Table, and Calendar.
-4. Add and clear a due date.
-5. Assign and remove users.
-6. Archive a completed task and restore it from Archived Tasks.
+4. Assign and unassign users.
+5. Set and clear a due date.
+6. Archive and restore it.
 
 ### Notes
 
-1. Open the Notes workspace.
-2. Create an organization note.
-3. Create a project-linked note.
-4. Search notes by title or content.
+1. Create a team note.
+2. Create a project-linked note.
+3. Create a task-linked note.
+4. Search notes.
 5. Edit and delete a note.
-6. Open a task and create a linked note from the task context.
+6. Open linked project/task context from Notes.
 
-### Realtime And Presence
+### Realtime
 
 1. Open the app in two sessions.
-2. Confirm online users appear.
-3. Open the same task in both sessions.
-4. Confirm both viewers appear in the task panel.
-5. Update task status or due date in one session and confirm the other session updates.
+2. Open the same task in both sessions.
+3. Update status or due date in one session and confirm the other session updates.
+4. Confirm presence and notifications update appropriately.
 
-### Notifications
+## Contributor Notes
 
-1. Trigger assignment, status, due date, and update notifications.
-2. Confirm toast popup and dropdown entry both appear.
-3. Mark one notification as read.
-4. Mark all as read.
-5. Delete a read notification.
+- treat workspaces as persistent operational surfaces, not isolated cards
+- preserve read-first / action-on-demand behavior
+- keep team/project/note continuity intact when changing deep-open behavior
+- prefer lightweight local floating windows over introducing a global modal system
+- keep backend access checks explicit and small when changing membership or deletion flows
+- avoid breaking workspace persistence without a migration or cleanup path
 
 ## Current Status
 
-### Completed
+Currently in place:
 
-- JWT authentication and protected routes
-- user onboarding without forced organization creation
-- organization creation, edit, delete, and membership management
-- project workspace foundation with member management
-- project-scoped notes and tasks
-- project and organization popup interaction patterns
-- active task workspace with three views
-- drag-and-drop Kanban
-- task assignment, due dates, archive, and restore
-- realtime task synchronization
-- task updates and notifications
-- notes workspace and linked notes
-- lightweight presence
+- real-time task execution surface
+- team workspace shell and operational tab surfaces
+- project workspace with scoped tasks, notes, and membership
+- notes workspace for retrieval and context
+- workspace continuity and recent work
+- notifications and presence
 - command palette
-- recent work memory
 
-### In Progress / Likely Next
+Likely next areas:
 
 - richer project workflows
-- deeper organization settings
-- more note collaboration tooling
-- expanded reporting and analytics
-- mobile polish
-- more complete profile and settings surfaces
-
-## Notes For Contributors
-
-- Prefer treating workspaces as persistent operational surfaces, not isolated dashboard cards.
-- Preserve read-first / action-on-demand behavior when extending Projects and Organizations.
-- Reuse the existing centered local popup pattern instead of introducing a global modal system unless there is a clear reason.
-- Keep backend changes small and access-check aware.
+- deeper note collaboration
+- broader settings/profile coverage
+- more polish for cross-workspace consistency
+- mobile and smaller-screen refinement
 
 ## Author
 

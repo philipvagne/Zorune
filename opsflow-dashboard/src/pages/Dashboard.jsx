@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   DndContext,
   PointerSensor,
@@ -590,6 +596,46 @@ export default function Dashboard({ token, onLogout }) {
     normalizedTaskFilters.project !== "ALL",
     normalizedTaskFilters.sort !== "DUE_DATE",
   ].filter(Boolean).length;
+  const todaySummaryItems = useMemo(() => {
+    const today = startOfToday();
+    const dueTodayCount = activeTasks.filter(
+      (task) =>
+        task.status !== "DONE" &&
+        task.dueDate &&
+        isSameDay(task.dueDate, today)
+    ).length;
+    const overdueCount = activeTasks.filter(
+      (task) =>
+        task.status !== "DONE" &&
+        task.dueDate &&
+        new Date(task.dueDate).setHours(0, 0, 0, 0) < today
+    ).length;
+    const assignedToYouCount = currentUserId
+      ? activeTasks.filter((task) => isTaskAssignedTo(task, currentUserId)).length
+      : 0;
+    const updatesAwaitingCount = activeTasks.filter(
+      (task) => (task.unreadNoteCount || 0) > 0 || task.hasUnreadNotes
+    ).length;
+
+    return [
+      { id: "today", label: "Tasks due today", value: dueTodayCount, tone: "tone-violet" },
+      { id: "overdue", label: "Overdue tasks", value: overdueCount, tone: "tone-amber" },
+      { id: "assigned", label: "Assigned to you", value: assignedToYouCount, tone: "tone-rose" },
+      { id: "updates", label: "Updates awaiting you", value: updatesAwaitingCount, tone: "tone-sky" },
+    ];
+  }, [activeTasks, currentUserId]);
+  const currentUserProfile = useMemo(() => {
+    const liveUser = onlineUsers.find((user) => user.id === currentUserId);
+
+    return {
+      name:
+        liveUser?.fullName ||
+        liveUser?.username ||
+        liveUser?.email?.split("@")[0] ||
+        "OpsFlow Member",
+      email: liveUser?.email || "workspace@opsflow.com",
+    };
+  }, [currentUserId, onlineUsers]);
 
   const resetWorkspaceState = () => {
     window.localStorage.removeItem("opsflow.activeView");
@@ -872,7 +918,7 @@ export default function Dashboard({ token, onLogout }) {
             </button>
           </div>
 
-          {renderWorkspaceCardBody()}
+          <div className="workspace-card-body">{renderWorkspaceCardBody()}</div>
         </div>
     );
   };
@@ -1100,34 +1146,145 @@ useEffect(() => {
 
 return (
   <div className="dashboard-shell">
-    <TopBar
-      centerSlot={
-        <button
-          type="button"
-          className="workspace-search-button"
-          onClick={() => setCommandPaletteOpen(true)}
-          title="Search tasks, projects, and notes"
-        >
-          <span className="workspace-search-icon">⌕</span>
-          <span className="workspace-search-copy">Search tasks, projects, notes...</span>
-          <span className="workspace-search-shortcut">Ctrl K</span>
-        </button>
-      }
-      actions={
-        <>
-          <div className="recent-work-anchor">
+    <div className="dashboard-header-layer">
+      <div className="dashboard-header-spacer" aria-hidden="true" />
+      <div className="dashboard-header-shell">
+        <TopBar
+          centerSlot={
             <button
               type="button"
-              className={recentWorkOpen ? "shortcut-hint active" : "shortcut-hint"}
-              onClick={(event) => {
-                event.stopPropagation();
-                setRecentWorkOpen((current) => !current);
-              }}
-              title="Recent work"
+              className="workspace-search-button"
+              onClick={() => setCommandPaletteOpen(true)}
+              title="Search tasks, projects, and notes"
             >
-              Recent Work
+              <span className="workspace-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <circle
+                    cx="8.75"
+                    cy="8.75"
+                    r="5.25"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                  />
+                  <path
+                    d="M12.5 12.5L16.25 16.25"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <span className="workspace-search-copy">Search tasks, projects, notes...</span>
+              <span className="workspace-search-shortcut">Ctrl K</span>
             </button>
-          </div>
+          }
+          actions={
+            <>
+              <div className="recent-work-anchor">
+                <button
+                  type="button"
+                  className={
+                    recentWorkOpen
+                      ? "shortcut-hint recent-work-button active"
+                      : "shortcut-hint recent-work-button"
+                  }
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setRecentWorkOpen((current) => !current);
+                  }}
+                  title="Recent work"
+                >
+                  Recent Work
+                </button>
+              </div>
+              <NotificationBell
+                notifications={notifications}
+                openNotifications={openNotifications}
+                setOpenNotifications={setOpenNotifications}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead}
+                deleteNotification={deleteNotification}
+                showPanel={false}
+              />
+              <button className="logout-button" onClick={onLogout} title="Logout" aria-label="Logout">
+                Logout
+              </button>
+            </>
+          }
+        />
+      </div>
+    </div>
+
+    <div className="dashboard-frame">
+      <LeftRail
+        summaryItems={todaySummaryItems}
+        currentUser={currentUserProfile}
+        activeView={activeView}
+        onViewChange={changeView}
+      />
+
+      <div className="dashboard-primary-stage">
+        <CenterWorkspace eyebrow="Live workspace" title="Active Tasks">
+          <section className="dashboard-board-shell">
+            <TaskProductivityToolbar
+              filters={normalizedTaskFilters}
+              onFiltersChange={setTaskFilters}
+              assigneeOptions={assigneeOptions}
+              projectOptions={projectOptions}
+              activeFilterCount={activeFilterCount}
+              onClear={() => setTaskFilters(defaultTaskFilters)}
+              onCreateTask={openCreateTask}
+              activeTaskLayout={activeTaskLayout}
+              onTaskLayoutChange={(layout) => {
+                setActiveTaskLayout(layout);
+                setActiveView("tasks");
+                setContextMode("empty");
+                setSelectedTaskId(null);
+              }}
+            />
+            <div className="dashboard-board-surface">{renderActiveTasks()}</div>
+          </section>
+
+          {canvasContent ? (
+            <ContextPanel
+              className={
+                contextMode === "workspace"
+                  ? "dashboard-context-panel--workspace dashboard-workspace-shell"
+                  : "dashboard-workspace-shell"
+              }
+            >
+              {canvasContent}
+            </ContextPanel>
+          ) : null}
+        </CenterWorkspace>
+      </div>
+
+      <aside className="dashboard-window-zone" aria-label="Dashboard side windows">
+        <div className="dashboard-window-slot dashboard-window-slot-recent-work">
+          <RecentWorkPanel
+            isOpen={recentWorkOpen}
+            recentTasks={recentlyActiveTasks.map((task) => ({
+              ...task,
+              meta: [
+                task.status === "IN_PROGRESS" ? "In progress" : task.status,
+                task.unreadNoteCount > 0
+                  ? `${task.unreadNoteCount} new note${task.unreadNoteCount > 1 ? "s" : ""}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" - "),
+            }))}
+            recentOrganizations={recentWorkOrganizations}
+            recentProjects={recentWorkProjects}
+            recentNotes={recentWorkNotes}
+            onSelectOrganization={openRecentOrganization}
+            onSelectTask={selectTask}
+            onSelectProject={openRecentProject}
+            onSelectNote={openRecentNote}
+          />
+        </div>
+
+        <div className="dashboard-window-slot dashboard-window-slot-notifications">
           <NotificationBell
             notifications={notifications}
             openNotifications={openNotifications}
@@ -1135,78 +1292,11 @@ return (
             markAsRead={markAsRead}
             markAllAsRead={markAllAsRead}
             deleteNotification={deleteNotification}
+            showTrigger={false}
+            embedded
           />
-          <button className="logout-button" onClick={onLogout}>
-            Logout
-          </button>
-        </>
-      }
-    />
-
-    <div className="dashboard-body">
-      <LeftRail
-        onlineUsers={onlineUsers}
-        activeView={activeView}
-        activeTaskLayout={activeTaskLayout}
-        onViewChange={changeView}
-        onTaskLayoutChange={(layout) => {
-          setActiveTaskLayout(layout);
-          setActiveView("tasks");
-          setContextMode("empty");
-          setSelectedTaskId(null);
-        }}
-      />
-
-      <div
-        className={
-          canvasContent
-            ? "dashboard-workspace-stack has-context-surface"
-            : "dashboard-workspace-stack"
-        }
-      >
-        <CenterWorkspace
-          eyebrow="Live workspace"
-          title="Active Tasks"
-        >
-          <TaskProductivityToolbar
-            filters={normalizedTaskFilters}
-            onFiltersChange={setTaskFilters}
-            assigneeOptions={assigneeOptions}
-            projectOptions={projectOptions}
-            activeFilterCount={activeFilterCount}
-            onClear={() => setTaskFilters(defaultTaskFilters)}
-            onCreateTask={openCreateTask}
-          />
-          {renderActiveTasks()}
-        </CenterWorkspace>
-
-        <ContextPanel>{canvasContent}</ContextPanel>
-      </div>
-
-      <aside className="dashboard-right-context">
-        <RecentWorkPanel
-          isOpen={recentWorkOpen}
-          recentTasks={recentlyActiveTasks.map((task) => ({
-            ...task,
-            meta: [
-              task.status === "IN_PROGRESS" ? "In progress" : task.status,
-              task.unreadNoteCount > 0
-                ? `${task.unreadNoteCount} new note${task.unreadNoteCount > 1 ? "s" : ""}`
-                : "",
-            ]
-              .filter(Boolean)
-              .join(" - "),
-          }))}
-          recentOrganizations={recentWorkOrganizations}
-          recentProjects={recentWorkProjects}
-          recentNotes={recentWorkNotes}
-          onSelectOrganization={openRecentOrganization}
-          onSelectTask={selectTask}
-          onSelectProject={openRecentProject}
-          onSelectNote={openRecentNote}
-        />
+        </div>
       </aside>
-
     </div>
 
     <CommandPalette
