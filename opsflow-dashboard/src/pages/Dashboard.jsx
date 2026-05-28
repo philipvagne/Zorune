@@ -857,6 +857,7 @@ export default function Dashboard({ token, onLogout }) {
       activeView === "archive"
         ? "Archived Tasks"
         : currentWorkspace.title;
+    const suppressWorkspaceTitle = activeView === "organizations";
 
     const renderWorkspaceCardBody = () => {
       if (activeView === "archive") {
@@ -921,23 +922,31 @@ export default function Dashboard({ token, onLogout }) {
     };
 
       return (
-        <div className="workspace-card-shell">
-          <div className="workspace-card-header">
-            <h2>{workspaceTitle}</h2>
+        <div
+          className={
+            suppressWorkspaceTitle
+              ? "workspace-card-shell workspace-card-shell--teams"
+              : "workspace-card-shell"
+          }
+        >
+          {!suppressWorkspaceTitle ? (
+            <div className="workspace-card-header">
+              <h2>{workspaceTitle}</h2>
 
-            <button
-              type="button"
-              className="task-detail-close workspace-shell-close"
-              onClick={closeContextPanel}
-              aria-label={`Close ${workspaceTitle}`}
-            >
-              X
-            </button>
-          </div>
+              <button
+                type="button"
+                className="task-detail-close workspace-shell-close"
+                onClick={closeContextPanel}
+                aria-label={`Close ${workspaceTitle}`}
+              >
+                X
+              </button>
+            </div>
+          ) : null}
 
           <div className="workspace-card-body">{renderWorkspaceCardBody()}</div>
         </div>
-    );
+      );
   };
 
   const canvasContent = renderCanvasContent();

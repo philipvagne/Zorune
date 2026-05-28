@@ -115,6 +115,36 @@ const formatOrganizationDate = (value) => {
   return parsed.toLocaleDateString();
 };
 
+const formatRelativeActivityTime = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  const diffMs = Date.now() - parsed.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diffMs < hour) {
+    const minutes = Math.max(1, Math.round(diffMs / minute));
+    return `${minutes}m ago`;
+  }
+
+  if (diffMs < day) {
+    const hours = Math.max(1, Math.round(diffMs / hour));
+    return `${hours}h ago`;
+  }
+
+  const days = Math.max(1, Math.round(diffMs / day));
+  return `${days}d ago`;
+};
+
 const getProjectStatusState = (project) => {
   const rawStatus = String(project?.status || "").toUpperCase();
   const dueDate = project?.dueDate ? new Date(project.dueDate) : null;
@@ -182,6 +212,7 @@ export default function OrganizationsWorkspace({
   const [memberRole, setMemberRole] = useState("MEMBER");
   const [memberSearch, setMemberSearch] = useState("");
   const [memberRoleFilter, setMemberRoleFilter] = useState("ALL");
+  const [teamSearch, setTeamSearch] = useState("");
   const [creatingOrganization, setCreatingOrganization] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
   const [removingMember, setRemovingMember] = useState(false);
@@ -299,6 +330,10 @@ export default function OrganizationsWorkspace({
     : 0;
   const organizationOverviewStats = useMemo(() => {
     const now = Date.now();
+    let totalTaskCount = 0;
+    let inProgressTaskCount = 0;
+    let completedTaskCount = 0;
+    let overdueTaskCount = 0;
     let activeProjectCount = 0;
     let doneProjectCount = 0;
     let overdueProjectCount = 0;
@@ -307,6 +342,9 @@ export default function OrganizationsWorkspace({
       const status = String(project?.status || "").toUpperCase();
       const activeTasks = Number(project?.taskCounts?.totalActive || 0);
       const doneTasks = Number(project?.taskCounts?.done || 0);
+      const todoTasks = Number(project?.taskCounts?.todo || 0);
+      const inProgressTasks =
+        Number(project?.taskCounts?.inProgress || project?.taskCounts?.in_progress || 0);
       const dueDate = project?.dueDate ? new Date(project.dueDate) : null;
       const hasValidDueDate =
         dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
@@ -326,9 +364,25 @@ export default function OrganizationsWorkspace({
       if (isActive && hasValidDueDate && dueDate.getTime() < now) {
         overdueProjectCount += 1;
       }
+
+      totalTaskCount += activeTasks + doneTasks;
+      completedTaskCount += doneTasks;
+      inProgressTaskCount += inProgressTasks;
+
+      if (inProgressTasks === 0 && activeTasks > 0) {
+        inProgressTaskCount += Math.max(activeTasks - todoTasks, 0);
+      }
+
+      if (!isDone && hasValidDueDate && dueDate.getTime() < now) {
+        overdueTaskCount += activeTasks;
+      }
     });
 
     return {
+      totalTaskCount,
+      inProgressTaskCount,
+      completedTaskCount,
+      overdueTaskCount,
       activeProjectCount,
       doneProjectCount,
       overdueProjectCount,
@@ -350,6 +404,68 @@ export default function OrganizationsWorkspace({
       }),
     [organizations]
   );
+  const filteredOrganizations = useMemo(() => {
+    const query = teamSearch.trim().toLowerCase();
+
+    if (!query) {
+      return organizations;
+    }
+
+    return organizations.filter((organization) => {
+      const name = organization?.name?.toLowerCase() || "";
+      const slug = organization?.slug?.toLowerCase() || "";
+      return name.includes(query) || slug.includes(query);
+    });
+  }, [organizations, teamSearch]);
+  const selectedOrganizationLead = useMemo(() => {
+    const ownerMembership =
+      members.find((membership) => membership.role === "OWNER") ||
+      members.find((membership) => membership.role === "ADMIN") ||
+      null;
+
+    return ownerMembership?.user || null;
+  }, [members]);
+  const selectedOrganizationActiveProjects = useMemo(() => {
+    return projects
+      .filter((project) => {
+        const status = String(project?.status || "").toUpperCase();
+        return !["DONE", "COMPLETED", "ARCHIVED", "CLOSED"].includes(status);
+      })
+      .slice(0, 5);
+  }, [projects]);
+  const selectedOrganizationRecentActivity = useMemo(() => {
+    const projectEvents = projects
+      .map((project) => {
+        const time = project?.updatedAt || project?.createdAt || "";
+        return time
+          ? {
+              id: `project-${project.id}`,
+              label: project?.name || "Untitled project",
+              meta: project?.updatedAt ? "Project updated" : "Project created",
+              time,
+            }
+          : null;
+      })
+      .filter(Boolean);
+
+    const memberEvents = members
+      .map((membership) => {
+        const time = membership?.joinedAt || membership?.createdAt || "";
+        return time
+          ? {
+              id: `member-${membership.id}`,
+              label: displayUserName(membership.user),
+              meta: "Member joined",
+              time,
+            }
+          : null;
+      })
+      .filter(Boolean);
+
+    return [...projectEvents, ...memberEvents]
+      .sort((left, right) => new Date(right.time) - new Date(left.time))
+      .slice(0, 5);
+  }, [members, projects]);
   const organizationSummaryHydrationKey = useMemo(
     () =>
       organizationsNeedingSummaryHydration
@@ -903,9 +1019,14 @@ export default function OrganizationsWorkspace({
       <section className="project-panel organization-collection-pane">
         <div className="organization-collection-body">
           <div className="organization-collection-topbar">
-            <div className="organization-collection-heading">
-              <h4>Your Teams</h4>
-            </div>
+            <label className="organization-list-search">
+              <input
+                className="ui-input"
+                value={teamSearch}
+                onChange={(event) => setTeamSearch(event.target.value)}
+                placeholder="Search teams..."
+              />
+            </label>
             <button
               className="contextual-create-button"
               type="button"
@@ -926,9 +1047,14 @@ export default function OrganizationsWorkspace({
                   workspaces.
                 </p>
               </div>
+            ) : filteredOrganizations.length === 0 ? (
+              <div className="org-empty-state">
+                <h4>No matching teams</h4>
+                <p>Try a different team name or slug.</p>
+              </div>
             ) : (
               <div className="project-card-grid organization-card-grid">
-                {organizations.map((organization) => {
+                {filteredOrganizations.map((organization) => {
                   const memberCount =
                     organization.memberCount ??
                     memberCountsByOrgId[organization.id] ??
@@ -1016,29 +1142,32 @@ export default function OrganizationsWorkspace({
       <section className="project-panel project-detail-panel organization-detail-panel">
         {selectedOrganization ? (
           <>
-            <div className="project-opened-strip">
-              <div className="project-opened-tab" aria-label="Opened team">
-                <div className="project-opened-tab-main">
-                  <span
-                    className="project-opened-tab-icon organization-opened-tab-icon"
-                    aria-hidden="true"
-                  >
-                    {getOrganizationInitials(selectedOrganization)}
-                  </span>
-                  <div className="project-opened-tab-copy">
-                    <strong>{selectedOrganization.name}</strong>
-                  </div>
+            <div className="organization-detail-header">
+              <div className="organization-detail-identity">
+                <span
+                  className="project-opened-tab-icon organization-opened-tab-icon"
+                  aria-hidden="true"
+                >
+                  {getOrganizationInitials(selectedOrganization)}
+                </span>
+                <div className="organization-detail-copy">
+                  <strong>{selectedOrganization.name}</strong>
+                  <span>{selectedOrganizationMemberCount} members</span>
                 </div>
+              </div>
 
+              {canManageSelectedOrganization ? (
                 <button
                   type="button"
-                  className="project-opened-tab-close"
-                  onClick={() => setSelectedOrgId("")}
-                  aria-label={`Close ${selectedOrganization.name}`}
+                  className="contextual-create-button"
+                  onClick={() => {
+                    closeOrganizationPopup();
+                    setShowOrganizationMemberAddForm(true);
+                  }}
                 >
-                  Close
+                  Add Member
                 </button>
-              </div>
+              ) : null}
             </div>
 
             <div
@@ -1095,18 +1224,87 @@ export default function OrganizationsWorkspace({
             <div className="project-detail-content organization-detail-content">
               {activeOrganizationTab === "overview" ? (
                 <div className="project-overview-surface organization-overview-surface">
-                  <div className="organization-overview-summary">
-                    <div className="organization-overview-copy">
-                      <h5>{selectedOrganization.name}</h5>
-                      <div className="organization-overview-context">
-                        <span>{selectedOrganizationMemberCount} members</span>
-                        <span>{selectedOrganizationProjectCount} projects</span>
+                  <div className="organization-overview-task-stats">
+
+                    <div className="organization-overview-task-stat">
+                      <div className="organization-overview-task-stat-top">
+                        <strong>{organizationOverviewStats.totalTaskCount}</strong>
+
+                        <span
+                          className="organization-overview-task-icon"
+                          aria-hidden="true"
+                        >
+                          #
+                        </span>
                       </div>
+
+                      <span>Total tasks</span>
+                    </div>
+
+                    <div className="organization-overview-task-stat">
+                      <div className="organization-overview-task-stat-top">
+                        <strong>{organizationOverviewStats.inProgressTaskCount}</strong>
+
+                        <span
+                          className="organization-overview-task-icon"
+                          aria-hidden="true"
+                        >
+                          ↗
+                        </span>
+                      </div>
+
+                      <span>In progress</span>
+                    </div>
+
+                    <div className="organization-overview-task-stat">
+                      <div className="organization-overview-task-stat-top">
+                        <strong>{organizationOverviewStats.completedTaskCount}</strong>
+
+                        <span
+                          className="organization-overview-task-icon"
+                          aria-hidden="true"
+                        >
+                          ✓
+                        </span>
+                      </div>
+
+                      <span>Completed</span>
+                    </div>
+
+                    <div className="organization-overview-task-stat">
+                      <div className="organization-overview-task-stat-top">
+                        <strong>{organizationOverviewStats.overdueTaskCount}</strong>
+
+                        <span
+                          className="organization-overview-task-icon"
+                          aria-hidden="true"
+                        >
+                          !
+                        </span>
+                      </div>
+
+                      <span>Overdue</span>
+                    </div>
+
+                  </div>
+
+                  <div className="organization-overview-grid">
+                    <section className="organization-overview-block">
+                      <h5>About the team</h5>
                       <p className="project-surface-description">
-                        This team surface keeps your people, project access,
-                        and shared workspace structure in one calmer operational
-                        layer.
+                        {selectedOrganization.description ||
+                          "This team surface keeps your people, project access, and shared workspace structure in one calmer operational layer."}
                       </p>
+                      <div className="organization-overview-meta">
+                        <span>
+                          Team lead{" "}
+                          <strong>
+                            {selectedOrganizationLead
+                              ? displayUserName(selectedOrganizationLead)
+                              : "Not assigned yet"}
+                          </strong>
+                        </span>
+                      </div>
 
                       {canManageSelectedOrganization ? (
                         <div className="project-overview-actions organization-overview-actions">
@@ -1134,22 +1332,48 @@ export default function OrganizationsWorkspace({
                           </button>
                         </div>
                       ) : null}
-                    </div>
+                    </section>
 
-                    <div className="project-detail-stats organization-overview-stats">
-                      <div>
-                        <strong>{organizationOverviewStats.activeProjectCount}</strong>
-                        <span>Active projects</span>
-                      </div>
-                      <div>
-                        <strong>{organizationOverviewStats.doneProjectCount}</strong>
-                        <span>Done projects</span>
-                      </div>
-                      <div>
-                        <strong>{organizationOverviewStats.overdueProjectCount}</strong>
-                        <span>Overdue projects</span>
-                      </div>
-                    </div>
+                    <section className="organization-overview-block">
+                      <h5>Active projects</h5>
+                      {selectedOrganizationActiveProjects.length > 0 ? (
+                        <div className="organization-overview-list">
+                          {selectedOrganizationActiveProjects.map((project) => (
+                            <div key={project.id} className="organization-overview-list-item">
+                              <strong>{project.name}</strong>
+                              <span>{getProjectStatusState(project).label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="muted-text">
+                          No active projects yet.
+                        </div>
+                      )}
+                    </section>
+
+                    <section className="organization-overview-block">
+                      <h5>Recent activity</h5>
+                      {selectedOrganizationRecentActivity.length > 0 ? (
+                        <div className="organization-overview-list">
+                          {selectedOrganizationRecentActivity.map((activity) => (
+                            <div key={activity.id} className="organization-overview-list-item">
+                              <strong>{activity.label}</strong>
+                              <span>
+                                {activity.meta}
+                                {formatRelativeActivityTime(activity.time)
+                                  ? ` · ${formatRelativeActivityTime(activity.time)}`
+                                  : ""}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="muted-text">
+                          No recent activity yet.
+                        </div>
+                      )}
+                    </section>
                   </div>
                 </div>
               ) : null}
@@ -1160,18 +1384,6 @@ export default function OrganizationsWorkspace({
                     <div>
                       <div className="dashboard-eyebrow">Team Members</div>
                     </div>
-                    {canManageSelectedOrganization ? (
-                      <button
-                        type="button"
-                        className="contextual-create-button"
-                        onClick={() => {
-                          closeOrganizationPopup();
-                          setShowOrganizationMemberAddForm(true);
-                        }}
-                      >
-                        Add Member
-                      </button>
-                    ) : null}
                   </div>
 
                   {loadingMembers ? (
