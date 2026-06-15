@@ -278,13 +278,21 @@ cd apps/api
 npm install
 ```
 
-Create `apps/api/.env`:
+Copy [`apps/api/.env.example`](C:/Users/phili/Desktop/opsflow/apps/api/.env.example) to `apps/api/.env`:
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/opsflow
-JWT_SECRET=replace_me
+JWT_SECRET=change-this-to-a-long-random-secret-before-deploying
 PORT=3000
+NODE_ENV=development
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+WS_CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 ```
+
+Notes:
+
+- `JWT_SECRET` must be changed for any real deployment.
+- `WS_CORS_ORIGINS` is optional if it should match `CORS_ORIGINS`.
 
 Run migrations and start the API:
 

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from '../auth/auth.constants';
+import { getWebsocketCorsOrigins } from '../auth/auth.constants';
 import { PrismaService } from '../prisma/prisma.service';
 
 type PresenceUser = {
@@ -21,7 +21,7 @@ type PresenceUser = {
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: getWebsocketCorsOrigins(),
   },
 })
 export class NotificationsGateway
@@ -53,14 +53,11 @@ async handleConnection(client: Socket) {
     const token = client.handshake.auth?.token;
 
     if (!token) {
-      console.log('No token provided');
       client.disconnect();
       return;
     }
 
-    const payload = this.jwtService.verify(token, {
-      secret: jwtConstants.secret,
-    });
+    const payload = this.jwtService.verify(token);
 
     const userId = payload.sub;
     const profile = await this.getPresenceProfile(userId);
@@ -87,10 +84,8 @@ async handleConnection(client: Socket) {
       });
     }
 
-    console.log('SOCKET AUTH SUCCESS:', userId);
     await this.emitOnlineUsers();
   } catch (err) {
-    console.log('SOCKET AUTH FAILED:', err.message);
     client.disconnect();
   }
 }

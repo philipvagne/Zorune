@@ -1,16 +1,20 @@
-# React + Vite
+# OpsFlow Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite frontend for OpsFlow.
 
-Currently, two official plugins are available:
+This app provides the main workspace UI for:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- login and registration
+- task views across kanban, table, and calendar
+- projects, teams, notes, and notifications
+- realtime task updates and lightweight presence
 
-## React Compiler
+## Quick start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Make sure the API is running from `apps/api`
+2. Install dependencies in `opsflow-dashboard`
+3. Run `npm run dev`
 
-## Expanding the ESLint configuration
+Default local URL: `http://localhost:5173`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+For the complete setup flow, use the root [README](C:/Users/phili/Desktop/opsflow/README.md).
