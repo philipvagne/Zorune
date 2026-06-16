@@ -134,132 +134,140 @@ export default function CreateTaskPanel({
   const hasProjects = projects.length > 0;
 
   return (
-    <div className="task-detail-panel">
-      <div className="task-detail-header">
-        <div>
-          <div className="dashboard-eyebrow">Create</div>
-          <h2>New Task</h2>
-        </div>
-
-        <button
-          type="button"
-          className="task-detail-close"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
-
-      {loadingContext ? (
-        <div className="context-panel-empty">
-          Loading workspace context...
-        </div>
-      ) : !hasOrganizations ? (
-        <div className="context-panel-empty">
-          A project is required before creating tasks. Create or join a
-          team first.
-        </div>
-      ) : (
-        <form className="task-create-form" onSubmit={handleSubmit}>
-          <section className="task-panel-section">
-            <strong>Workspace</strong>
-
-            <label className="form-label">
-              Team
-              <select
-                className="ui-input full-width"
-                value={selectedOrgId}
-                onChange={(event) => setSelectedOrgId(event.target.value)}
-              >
-                {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-label">
-              Project
-              <select
-                className="ui-input full-width"
-                value={selectedProjectId}
-                onChange={(event) => setSelectedProjectId(event.target.value)}
-                disabled={loadingProjects || !hasProjects}
-              >
-                {hasProjects ? (
-                  projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No projects available</option>
-                )}
-              </select>
-            </label>
-
-            {!hasProjects && !loadingProjects && (
-              <div className="muted-text">
-                Create a project in this team before adding tasks.
-              </div>
-            )}
-          </section>
-
-          <section className="task-panel-section">
-            <label className="form-label">
-              Title
-              <input
-                className="ui-input full-width"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Task title"
-              />
-            </label>
-
-            <label className="form-label">
-              Description
-              <textarea
-                className="ui-textarea"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Optional description"
-                rows={4}
-              />
-            </label>
-
-            <label className="form-label">
-              Due date
-              <input
-                type="date"
-                className="ui-input full-width"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
-            </label>
-          </section>
-
-          {error && <div className="form-error">{error}</div>}
-
-          <div className="button-row">
-            <button
-              type="submit"
-              className="ui-button ui-button-primary"
-              disabled={submitting || !hasProjects}
-            >
-              {submitting ? "Creating..." : "Create task"}
-            </button>
+    <div className="workspace-card-shell workspace-card-shell--create-task">
+      <div className="workspace-card-body task-create-surface-body">
+        <div className="task-detail-panel">
+          <div className="task-detail-header">
+            <div>
+              <div className="dashboard-eyebrow">Create</div>
+              <h2>New Task</h2>
+            </div>
 
             <button
               type="button"
-              className="ui-button ui-button-secondary"
+              className="task-detail-close"
               onClick={onClose}
             >
-              Cancel
+              Close
             </button>
           </div>
-        </form>
-      )}
+
+          {loadingContext ? (
+            <div className="context-panel-empty">
+              Loading workspace context...
+            </div>
+          ) : !hasOrganizations ? (
+            <div className="context-panel-empty">
+              A project is required before creating tasks. Create or join a
+              team first.
+            </div>
+          ) : (
+            <form className="task-create-form" onSubmit={handleSubmit}>
+              <div className="task-create-form-body">
+                <section className="task-panel-section">
+                  <strong>Workspace</strong>
+
+                  <label className="form-label">
+                    Team
+                    <select
+                      className="ui-input full-width"
+                      value={selectedOrgId}
+                      onChange={(event) => setSelectedOrgId(event.target.value)}
+                    >
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="form-label">
+                    Project
+                    <select
+                      className="ui-input full-width"
+                      value={selectedProjectId}
+                      onChange={(event) =>
+                        setSelectedProjectId(event.target.value)
+                      }
+                      disabled={loadingProjects || !hasProjects}
+                    >
+                      {hasProjects ? (
+                        projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {project.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No projects available</option>
+                      )}
+                    </select>
+                  </label>
+
+                  {!hasProjects && !loadingProjects && (
+                    <div className="muted-text">
+                      Create a project in this team before adding tasks.
+                    </div>
+                  )}
+                </section>
+
+                <section className="task-panel-section">
+                  <label className="form-label">
+                    Title
+                    <input
+                      className="ui-input full-width"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      placeholder="Task title"
+                    />
+                  </label>
+
+                  <label className="form-label">
+                    Description
+                    <textarea
+                      className="ui-textarea"
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      placeholder="Optional description"
+                      rows={4}
+                    />
+                  </label>
+
+                  <label className="form-label">
+                    Due date
+                    <input
+                      type="date"
+                      className="ui-input full-width"
+                      value={dueDate}
+                      onChange={(event) => setDueDate(event.target.value)}
+                    />
+                  </label>
+                </section>
+
+                {error && <div className="form-error">{error}</div>}
+              </div>
+
+              <div className="button-row task-create-form-actions">
+                <button
+                  type="submit"
+                  className="ui-button ui-button-primary"
+                  disabled={submitting || !hasProjects}
+                >
+                  {submitting ? "Creating..." : "Create task"}
+                </button>
+
+                <button
+                  type="button"
+                  className="ui-button ui-button-secondary"
+                  onClick={onClose}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
