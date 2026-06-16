@@ -467,54 +467,55 @@ export default function TaskModal({
   if (!task) return null;
 
   return (
-    <div className="task-detail-panel">
-        <div
-          className="task-detail-header"
-        >
-          <h2>{task.title}</h2>
+    <div className="workspace-card-shell workspace-card-shell--task-detail">
+      <div className="workspace-card-body task-detail-surface-body">
+        <div className="task-detail-panel">
+          <div className="task-detail-header">
+            <h2>{task.title}</h2>
 
-          <button
-            type="button"
-            aria-label="Close task details"
-            className="task-detail-close"
-            onClick={onClose}
-          >
-            Close
-          </button>
-        </div>
+            <button
+              type="button"
+              aria-label="Close task details"
+              className="task-detail-close"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
 
-        <section className="task-panel-section compact">
-          <strong>Viewing this task</strong>
+          <div className="task-detail-scroll">
+            <section className="task-panel-section compact">
+              <strong>Viewing this task</strong>
 
-          {viewers.length === 0 ? (
-            <div className="muted-text">No active viewers</div>
-          ) : (
-            <div className="presence-list inline">
-              {viewers.map((viewer) => {
-                const name =
-                  viewer.fullName ||
-                  viewer.username ||
-                  viewer.email ||
-                  "User";
-                const initials = name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
+              {viewers.length === 0 ? (
+                <div className="muted-text">No active viewers</div>
+              ) : (
+                <div className="presence-list inline">
+                  {viewers.map((viewer) => {
+                    const name =
+                      viewer.fullName ||
+                      viewer.username ||
+                      viewer.email ||
+                      "User";
+                    const initials = name
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
 
-                return (
-                  <div key={viewer.id} className="presence-user compact">
-                    <div className="presence-avatar">
-                      {initials}
-                    </div>
-                    <span>{name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                    return (
+                      <div key={viewer.id} className="presence-user compact">
+                        <div className="presence-avatar">
+                          {initials}
+                        </div>
+                        <span>{name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
         <section className="task-panel-section">
           <strong>Status</strong>
@@ -873,9 +874,12 @@ export default function TaskModal({
           </p>
         </section>
 
-        <div className="task-id">
-          Task ID: {task.id}
+            <div className="task-id">
+              Task ID: {task.id}
+            </div>
+          </div>
         </div>
+      </div>
     </div>
   );
 }
