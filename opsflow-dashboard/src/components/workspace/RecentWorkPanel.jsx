@@ -31,94 +31,47 @@ function formatRecentTime(value) {
   return new Date(value).toLocaleDateString();
 }
 
-function RecentWorkSection({
-  title,
-  items,
-  emptyText,
-  onSelect,
-}) {
-  return (
-    <section className="recent-work-section">
-      <div className="recent-work-section-title">{title}</div>
-
-      {items.length === 0 ? (
-        <div className="recent-work-empty">{emptyText}</div>
-      ) : (
-        <div className="recent-work-list">
-          {items.map((item) => (
-            <button
-              key={`${item.type || title}-${item.id}`}
-              type="button"
-              className="recent-work-item"
-              onClick={() => onSelect?.(item)}
-            >
-              <div className="recent-work-item-topline">
-                <span>{item.label}</span>
-                <span>{formatRecentTime(item.recentAt)}</span>
-              </div>
-              <strong>{item.title}</strong>
-              {item.meta ? (
-                <div className="recent-work-item-meta">{item.meta}</div>
-              ) : null}
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 export default function RecentWorkPanel({
   isOpen,
-  recentOrganizations,
-  recentTasks,
-  recentProjects,
-  recentNotes,
-  onSelectOrganization,
-  onSelectTask,
-  onSelectProject,
-  onSelectNote,
+  items,
+  onSelectItem,
 }) {
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="recent-work-panel" onClick={(event) => event.stopPropagation()}>
+    <div
+      className="recent-work-panel"
+      onClick={(event) => event.stopPropagation()}
+    >
       <div className="recent-work-panel-header">
         <div className="dashboard-eyebrow">Recent Work</div>
-        <span>Quiet continuity</span>
+        <p>Jump back into recent work</p>
       </div>
 
-      <div className="recent-work-panel-body">
-        <RecentWorkSection
-        title="Teams"
-        items={recentOrganizations}
-        emptyText="No recent team context yet."
-        onSelect={onSelectOrganization}
-      />
-
-        <RecentWorkSection
-          title="Tasks"
-          items={recentTasks}
-          emptyText="No recent task work yet."
-          onSelect={onSelectTask}
-        />
-
-        <RecentWorkSection
-          title="Projects"
-          items={recentProjects}
-          emptyText="No recent project work yet."
-          onSelect={onSelectProject}
-        />
-
-        <RecentWorkSection
-          title="Notes"
-          items={recentNotes}
-          emptyText="No recent notes yet."
-          onSelect={onSelectNote}
-        />
-      </div>
+      {items.length === 0 ? (
+        <div className="recent-work-empty">
+          Your recently opened work will appear here.
+        </div>
+      ) : (
+        <div className="recent-work-list" role="list">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="recent-work-item"
+              onClick={() => onSelectItem?.(item)}
+            >
+              <strong title={item.title}>{item.title}</strong>
+              <span className="recent-work-item-meta">
+                {item.itemType}
+                {item.recentAt ? ` • ${formatRecentTime(item.recentAt)}` : ""}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

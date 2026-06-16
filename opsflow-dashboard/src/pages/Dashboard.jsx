@@ -95,6 +95,62 @@ function persistWorkspaceValue(key, value) {
   window.localStorage.setItem(key, JSON.stringify(value));
 }
 
+function normalizeNotification(notification, fallbackCreatedAt) {
+  if (!notification) {
+    return null;
+  }
+
+  const createdAt =
+    notification.createdAt ||
+    notification.created_at ||
+    fallbackCreatedAt ||
+    new Date().toISOString();
+
+  return {
+    id: notification.id || notification.notificationId,
+    message: notification.message,
+    type: notification.type,
+    taskId: notification.taskId,
+    isRead: notification.isRead ?? false,
+    createdAt,
+  };
+}
+
+function mergeNotifications(currentNotifications, incomingNotifications) {
+  const mergedById = new Map();
+
+  currentNotifications.forEach((notification) => {
+    const normalized = normalizeNotification(notification);
+
+    if (normalized?.id) {
+      mergedById.set(normalized.id, normalized);
+    }
+  });
+
+  incomingNotifications.forEach((notification) => {
+    const existing = mergedById.get(notification.id || notification.notificationId);
+    const normalized = normalizeNotification(
+      notification,
+      existing?.createdAt
+    );
+
+    if (!normalized?.id) {
+      return;
+    }
+
+    mergedById.set(normalized.id, {
+      ...existing,
+      ...normalized,
+    });
+  });
+
+  return Array.from(mergedById.values()).sort(
+    (left, right) =>
+      new Date(right.createdAt || 0).getTime() -
+      new Date(left.createdAt || 0).getTime()
+  );
+}
+
 export default function Dashboard({ token, onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [openNotifications, setOpenNotifications] = useState(false);
@@ -318,7 +374,9 @@ export default function Dashboard({ token, onLogout }) {
         }
       );
 
-      setNotifications(res.data);
+      setNotifications((current) =>
+        mergeNotifications(current, res.data)
+      );
     } catch (err) {
       console.error(
         "Failed to fetch notifications:",
@@ -453,51 +511,77 @@ export default function Dashboard({ token, onLogout }) {
       a.name.localeCompare(b.name)
     );
   }, [activeTasks]);
-  const recentlyActiveTasks = useMemo(() => {
-    const historyById = new Map(
-      recentTaskHistory.map((entry) => [entry.id, entry])
-    );
+  const recentWorkItems = useMemo(() => {
+    const taskById = new Map(tasks.map((task) => [task.id, task]));
 
-    return activeTasks
-      .map((task) => {
-        const history = historyById.get(task.id);
-        const activityTime = Math.max(
-          history?.recentAt ? new Date(history.recentAt).getTime() : 0,
-          task.recentActivityAt ? new Date(task.recentActivityAt).getTime() : 0,
-          task.updatedAt ? new Date(task.updatedAt).getTime() : 0
-        );
+    const taskItems = recentTaskHistory
+      .map((entry) => {
+        const task = taskById.get(entry.id);
+
+        if (!task) {
+          return null;
+        }
 
         return {
-          ...task,
-          label: task.project?.name || "Task",
-          recentAt: activityTime ? new Date(activityTime).toISOString() : null,
-          recentScore: activityTime,
+          id: `task-${task.id}`,
+          entityId: task.id,
+          type: "task",
+          itemType: "Task",
+          title: task.title || entry.title || "Untitled task",
+          recentAt: entry.recentAt,
         };
       })
-      .filter(
-        (task) =>
-          task.recentScore > 0 &&
-          (task.isRecentlyActive ||
-            task.hasUnreadNotes ||
-            historyById.has(task.id))
+      .filter(Boolean);
+
+    const projectItems = recentProjectHistory.map((project) => ({
+      id: `project-${project.projectId || project.id}`,
+      entityId: project.projectId || project.id,
+      type: "project",
+      itemType: "Project",
+      title: project.title || "Untitled project",
+      recentAt: project.recentAt,
+      source: project,
+    }));
+
+    const noteItems = recentNoteHistory.map((note) => ({
+      id: `note-${note.noteId || note.id}`,
+      entityId: note.noteId || note.id,
+      type: "note",
+      itemType: "Note",
+      title: note.title || "Untitled note",
+      recentAt: note.recentAt,
+      source: note,
+    }));
+
+    const workspaceItems = recentOrganizationHistory.map((organization) => ({
+      id: `workspace-${organization.organizationId || organization.id}`,
+      entityId: organization.organizationId || organization.id,
+      type: "workspace",
+      itemType: "Workspace",
+      title: organization.title || organization.name || "Untitled workspace",
+      recentAt: organization.recentAt,
+      source: organization,
+    }));
+
+    return [
+      ...taskItems,
+      ...projectItems,
+      ...noteItems,
+      ...workspaceItems,
+    ]
+      .filter((item) => item.entityId && item.recentAt)
+      .sort(
+        (left, right) =>
+          new Date(right.recentAt).getTime() - new Date(left.recentAt).getTime()
       )
-      .sort((left, right) => right.recentScore - left.recentScore)
-      .slice(0, 6);
-  }, [activeTasks, recentTaskHistory]);
-  const recentWorkProjects = useMemo(
-    () =>
-      recentProjectHistory.map((project) => ({
-        ...project,
-        meta:
-          project.label && project.label !== "Project" ? project.label : "",
-      })),
-    [recentProjectHistory]
-  );
-  const recentWorkOrganizations = useMemo(
-    () => recentOrganizationHistory,
-    [recentOrganizationHistory]
-  );
-  const recentWorkNotes = useMemo(() => recentNoteHistory, [recentNoteHistory]);
+      .slice(0, 5);
+  }, [
+    recentNoteHistory,
+    recentOrganizationHistory,
+    recentProjectHistory,
+    recentTaskHistory,
+    tasks,
+  ]);
 
   const filteredTasks = useMemo(() => {
     const today = startOfToday();
@@ -697,6 +781,7 @@ export default function Dashboard({ token, onLogout }) {
     setSelectedTaskId(null);
     setActiveView("projects");
     setContextMode("workspace");
+    setRecentWorkOpen(false);
     setWorkspaceRenderNonce((current) => ({
       ...current,
       projects: current.projects + 1,
@@ -715,6 +800,7 @@ export default function Dashboard({ token, onLogout }) {
     setSelectedTaskId(null);
     setActiveView("organizations");
     setContextMode("workspace");
+    setRecentWorkOpen(false);
     setWorkspaceRenderNonce((current) => ({
       ...current,
       organizations: current.organizations + 1,
@@ -734,6 +820,7 @@ export default function Dashboard({ token, onLogout }) {
     setSelectedTaskId(null);
     setActiveView("projects");
     setContextMode("workspace");
+    setRecentWorkOpen(false);
     setWorkspaceRenderNonce((current) => ({
       ...current,
       projects: current.projects + 1,
@@ -758,10 +845,38 @@ export default function Dashboard({ token, onLogout }) {
     setSelectedTaskId(null);
     setActiveView("notes");
     setContextMode("workspace");
+    setRecentWorkOpen(false);
     setWorkspaceRenderNonce((current) => ({
       ...current,
       notes: current.notes + 1,
     }));
+  };
+
+  const handleRecentWorkSelect = (item) => {
+    if (item.type === "task") {
+      const task = tasks.find((currentTask) => currentTask.id === item.entityId);
+
+      if (task) {
+        selectTask(task);
+        setRecentWorkOpen(false);
+      }
+
+      return;
+    }
+
+    if (item.type === "project") {
+      openRecentProject(item.source);
+      return;
+    }
+
+    if (item.type === "note") {
+      openRecentNote(item.source);
+      return;
+    }
+
+    if (item.type === "workspace") {
+      openRecentOrganization(item.source);
+    }
   };
 
   const renderActiveTasks = () => {
@@ -962,22 +1077,14 @@ useEffect(() => {
   socket.on("notification", (data) => {
     toast.success(data.message);
 
-    const normalized = {
-      id: data.id || data.notificationId,
-      message: data.message,
-      type: data.type,
-      taskId: data.taskId,
-      isRead: data.isRead ?? false,
-    };
-
     setNotifications((prev) => {
-      const exists = prev.some(
-        (n) => n.id === normalized.id
-      );
+      const normalized = normalizeNotification(data);
 
-      if (exists) return prev;
+      if (!normalized?.id) {
+        return prev;
+      }
 
-      return [normalized, ...prev];
+      return mergeNotifications(prev, [normalized]);
     });
   });
 
@@ -1037,6 +1144,10 @@ useEffect(() => {
   // CLICK OUTSIDE CLOSE
   useEffect(() => {
     const handleClickOutside = () => {
+      if (recentWorkOpen) {
+        setRecentWorkOpen(false);
+      }
+
       if (openNotifications) {
         setOpenNotifications(false);
       }
@@ -1076,6 +1187,16 @@ useEffect(() => {
         return;
       }
 
+      if (openNotifications) {
+        setOpenNotifications(false);
+        return;
+      }
+
+      if (recentWorkOpen) {
+        setRecentWorkOpen(false);
+        return;
+      }
+
       closeContextPanel();
     }
   };
@@ -1085,7 +1206,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("keydown", handleKeys);
   };
-}, [closeContextPanel, commandPaletteOpen]);
+}, [closeContextPanel, commandPaletteOpen, openNotifications, recentWorkOpen]);
 
 useEffect(() => {
   if (tasks.length > 0 && selectedTaskId && !selectedTask) {
@@ -1255,7 +1376,11 @@ return (
       />
 
       <div className="dashboard-primary-stage">
-        <CenterWorkspace eyebrow="Live workspace" title="Active Tasks">
+        <CenterWorkspace
+          eyebrow="Live workspace"
+          title="Active Tasks"
+          className={canvasContent ? "has-context-surface" : ""}
+        >
           <section className="dashboard-board-shell">
             <TaskProductivityToolbar
               filters={normalizedTaskFilters}
@@ -1294,24 +1419,8 @@ return (
         <div className="dashboard-window-slot dashboard-window-slot-recent-work">
           <RecentWorkPanel
             isOpen={recentWorkOpen}
-            recentTasks={recentlyActiveTasks.map((task) => ({
-              ...task,
-              meta: [
-                task.status === "IN_PROGRESS" ? "In progress" : task.status,
-                task.unreadNoteCount > 0
-                  ? `${task.unreadNoteCount} new note${task.unreadNoteCount > 1 ? "s" : ""}`
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" - "),
-            }))}
-            recentOrganizations={recentWorkOrganizations}
-            recentProjects={recentWorkProjects}
-            recentNotes={recentWorkNotes}
-            onSelectOrganization={openRecentOrganization}
-            onSelectTask={selectTask}
-            onSelectProject={openRecentProject}
-            onSelectNote={openRecentNote}
+            items={recentWorkItems}
+            onSelectItem={handleRecentWorkSelect}
           />
         </div>
 

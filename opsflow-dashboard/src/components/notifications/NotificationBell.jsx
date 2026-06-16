@@ -1,61 +1,53 @@
-import { useMemo, useState } from "react";
-
-const notificationFilters = [
-  { id: "ALL", label: "All" },
-  { id: "UNREAD", label: "Unread" },
-  { id: "ASSIGNMENTS", label: "Assignments" },
-  { id: "UPDATES", label: "Updates" },
-  { id: "DUE_DATES", label: "Due dates" },
-  { id: "STATUS", label: "Status" },
-  { id: "SYSTEM", label: "System" },
-];
+import { useMemo } from "react";
 
 const typeCategoryMap = {
-  TASK_ASSIGNED: "ASSIGNMENTS",
-  TASK_UNASSIGNED: "ASSIGNMENTS",
-  TASK_UPDATE_POSTED: "UPDATES",
-  TASK_NOTE_ADDED: "UPDATES",
-  TASK_DUE_DATE_ADDED: "DUE_DATES",
-  TASK_DUE_DATE_CHANGED: "DUE_DATES",
-  TASK_DUE_DATE_CLEARED: "DUE_DATES",
-  TASK_STATUS_CHANGED: "STATUS",
-  TASK_ARCHIVED: "SYSTEM",
-  TASK_RESTORED: "SYSTEM",
+  TASK_ASSIGNED: "Assignment",
+  TASK_UNASSIGNED: "Assignment",
+  TASK_UPDATE_POSTED: "Update",
+  TASK_NOTE_ADDED: "Comment",
+  TASK_DUE_DATE_ADDED: "Due date",
+  TASK_DUE_DATE_CHANGED: "Due date",
+  TASK_DUE_DATE_CLEARED: "Due date",
+  TASK_STATUS_CHANGED: "Status",
+  TASK_ARCHIVED: "System",
+  TASK_RESTORED: "System",
 };
-
-const categoryLabels = {
-  ASSIGNMENTS: "Assignment",
-  UPDATES: "Update",
-  DUE_DATES: "Due date",
-  STATUS: "Status",
-  SYSTEM: "System",
-};
-
-function getNotificationCategory(type) {
-  return typeCategoryMap[type] || "SYSTEM";
-}
 
 function getTypeLabel(type) {
-  return categoryLabels[getNotificationCategory(type)] || "System";
+  return typeCategoryMap[type] || "Notification";
 }
 
-function getGroupedNotifications(notifications) {
-  return notifications.reduce((groups, notification) => {
-    const key = `${notification.taskId || "global"}:${notification.type}`;
-    const existing = groups.find((group) => group.key === key);
+function formatNotificationTime(value) {
+  if (!value) {
+    return "";
+  }
 
-    if (existing) {
-      existing.items.push(notification);
-      return groups;
-    }
+  const timestamp = new Date(value).getTime();
 
-    groups.push({
-      key,
-      items: [notification],
-    });
+  if (Number.isNaN(timestamp)) {
+    return "";
+  }
 
-    return groups;
-  }, []);
+  const diff = Date.now() - timestamp;
+  const minutes = Math.max(1, Math.round(diff / 60000));
+
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  const hours = Math.round(minutes / 60);
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  const days = Math.round(hours / 24);
+
+  if (days < 7) {
+    return `${days}d ago`;
+  }
+
+  return new Date(value).toLocaleDateString();
 }
 
 export default function NotificationBell({
@@ -64,30 +56,20 @@ export default function NotificationBell({
   setOpenNotifications,
   markAsRead,
   markAllAsRead,
-  deleteNotification,
   showTrigger = true,
   showPanel = true,
   embedded = false,
 }) {
-  const [activeFilter, setActiveFilter] = useState("ALL");
-  const unreadCount = notifications.filter(
-    (n) => !n.isRead
-  ).length;
-  const filteredNotifications = useMemo(() => {
-    if (activeFilter === "ALL") {
-      return notifications;
-    }
-
-    if (activeFilter === "UNREAD") {
-      return notifications.filter((notification) => !notification.isRead);
-    }
-
-    return notifications.filter(
-      (notification) =>
-        getNotificationCategory(notification.type) === activeFilter
-    );
-  }, [activeFilter, notifications]);
-  const groupedNotifications = getGroupedNotifications(filteredNotifications);
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
+  const sortedNotifications = useMemo(
+    () =>
+      [...notifications].sort(
+        (left, right) =>
+          new Date(right.createdAt || 0).getTime() -
+          new Date(left.createdAt || 0).getTime()
+      ),
+    [notifications]
+  );
 
   return (
     <div className="notification-shell">
@@ -97,9 +79,9 @@ export default function NotificationBell({
           data-count={unreadCount > 0 ? unreadCount : ""}
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
           title="Notifications"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenNotifications((prev) => !prev);
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpenNotifications((current) => !current);
           }}
         >
           Notifications{" "}
@@ -107,98 +89,68 @@ export default function NotificationBell({
         </button>
       ) : null}
 
-      {showPanel && openNotifications && (
+      {showPanel && openNotifications ? (
         <div
           className={embedded ? "notification-menu notification-menu-embedded" : "notification-menu"}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
         >
           <div className="notification-menu-header">
             <div>
               <strong>Notifications</strong>
-              <span>{unreadCount} unread</span>
+              <span>
+                {unreadCount > 0
+                  ? `${unreadCount} unseen`
+                  : "Nothing new right now"}
+              </span>
             </div>
 
-            {unreadCount > 0 && (
+            {unreadCount > 0 ? (
               <button
                 type="button"
                 className="notification-mark-all"
                 onClick={markAllAsRead}
               >
-                Mark all read
+                Mark all seen
               </button>
-            )}
-          </div>
-
-          <div className="notification-filter-row">
-            {notificationFilters.map((filter) => (
-              <button
-                key={filter.id}
-                type="button"
-                className={activeFilter === filter.id ? "active" : ""}
-                onClick={() => setActiveFilter(filter.id)}
-              >
-                {filter.label}
-              </button>
-            ))}
+            ) : null}
           </div>
 
           <div className="notification-list">
-            {groupedNotifications.length === 0 ? (
+            {sortedNotifications.length === 0 ? (
               <div className="notification-empty">
-                No notifications in this view
+                Nothing needs your attention right now.
               </div>
             ) : (
-              groupedNotifications.map((group) => {
-                const n = group.items[0];
-                const repeatedCount = group.items.length;
-
-                return (
-                <div
-                  key={group.key}
+              sortedNotifications.map((notification) => (
+                <button
+                  key={notification.id}
+                  type="button"
                   className={
-                    n.isRead
+                    notification.isRead
                       ? "notification-item"
                       : "notification-item unread"
                   }
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    markAsRead(n.id);
+                  onClick={() => {
+                    if (!notification.isRead) {
+                      markAsRead(notification.id);
+                    }
                   }}
                 >
-                  <div className="notification-meta-row">
-                    <span className="notification-type-pill">
-                      {getTypeLabel(n.type)}
-                    </span>
-                    {repeatedCount > 1 && (
-                      <span className="notification-repeat-count">
-                        {repeatedCount} related
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="notification-item-row">
-                    <span>{n.message}</span>
-
-                    {n.isRead && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(n.id);
-                        }}
-                        className="ui-button ui-button-ghost notification-delete"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-                );
-              })
+                  <span className="notification-message">
+                    {notification.message}
+                  </span>
+                  <span className="notification-meta">
+                    {getTypeLabel(notification.type)}
+                    {notification.createdAt
+                      ? ` • ${formatNotificationTime(notification.createdAt)}`
+                      : ""}
+                  </span>
+                </button>
+              ))
             )}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
