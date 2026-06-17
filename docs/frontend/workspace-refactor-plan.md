@@ -1,273 +1,274 @@
 # Workspace Refactor Plan
 
-## Purpose
+## Status
 
-This document defines the long-term plan for improving workspace architecture in Zorune.
+Current state:
+- Workspace system functions correctly
+- Teams Workspace frame is approved and protected
+- Shared workspace primitives exist but ownership is unclear
+- Small changes currently create unexpected regressions
 
-The goal is to:
+Current goal:
+Create a clean, maintainable workspace architecture before continuing major feature development.
 
-- Reduce accidental coupling
-- Clarify ownership of shared workspace primitives
-- Improve maintainability
-- Make future workspace changes safer
-- Create a reusable foundation for Teams, Projects, Tasks, Profile, and Settings
+---
 
-This is an architecture planning document.
+## Core Problem
 
-It does not authorize large rewrites.
+The architecture is not suffering from too much reuse.
 
-All refactoring should happen in small, testable, commit-able phases.
+The architecture is suffering from unclear ownership of reuse.
 
-1. Architecture Summary
-Workspace Inventory
-The workspace frame is rendered through Dashboard -> ContextPanel -> canvasContent, with three current surface modes:
-Collection Workspace
-Teams: [OrganizationsWorkspace.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/organizations/OrganizationsWorkspace.jsx)
-Projects: [ProjectsWorkspace.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/projects/ProjectsWorkspace.jsx)
-Notes: [NotesWorkspace.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/notes/NotesWorkspace.jsx)
-Archive: [ArchivedTasks.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/archive/ArchivedTasks.jsx)
+### Symptoms
 
-Form Workspace
-Create Task: [CreateTaskPanel.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/tasks/CreateTaskPanel.jsx)
+- Teams depends on project-* classes
+- Small UI changes create unrelated regressions
+- Shared layout primitives are hidden behind project-* naming
+- Dashboard owns too much workspace composition logic
+- Future maintenance is becoming expensive
 
-Detail Workspace
-Active Task: [TaskModal.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/tasks/TaskModal.jsx)
+---
 
-Account/System Workspace
-Profile: currently placeholder content from [Dashboard.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/pages/Dashboard.jsx)
-Settings: currently placeholder content from [Dashboard.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/pages/Dashboard.jsx)
+## Workspace Inventory
 
-Current Structure
-The current workspace architecture has two distinct render paths:
-Workspace shell path
-Used by Teams, Projects, Notes, Archive, Profile, Settings
-Built in [Dashboard.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/pages/Dashboard.jsx) with:ContextPanel
-workspace-card-shell
-workspace-card-header
-workspace-card-body
+### Collection Workspaces
 
+- Teams
+- Projects
+- Notes
+- Archive
 
-Direct surface path
-Used by Active Task and Create Task
-These components now self-render their own workspace-card-shell and workspace-card-body
-That makes them structurally closer to the frame contract than before, but still on a different composition path from the collection workspaces
+### Form Workspaces
 
-Shared Layout Primitives
-The real shared primitives today are mostly CSS-based, not component-based:
-workspace-card-shell
-workspace-card-body
-dashboard-workspace-shell
-dashboard-context-panel--workspace
-popup shell classes under workspace-floating-window*
-several project-* classes that are functioning as generic workspace detail primitives
-Shared Components
-CenterWorkspace is only a thin wrapper and is not a real layout primitive yet: [CenterWorkspace.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/components/dashboard/CenterWorkspace.jsx)
-ContextPanel is the actual frame host wrapper
-Dashboard owns almost all surface routing and shell decisions
-Shared CSS Structures
-The most important shared CSS structures are:
-frame shell:
-dashboard-workspace-shell
-workspace-card-shell
-workspace-card-body
+- Create Task
 
-collection/detail layout:
-project-panel
-project-detail-content
-project-surface-tabs
-project-surface-tab
-project-surface-section
-project-surface-section-header
+### Detail Workspaces
 
-popup/form layer:
-project-form
-project-workspace-popup-*
-workspace-floating-window*
+- Active Task
 
-2. Coupling Analysis
-Intentional Reuse
-Shared workspace frame shell in [Dashboard.jsx](C:/Users/phili/Desktop/opsflow/opsflow-dashboard/src/pages/Dashboard.jsx)
-Shared popup shell behavior between Teams and Projects
-Shared collection/detail structure between Teams and Projects
-Shared task detail and create-task card styling through workspace-card-shell variants
-This reuse is directionally correct. It supports consistency and reduces duplicate CSS.
-Accidental Coupling
-Teams depends heavily on project-* classes for its right-side detail layout, tabs, sections, avatars, list shells, and forms
-Projects is effectively the CSS base provider for both Projects and Teams
-TaskModal and CreateTaskPanel use the frame shell classes directly, but outside the same dashboard-level composition used by Teams/Projects
-CenterWorkspace is not actually a meaningful primitive yet; Dashboard still owns all structural behavior
-Dashboard passes className into CenterWorkspace, but CenterWorkspace does not accept or apply it. That is a structural smell and shows the layout API is not stable
-Risky Shared Dependencies
-High-risk shared dependencies are:
-project-detail-content
-project-surface-tabs
-project-surface-tab
-project-surface-section
-project-surface-section-header
-project-overview-surface
-project-form
-project-workspace-popup-*
-If one of these changes, Teams can regress even when only Projects seems to be touched.
-Areas Where One Workspace Can Affect Another
-Teams right-side detail area can be broken by Project CSS edits
-Project popup/form edits can break Team create/edit/remove flows
-Shared frame height/max-height rules can affect all workspace-hosted surfaces
-Task surfaces are safer now than before, but still rely on the same workspace-card-shell behavior and can be affected by frame shell CSS changes
+### Account / System Workspaces
 
-3. Naming Analysis
-Misleading Class Names
-The biggest naming problem is that many project-* classes are no longer project-only. They now behave like generic workspace-detail primitives.
-Examples:
-project-detail-content
-project-surface-tabs
-project-surface-tab
-project-surface-section
-project-surface-section-header
-project-overview-surface
-project-overview-actions
-project-form
-project-workspace-popup-layer
-project-workspace-popup-backdrop
-project-workspace-popup-shell
-project-* Classes Acting As Generic Workspace Primitives
-These are effectively reusable workspace classes already:
-project-panel
-project-list-panel
-project-detail-content
-project-surface-tabs
-project-surface-tab
-project-surface-section
-project-surface-section-header
-project-form
-project-workspace-popup-*
-organization-* Classes That Are Actually Teams-Specific
-These are correctly Teams-owned in practice:
-organizations-workspace
-organization-detail-content
-organization-overview-*
-organization-members-*
-organization-projects-*
-organization-settings-*
-These are not generic organization primitives. They are specifically the Teams workspace implementation.
-Opportunities For Clearer Structure
-The codebase wants three naming layers:
-workspace-* for generic frame/detail primitives
-teams-* or organization-* for Teams-only surface implementation
-projects-* for Project-only behavior
-Right now project-* is doing double duty as both shared and project-specific.
+- Profile
+- Settings
 
-4. Primitive Candidates
-These are the strongest candidates to become explicit reusable workspace primitives:
-workspace-shell
-outer frame shell
-currently approximated by workspace-card-shell
+---
 
-workspace-body
-inner bounded content region
-currently workspace-card-body
+## Current Architecture
 
-workspace-detail-panel
-right-side detail column/container
-currently split across project-detail-content, organization-detail-content, task/create task bodies
+### Shared Workspace Shell
 
-workspace-tabs
-currently project-surface-tabs
+- dashboard-workspace-shell
+- workspace-card-shell
+- workspace-card-body
 
-workspace-tab
-currently project-surface-tab
+### Shared Layout Primitives
 
-workspace-section
-currently project-surface-section
+Current shared primitives:
 
-workspace-section-header
-currently project-surface-section-header
+- project-detail-content
+- project-surface-tabs
+- project-surface-tab
+- project-surface-section
+- project-surface-section-header
+- project-form
+- project-workspace-popup-*
 
-workspace-form-surface
-currently spread across project-form, task form sections, popup content
+### Problem
 
-workspace-popup-layer
-currently project-workspace-popup-* plus workspace-floating-window*
+These are functioning as generic workspace primitives even though they are named project-*.
 
-workspace-collection-panel
-currently project-panel plus list-panel variants
+## Frozen Shared Primitives - Current State
 
-These are candidates only. They should be extracted gradually, not renamed wholesale.
+This section freezes the current shared workspace primitives as they exist today.
 
-5. Recommended Target Structure
-A safer target structure would be:
+They should be treated as protected cross-surface dependencies until a later migration introduces explicit `workspace-*` ownership.
+
+No one should rename, split, or restyle these primitives casually during feature work.
+
+| Current class name | Current role | Surfaces affected | Risk level | Eventually become `workspace-*` primitive |
+| --- | --- | --- | --- | --- |
+| `dashboard-center-workspace` | Main center-stage host that holds the board surface and optional context workspace side-by-side. | `Dashboard.jsx`, `CenterWorkspace.jsx` | Medium | Keep as-is or fold into a top-level `workspace-shell` layer later |
+| `dashboard-workspace-shell` | Dashboard context-panel modifier that turns the right side into the protected workspace region. | `Dashboard.jsx`, context-panel workspace rendering | High | Yes |
+| `workspace-card-shell` | Shared outer frame wrapper for workspace surfaces rendered inside the protected frame. Used by task detail, create task, and workspace cards. | `Dashboard.jsx`, `TaskModal.jsx`, `CreateTaskPanel.jsx` | High | Already in the right naming family; keep and formalize |
+| `workspace-card-body` | Shared inner body wrapper that constrains workspace content and participates in height/scroll behavior. | `Dashboard.jsx`, `TaskModal.jsx`, `CreateTaskPanel.jsx`, Teams/Projects mounting surfaces | High | Already in the right naming family; keep and formalize |
+| `project-panel` | Generic two-column workspace panel base, even though it is named for Projects. It provides the panel box model used by both Teams and Projects. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-collection-pane` | Left collection rail primitive for collection-style workspaces. It is currently the collection rail implementation for Projects and informs the Teams structure. | `ProjectsWorkspace.jsx`, related shared CSS used as the collection reference | Medium | Yes |
+| `project-detail-panel` | Right detail-pane primitive for collection workspaces. It currently behaves as a generic detail container and is also attached to Teams. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-collection-body` | Shared vertical stack primitive inside the left collection rail. Controls header/controls/list composition. | `ProjectsWorkspace.jsx`, indirectly mirrored by Teams | Medium | Yes |
+| `project-detail-content` | Shared content wrapper below the detail header/tabs. This is one of the most fragile hidden primitives because scroll ownership and tab-body sizing depend on it. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Critical | Yes |
+| `project-list-panel` | Shared list-region primitive for collection rails. Teams uses it directly via `project-list-panel organization-list-panel`. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-card-grid` | Shared scroll/list stack primitive for collection cards. Teams depends on it directly via `project-card-grid organization-card-grid`. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-card` | Shared clickable collection-item primitive used as the base card/button for both project items and team items. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Medium | Yes |
+| `project-count-row` | Shared compact metadata row under collection titles. Teams uses it directly for project/member counts. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Low | Optional |
+| `project-opened-strip` | Shared detail-header strip primitive used to present the currently opened entity in detail surfaces. Teams styles against this pattern even when not always rendering the strip itself. | `ProjectsWorkspace.jsx`, Teams-specific CSS overrides in `App.css` | Medium | Yes |
+| `project-opened-tab` | Shared opened-entity identity pill inside detail surfaces. Teams overrides its appearance through descendant selectors. | `ProjectsWorkspace.jsx`, Teams-specific CSS overrides in `App.css` | Medium | Yes |
+| `project-opened-tab-main` | Shared inner layout wrapper for the opened-entity pill content. | `ProjectsWorkspace.jsx`, Teams-specific CSS overrides in `App.css` | Low | Optional |
+| `project-opened-tab-icon` | Shared identity/icon primitive used in both Projects and Teams detail headers. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Medium | Yes |
+| `project-opened-tab-copy` / `project-opened-tab-label` / `project-opened-tab-close` | Shared copy/label/close affordance primitives for opened-entity detail header UI. | `ProjectsWorkspace.jsx`, Teams-specific CSS overrides in `App.css` | Medium | Yes |
+| `project-surface-tabs` | Shared tab-row primitive across collection-style detail surfaces. Teams depends on this directly for Overview/Members/Projects/Settings. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Critical | Yes |
+| `project-surface-tab` | Shared individual tab button primitive. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-surface-section` | Shared tab-body section primitive below the tabs. Teams Members, Projects, and Settings all use this directly. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Critical | Yes |
+| `project-surface-section-header` | Shared section header primitive inside tab content. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-surface-description` | Shared body copy primitive used inside overview/detail sections. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Low | Optional |
+| `project-overview-surface` | Shared overview-surface primitive. Teams Overview depends on this directly even though the content is not a Project overview. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Critical | Yes |
+| `project-members-surface` | Shared member-surface primitive. Teams Members currently layers on top of this class. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-tasks-surface` / `project-notes-surface` | Shared task/note surface primitives used inside Projects and as the pattern reference for future normalized task/note workspaces. | `ProjectsWorkspace.jsx` | Medium | Yes |
+| `project-tasks-list-shell` / `project-notes-list-shell` / `project-members-list-shell` | Shared inner scroll-shell primitives for tab bodies. These are important because they currently participate in scroll ownership decisions. | `ProjectsWorkspace.jsx`, conceptually mirrored by Teams list-shell overrides | High | Yes |
+| `project-member-avatar` / `project-member-avatar-large` / `project-member-copy` / `project-member-role` | Shared member-row building blocks that leak into Teams member rendering. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Medium | Optional, but likely yes as member primitives |
+| `project-form` | Shared form surface primitive used for project forms, team popups, and multiple workspace overlays. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `project-workspace-popup-layer` / `project-workspace-popup-backdrop` / `project-workspace-popup-shell` | Shared popup-layer primitives that Teams still composes with newer `workspace-floating-window-*` classes. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | High | Yes |
+| `workspace-floating-window-*` and `workspace-action-popup*` | Already-neutral popup/window primitives that now sit beside older `project-workspace-popup-*` classes. This is a transitional shared primitive cluster rather than a fully normalized system. | `OrganizationsWorkspace.jsx`, `ProjectsWorkspace.jsx` | Medium | Keep and formalize |
+| `task-detail-panel` | Shared task/detail panel primitive used by both Active Task and Create Task. It is task-named but currently functions as a generic single-surface detail/form panel. | `TaskModal.jsx`, `CreateTaskPanel.jsx` | Medium | Probably, via a later `workspace-detail-panel` or `workspace-form-panel` |
+| `task-detail-header` | Shared header primitive used by both Active Task and Create Task. | `TaskModal.jsx`, `CreateTaskPanel.jsx` | Low | Optional |
+| `task-detail-scroll` | Shared internal scroll container for task detail surfaces. Important for the protected-frame contract. | `TaskModal.jsx` | Medium | Yes, if task/detail surfaces are normalized |
+| `task-create-form`, `task-create-form-body`, `task-create-form-actions` | Shared create-surface form scaffolding inside the protected frame. | `CreateTaskPanel.jsx` | Low | Optional, likely later form primitives |
+
+### Frozen current-state guidance
+
+- Teams currently depends on multiple `project-*` classes as hidden generic primitives.
+- Projects is the original owner in name only, not in actual architectural scope.
+- Task detail and Create Task already rely on `workspace-card-*` and `task-*` primitives that participate in the same protected frame contract.
+- Popup and overlay behavior is currently split between older `project-workspace-popup-*` names and newer `workspace-floating-window-*` names.
+- The highest-risk primitives are the ones that control frame sizing, detail-pane sizing, tab layout, and scroll ownership.
+- Phase 2 should introduce neutral aliases before any attempt to detach Teams from `project-*` classes.
+
+---
+
+## Target Architecture
+
 Dashboard
-owns routing only
-chooses which workspace surface to render
+└── ContextPanel
+    └── WorkspaceShell
+        ├── Teams
+        ├── Projects
+        ├── Notes
+        ├── Archive
+        ├── Active Task
+        ├── Create Task
+        ├── Profile
+        └── Settings
 
-ContextPanel
-owns stable frame placement only
+### Shared Workspace Primitives
 
-WorkspaceShell
-owns frame shell, header slot, body slot, sizing contract
+- workspace-shell
+- workspace-body
+- workspace-detail-panel
+- workspace-tabs
+- workspace-tab
+- workspace-section
+- workspace-section-header
+- workspace-form-surface
+- workspace-popup-layer
+- workspace-collection-panel
 
-Workspace surface components
-Teams
-Projects
-Notes
-Archive
-Task Detail
-Create Task
-Profile
-Settings
+### Surface-Specific Layers
 
-Each surface should then compose from shared primitives like:
-workspace-detail-panel
-workspace-tabs
-workspace-section
-workspace-popup-layer
-And keep its own domain-specific classes for the actual content inside those primitives.
-That keeps the frame stable and makes domain surfaces easier to reason about.
+Teams:
+- organization-*
 
-6. Phased Refactor Roadmap
-Phase 1: Document and freeze shared primitives
-Identify current shared CSS selectors that already behave like workspace primitives
-Do not rename anything yet
-Test: Teams, Projects, Active Task, Create Task all still render identically
-Phase 2: Extract neutral aliases
-Introduce neutral workspace-* aliases for the most reused project-* layout classes
-Keep old classes mapped in parallel
-Test: Teams and Projects tabs, detail areas, and popups remain unchanged
-Phase 3: Migrate Teams to neutral primitives
-Move Teams from project-* structural dependencies to workspace-*
-Leave Teams-specific content classes alone
-Test: all Teams tabs, all Team popup flows, internal scrolling
-Phase 4: Migrate Projects to neutral primitives
-Move Projects to the same shared workspace primitives
-Leave project-specific content classes as project-*
-Test: project overview, tasks, notes, members, all project popups
-Phase 5: Normalize task surfaces
-Align TaskModal and CreateTaskPanel with the same shell/detail primitives used by collection workspaces
-Test: task detail scroll, create-task scroll, frame height consistency
-Phase 6: Clean up placeholders and account/system surfaces
-Apply same primitives to Profile and Settings once those are real surfaces
-Test: shell stability and internal scrolling only
-Each phase is independently testable and commit-able.
+Projects:
+- project-*
 
-7. Risk Assessment
-High-Risk Areas
-Teams right-side detail layout
-Teams tab row and tab body scroll behavior
-shared popup/form shell between Teams and Projects
-any change to project-detail-content, project-surface-tabs, project-surface-section
-workspace frame sizing rules in App.css
-Low-Risk Areas
-domain-specific Teams content classes under organization-overview-*, organization-members-*, organization-projects-*, organization-settings-*
-domain-specific Project content classes for cards, notes, and member rows
-local copy/layout helpers inside task detail sections
-Areas That Should Not Be Touched Yet
-Teams outer frame contract
-dashboard-level frame geometry
-workspace-card-shell height/max-height rules unless absolutely necessary
-mobile/global workspace layout rules until desktop primitive separation is stable
-Most Important Current Conclusion
-The architecture is not mainly suffering from too much reuse. It is suffering from unclear ownership of reuse.
-The biggest structural problem is:
-project-* classes are acting as hidden generic workspace primitives
-Dashboard still owns too much shell composition logic
-CenterWorkspace is too thin to be a real workspace abstraction
-That is why small changes are expensive and regressions feel unrelated to the file being edite
+Tasks:
+- task-*
+
+---
+
+## Refactor Roadmap
+
+### Phase 1 — Freeze Existing Primitives
+
+Goal:
+Document current shared primitives.
+
+Changes:
+- No code changes
+- Documentation only
+
+Status:
+☐ Not Started
+
+---
+
+### Phase 2 — Introduce workspace-* Aliases
+
+Goal:
+Create neutral primitive names.
+
+Changes:
+- Add workspace-* aliases
+- Keep old classes working
+
+Status:
+☐ Not Started
+
+---
+
+### Phase 3 — Migrate Teams
+
+Goal:
+Remove Teams dependency on project-* primitives.
+
+Status:
+☐ Not Started
+
+---
+
+### Phase 4 — Migrate Projects
+
+Goal:
+Move Projects onto workspace-* primitives.
+
+Status:
+☐ Not Started
+
+---
+
+### Phase 5 — Normalize Task Surfaces
+
+Goal:
+Align Task Detail and Create Task with workspace primitives.
+
+Status:
+☐ Not Started
+
+---
+
+### Phase 6 — Profile & Settings
+
+Goal:
+Apply shared primitives to account/system surfaces.
+
+Status:
+☐ Not Started
+
+---
+
+## High Risk Areas
+
+- Teams tab layout
+- Teams scrolling behavior
+- Shared popup shell
+- project-detail-content
+- project-surface-tabs
+- workspace frame sizing
+
+---
+
+## Protected Areas
+
+Do not modify without explicit approval:
+
+- Teams Workspace frame
+- Dashboard workspace positioning
+- Workspace frame sizing
+- Workspace top border
+- Dashboard lower-center layout
+
+---
+
+## Key Takeaway
+
+The long-term solution is not to remove reuse.
+
+The long-term solution is to make shared workspace primitives explicit and give them clear ownership.
