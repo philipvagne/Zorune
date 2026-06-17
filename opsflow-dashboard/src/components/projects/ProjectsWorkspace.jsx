@@ -1236,7 +1236,7 @@ export default function ProjectsWorkspace({
     <div className="projects-workspace">
       {error ? <div className="form-error project-error">{error}</div> : null}
 
-      <section className="project-panel project-collection-pane">
+      <section className="workspace-collection-panel project-collection-pane">
         <div className="project-panel-header project-collection-header">
           <div>
             <div className="dashboard-eyebrow">Projects</div>
@@ -1361,7 +1361,7 @@ export default function ProjectsWorkspace({
         </div>
       </section>
 
-      <section className="project-panel project-detail-panel">
+      <section className="workspace-collection-panel workspace-detail-panel">
         {loadingProjectSurface ? (
           <div className="workspace-placeholder">Loading project surface...</div>
         ) : selectedProject ? (
@@ -1400,7 +1400,7 @@ export default function ProjectsWorkspace({
             </div>
 
             <div
-              className="project-surface-tabs"
+              className="workspace-tabs"
               role="tablist"
               aria-label="Project detail tabs"
             >
@@ -1408,8 +1408,8 @@ export default function ProjectsWorkspace({
                 type="button"
                 className={
                   activeProjectTab === "overview"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveProjectTab("overview")}
               >
@@ -1419,8 +1419,8 @@ export default function ProjectsWorkspace({
                 type="button"
                 className={
                   activeProjectTab === "tasks"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveProjectTab("tasks")}
               >
@@ -1430,8 +1430,8 @@ export default function ProjectsWorkspace({
                 type="button"
                 className={
                   activeProjectTab === "notes"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveProjectTab("notes")}
               >
@@ -1441,8 +1441,8 @@ export default function ProjectsWorkspace({
                 type="button"
                 className={
                   activeProjectTab === "members"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveProjectTab("members")}
               >
@@ -1450,9 +1450,9 @@ export default function ProjectsWorkspace({
               </button>
             </div>
 
-            <div className="project-detail-content">
+            <div className="workspace-detail-content">
               {activeProjectTab === "overview" ? (
-                <div className="project-overview-surface">
+                <div className="workspace-overview-surface">
                   <div className="project-detail-stats">
                     <div>
                       <strong>{selectedProject.taskCounts?.totalActive || 0}</strong>
@@ -1486,7 +1486,7 @@ export default function ProjectsWorkspace({
                   )}
 
                   {canManage ? (
-                    <div className="project-overview-actions">
+                    <div className="workspace-overview-actions">
                       <button
                         type="button"
                         className="contextual-create-button"
@@ -1513,8 +1513,8 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeProjectTab === "tasks" ? (
-                <section className="project-surface-section project-tasks-surface">
-                  <div className="project-surface-section-header">
+                <section className="workspace-section project-tasks-surface">
+                  <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Project Tasks</div>
                       <h5>Work in this project</h5>
@@ -1581,8 +1581,8 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeProjectTab === "notes" ? (
-                <section className="project-surface-section project-notes-surface">
-                  <div className="project-surface-section-header">
+                <section className="workspace-section project-notes-surface">
+                  <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Project Notes</div>
                       <h5>Context and references</h5>
@@ -1738,8 +1738,8 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeProjectTab === "members" ? (
-                <section className="project-surface-section project-members-surface">
-                  <div className="project-surface-section-header">
+                <section className="workspace-section project-members-surface">
+                  <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Project Members</div>
                       <h5>People in this project space</h5>
@@ -1822,10 +1822,10 @@ export default function ProjectsWorkspace({
         )}
 
         {activeWorkspacePopup ? (
-          <div className="project-workspace-popup-layer workspace-floating-window-layer" role="presentation">
+          <div className="workspace-popup-layer workspace-floating-window-layer" role="presentation">
             <button
               type="button"
-              className="project-workspace-popup-backdrop workspace-floating-window-backdrop"
+              className="workspace-popup-backdrop workspace-floating-window-backdrop"
               onMouseDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -1839,7 +1839,7 @@ export default function ProjectsWorkspace({
             />
 
             <div
-              className="project-workspace-popup-shell workspace-floating-window-shell"
+              className="workspace-popup-shell workspace-floating-window-shell"
               onMouseDown={(event) => {
                 event.stopPropagation();
               }}
@@ -1849,7 +1849,7 @@ export default function ProjectsWorkspace({
             >
               {activeWorkspacePopup === "create-project" ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
+                  className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window"
                   onSubmit={handleCreateProject}
                 >
                   <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -1906,7 +1906,7 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "edit-project" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
+                  className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window"
                   onSubmit={handleUpdateProject}
                 >
                   <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -1961,7 +1961,7 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "create-task" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-compact workspace-floating-window"
+                  className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-action-popup-compact workspace-floating-window"
                   onSubmit={handleCreateProjectTask}
                 >
                   <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -2027,7 +2027,7 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "create-note" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-compact workspace-floating-window"
+                  className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-action-popup-compact workspace-floating-window"
                   onSubmit={handleCreateProjectNote}
                 >
                   <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -2084,7 +2084,7 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "add-member" && selectedProject ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide workspace-floating-window"
+                  className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-action-popup-wide workspace-floating-window"
                   onSubmit={handleAddProjectMember}
                 >
                   <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -2173,7 +2173,7 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeWorkspacePopup === "delete-project" && selectedProject ? (
-                <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+                <div className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window">
                   <div className="workspace-action-popup-header workspace-floating-window-header">
                     <div className="workspace-floating-window-title">
                       <div className="dashboard-eyebrow">Delete</div>
@@ -2214,7 +2214,7 @@ export default function ProjectsWorkspace({
               {activeWorkspacePopup === "remove-member" &&
               selectedProject &&
               selectedRemovalMember ? (
-                <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+                <div className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window">
                   <div className="workspace-action-popup-header workspace-floating-window-header">
                     <div className="workspace-floating-window-title">
                       <div className="dashboard-eyebrow">Members</div>
@@ -2254,7 +2254,7 @@ export default function ProjectsWorkspace({
 
               {activeWorkspacePopup === "edit-note" && selectedProjectNote ? (
                 <form
-                  className="project-form contextual-create-surface workspace-action-popup workspace-action-popup-wide workspace-floating-window"
+                  className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-action-popup-wide workspace-floating-window"
                   onSubmit={(event) => {
                     event.preventDefault();
                     handleSaveProjectNote();
