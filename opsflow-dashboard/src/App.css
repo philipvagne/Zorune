@@ -2430,27 +2430,32 @@ button:active:not(:disabled),
   box-shadow: inset 0 -2px 0 transparent;
 }
 
-.organization-detail-panel .project-surface-tab:hover {
+.organization-detail-panel .project-surface-tab:hover,
+.organization-detail-panel .workspace-tab:hover {
   color: var(--text-strong);
   background: transparent;
 }
 
-.organization-detail-panel .project-surface-tab.active {
+.organization-detail-panel .project-surface-tab.active,
+.organization-detail-panel .workspace-tab.active {
   color: var(--text-strong);
   background: transparent;
   box-shadow: inset 0 -2px 0 rgba(91, 44, 255, 0.72);
 }
 
 .organization-detail-panel .project-surface-section,
+.organization-detail-panel .workspace-section,
 .organization-detail-panel .organization-overview-surface {
   padding: 0;
 }
 
-.organization-detail-panel .project-surface-section-header {
+.organization-detail-panel .project-surface-section-header,
+.organization-detail-panel .workspace-section-header {
   margin-bottom: 10px;
 }
 
-.organization-detail-panel .project-surface-section-header h5 {
+.organization-detail-panel .project-surface-section-header h5,
+.organization-detail-panel .workspace-section-header h5 {
   font-size: 15px;
   font-weight: 650;
 }
@@ -2461,6 +2466,7 @@ button:active:not(:disabled),
 }
 
 .organization-detail-content > .project-surface-section,
+.organization-detail-content > .workspace-section,
 .organization-detail-content > .organization-overview-surface,
 .organization-detail-content > .organization-foundation-surface {
   display: flex;
@@ -4457,18 +4463,23 @@ span.organization-overview-activity-avatar {
   padding: 4px 6px 2px 2px;
 }
 
-.organization-detail-panel.project-detail-panel {
+.organization-detail-panel.project-detail-panel,
+.organization-detail-panel.workspace-detail-panel {
   overflow-y: hidden;
 }
 
-.organization-detail-panel.project-detail-panel .project-detail-content.organization-detail-content {
+.organization-detail-panel.project-detail-panel .project-detail-content.organization-detail-content,
+.organization-detail-panel.workspace-detail-panel .workspace-detail-content.organization-detail-content {
   flex: 1 1 auto;
   overflow: hidden;
 }
 
 .organization-detail-panel .project-detail-content > .project-surface-section.organization-members-surface,
 .organization-detail-panel .project-detail-content > .project-surface-section.organization-projects-surface,
-.organization-detail-panel .project-detail-content > .project-surface-section.organization-foundation-surface {
+.organization-detail-panel .project-detail-content > .project-surface-section.organization-foundation-surface,
+.organization-detail-panel .workspace-detail-content > .workspace-section.organization-members-surface,
+.organization-detail-panel .workspace-detail-content > .workspace-section.organization-projects-surface,
+.organization-detail-panel .workspace-detail-content > .workspace-section.organization-foundation-surface {
   flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
@@ -4478,7 +4489,8 @@ span.organization-overview-activity-avatar {
   scroll-padding-bottom: 14px;
 }
 
-.organization-detail-panel .project-detail-content > .project-overview-surface.organization-overview-surface {
+.organization-detail-panel .project-detail-content > .project-overview-surface.organization-overview-surface,
+.organization-detail-panel .workspace-detail-content > .workspace-overview-surface.organization-overview-surface {
   flex: 1 1 auto;
   overflow: visible;
   padding-right: 0;
@@ -4487,7 +4499,9 @@ span.organization-overview-activity-avatar {
 }
 
 .organization-detail-panel .project-surface-section.organization-members-surface .organization-members-list-shell,
-.organization-detail-panel .project-surface-section.organization-projects-surface .organization-project-list-shell {
+.organization-detail-panel .project-surface-section.organization-projects-surface .organization-project-list-shell,
+.organization-detail-panel .workspace-section.organization-members-surface .organization-members-list-shell,
+.organization-detail-panel .workspace-section.organization-projects-surface .organization-project-list-shell {
   flex: 0 0 auto;
   overflow: visible;
   padding-right: 0;
