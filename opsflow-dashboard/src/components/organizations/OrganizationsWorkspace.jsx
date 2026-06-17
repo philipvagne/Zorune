@@ -1068,7 +1068,7 @@ export default function OrganizationsWorkspace({
               />
             </label>
             <button
-              className="contextual-create-button"
+              className="contextual-create-button organization-primary-action"
               type="button"
               onClick={() => {
                 setShowOrganizationCreateForm(true);
@@ -1169,7 +1169,7 @@ export default function OrganizationsWorkspace({
               {canManageSelectedOrganization ? (
                 <button
                   type="button"
-                  className="contextual-create-button"
+                  className="contextual-create-button organization-primary-action"
                   onClick={() => {
                     closeOrganizationPopup();
                     setShowOrganizationMemberAddForm(true);
@@ -1325,32 +1325,6 @@ export default function OrganizationsWorkspace({
                         </div>
                       </div>
 
-                      {canManageSelectedOrganization ? (
-                        <div className="project-overview-actions organization-overview-actions">
-                          <button
-                            type="button"
-                            className="contextual-create-button"
-                            onClick={() => {
-                              closeOrganizationPopup();
-                              setEditOrganizationName(selectedOrganization.name);
-                              setEditOrganizationSlug(selectedOrganization.slug || "");
-                              setShowOrganizationEditForm(true);
-                            }}
-                          >
-                            Edit Team
-                          </button>
-                          <button
-                            type="button"
-                            className="contextual-create-button contextual-create-button-danger"
-                            onClick={() => {
-                              closeOrganizationPopup();
-                              setShowOrganizationDeleteForm(true);
-                            }}
-                          >
-                            Delete Team
-                          </button>
-                        </div>
-                      ) : null}
                     </section>
 
                     <section className="organization-overview-block organization-overview-projects-block">

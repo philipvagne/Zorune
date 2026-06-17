@@ -2115,9 +2115,15 @@ button:active:not(:disabled),
   isolation: isolate;
   display: grid;
   grid-template-columns: minmax(344px, 358px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 20px;
-  min-height: 100%;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  align-self: stretch;
+  align-content: stretch;
   overflow: hidden;
 }
 
@@ -2129,12 +2135,14 @@ button:active:not(:disabled),
 .organization-collection-pane {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   min-height: 0;
 }
 
 .organization-detail-panel {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   min-height: 0;
 }
 
@@ -2191,15 +2199,16 @@ button:active:not(:disabled),
   margin-top: 10px;
 }
 
-.organization-list-panel {
+.project-list-panel.organization-list-panel {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   flex-direction: column;
   padding-top: 0;
+  overflow: hidden;
 }
 
-.organization-card-grid {
+.project-card-grid.organization-card-grid {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -3387,26 +3396,6 @@ span.organization-overview-activity-avatar {
   border-radius: 999px;
 }
 
-.organization-collection-topbar .contextual-create-button {
-  min-height: 34px;
-  padding: 0 4px;
-  border-radius: 10px;
-  color: rgba(91, 44, 255, 0.78);
-  background: transparent;
-  border: 0px solid rgba(91, 44, 255, 0.08);
-  font-size: 12px;
-  font-weight: 600;
-  box-shadow: none;
-}
-
-.organization-collection-topbar .contextual-create-button:hover {
-  background: transparent;
-  opacity: 0.78;
-  border-color: rgba(91, 44, 255, 0.14);
-  color: var(--accent);
-  transform: translateY(-1px);
-}
-
 .organization-settings-row {
   display: flex;
   align-items: center;
@@ -3514,6 +3503,30 @@ span.organization-overview-activity-avatar {
   background: rgba(254, 226, 226, 0.88);
 }
 
+.organization-collection-topbar .organization-primary-action,
+.organization-detail-header .organization-primary-action {
+  min-height: 34px;
+  padding: 0 4px;
+  border-radius: 10px;
+  color: rgba(91, 44, 255, 0.78);
+  background: transparent;
+  border: 0 solid rgba(91, 44, 255, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.organization-collection-topbar .organization-primary-action:hover,
+.organization-detail-header .organization-primary-action:hover {
+  background: transparent;
+  opacity: 0.78;
+  border-color: rgba(91, 44, 255, 0.14);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
 .org-empty-state h4 {
   margin: 0;
   color: var(--text-primary);
@@ -3569,16 +3582,23 @@ span.organization-overview-activity-avatar {
   isolation: isolate;
   display: grid;
   grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1 1 auto;
   gap: 16px;
   min-height: 0;
-  height: 100%;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  align-self: stretch;
   align-items: stretch;
+  align-content: stretch;
   overflow: hidden;
 }
 
 .project-panel {
+  box-sizing: border-box;
   min-width: 0;
-  height: 100%;
+  height: auto;
   padding: 20px;
   border: 0;
   border-radius: 0;
@@ -3608,6 +3628,8 @@ span.organization-overview-activity-avatar {
 .project-detail-panel {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .project-collection-body,
@@ -3618,9 +3640,10 @@ span.organization-overview-activity-avatar {
 
 .project-collection-body {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 18px;
+  overflow: visible;
 }
 
 .project-collection-controls {
@@ -3692,14 +3715,15 @@ span.organization-overview-activity-avatar {
 .project-list-panel {
   min-height: 0;
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   padding: 6px 2px 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  overflow: hidden;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .project-list-header {
@@ -4167,12 +4191,12 @@ span.organization-overview-activity-avatar {
 
 .project-card-grid {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
-  overflow-y: auto;
-  padding-right: 2px;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .project-card {
@@ -4410,27 +4434,66 @@ span.organization-overview-activity-avatar {
 }
 
 .project-detail-content {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   padding: 4px 6px 2px 2px;
+}
+
+.organization-detail-panel.project-detail-panel {
+  overflow-y: hidden;
+}
+
+.organization-detail-panel.project-detail-panel .project-detail-content.organization-detail-content {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.organization-detail-panel .project-detail-content > .project-surface-section.organization-members-surface,
+.organization-detail-panel .project-detail-content > .project-surface-section.organization-projects-surface,
+.organization-detail-panel .project-detail-content > .project-surface-section.organization-foundation-surface {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+  padding-bottom: 14px;
+  box-sizing: border-box;
+  scroll-padding-bottom: 14px;
+}
+
+.organization-detail-panel .project-detail-content > .project-overview-surface.organization-overview-surface {
+  flex: 1 1 auto;
+  overflow: visible;
+  padding-right: 0;
+  padding-bottom: 0;
+  scroll-padding-bottom: 0;
+}
+
+.organization-detail-panel .project-surface-section.organization-members-surface .organization-members-list-shell,
+.organization-detail-panel .project-surface-section.organization-projects-surface .organization-project-list-shell {
+  flex: 0 0 auto;
+  overflow: visible;
+  padding-right: 0;
+  padding-bottom: 0;
+  scroll-padding-bottom: 0;
 }
 
 .project-overview-surface,
 .project-tasks-surface,
-.project-notes-surface {
+.project-notes-surface,
+.project-members-surface {
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
   min-height: 0;
 }
 
 .project-overview-surface {
-  flex: 1;
   gap: 8px;
-  overflow-y: auto;
-  padding-right: 2px;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .project-overview-surface .project-form {
@@ -4506,15 +4569,15 @@ span.organization-overview-activity-avatar {
 .project-notes-surface,
 .project-notes-workspace,
 .project-members-surface {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .project-tasks-list-shell,
 .project-notes-list-shell,
 .project-members-list-shell {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
+  flex: 0 0 auto;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .project-members-list {
@@ -4677,6 +4740,7 @@ span.organization-overview-activity-avatar {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  overflow: visible;
 }
 
 .project-notes-surface > .project-form {
@@ -5583,6 +5647,18 @@ span.organization-overview-activity-avatar {
   min-height: 0;
   width: 100%;
   height: 100%;
+}
+
+.workspace-card-body > .projects-workspace {
+  height: auto;
+  max-height: 100%;
+  align-self: stretch;
+}
+
+.workspace-card-body > .organizations-workspace {
+  height: auto;
+  max-height: 100%;
+  align-self: stretch;
 }
 
 .task-detail-surface-body {
