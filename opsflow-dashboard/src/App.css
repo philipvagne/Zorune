@@ -2199,7 +2199,8 @@ button:active:not(:disabled),
   margin-top: 10px;
 }
 
-.project-list-panel.organization-list-panel {
+.project-list-panel.organization-list-panel,
+.workspace-list-panel.organization-list-panel {
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
@@ -2208,7 +2209,8 @@ button:active:not(:disabled),
   overflow: hidden;
 }
 
-.project-card-grid.organization-card-grid {
+.project-card-grid.organization-card-grid,
+.workspace-card-grid.organization-card-grid {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -2332,7 +2334,8 @@ button:active:not(:disabled),
   padding-right: 0;
 }
 
-.organization-detail-panel .project-opened-strip {
+.organization-detail-panel .project-opened-strip,
+.organization-detail-panel .workspace-opened-strip {
   margin-bottom: 0;
   padding-top: 0;
 }
@@ -2377,7 +2380,8 @@ button:active:not(:disabled),
   letter-spacing: -0.01em;
 }
 
-.organization-detail-panel .project-opened-tab {
+.organization-detail-panel .project-opened-tab,
+.organization-detail-panel .workspace-opened-tab {
   max-width: min(100%, 340px);
   gap: 14px;
   padding: 0 0 4px;
@@ -2386,22 +2390,26 @@ button:active:not(:disabled),
   box-shadow: none;
 }
 
-.organization-detail-panel .project-opened-tab-main {
+.organization-detail-panel .project-opened-tab-main,
+.organization-detail-panel .workspace-opened-tab-main {
   gap: 10px;
 }
 
-.organization-detail-panel .project-opened-tab-icon {
+.organization-detail-panel .project-opened-tab-icon,
+.organization-detail-panel .workspace-opened-tab-icon {
   width: 34px;
   height: 34px;
   border-radius: 11px;
 }
 
-.organization-detail-panel .project-opened-tab-copy strong {
+.organization-detail-panel .project-opened-tab-copy strong,
+.organization-detail-panel .workspace-opened-tab-copy strong {
   font-size: 14px;
   font-weight: 700;
 }
 
-.organization-detail-panel .project-opened-tab-close {
+.organization-detail-panel .project-opened-tab-close,
+.organization-detail-panel .workspace-opened-tab-close {
   padding: 6px 10px;
   color: rgba(71, 85, 105, 0.84);
   background: rgba(248, 244, 255, 0.78);
@@ -2614,7 +2622,8 @@ button:active:not(:disabled),
   font-weight: 650;
 }
 
-.organization-overview-copy .project-surface-description {
+.organization-overview-copy .project-surface-description,
+.organization-overview-copy .workspace-surface-description {
   margin-top: 0;
   max-width: 54ch;
   color: rgba(71, 85, 105, 0.94);
@@ -3341,13 +3350,17 @@ span.organization-overview-activity-avatar {
 }
 
 .organization-collection-pane .project-panel-header,
+.organization-collection-pane .workspace-panel-header,
 .project-collection-pane .project-panel-header,
+.project-collection-pane .workspace-panel-header,
 .notes-collection-pane .note-panel-header {
   margin-bottom: 18px;
 }
 
 .organization-detail-panel .project-panel-header,
+.organization-detail-panel .workspace-panel-header,
 .project-detail-panel .project-panel-header,
+.workspace-detail-panel .workspace-panel-header,
 .notes-detail-pane .note-panel-header {
   margin-bottom: 16px;
 }
@@ -3616,7 +3629,8 @@ span.organization-overview-activity-avatar {
   overflow: hidden;
 }
 
-.project-panel-header {
+.project-panel-header,
+.workspace-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -3624,7 +3638,8 @@ span.organization-overview-activity-avatar {
   margin-bottom: var(--space-4);
 }
 
-.project-panel-header h4 {
+.project-panel-header h4,
+.workspace-panel-header h4 {
   margin: 0;
   color: var(--text-primary);
   font-size: var(--font-section-title);
@@ -3704,7 +3719,8 @@ span.organization-overview-activity-avatar {
 }
 
 .project-collection-pane .org-empty-state,
-.project-list-panel .org-empty-state {
+.project-list-panel .org-empty-state,
+.workspace-list-panel .org-empty-state {
   padding: 14px 0 4px;
   border: 0;
   border-radius: 0;
@@ -3712,7 +3728,8 @@ span.organization-overview-activity-avatar {
 }
 
 .project-collection-pane .org-empty-state p,
-.project-list-panel .org-empty-state p {
+.project-list-panel .org-empty-state p,
+.workspace-list-panel .org-empty-state p {
   max-width: 32ch;
 }
 
@@ -3721,7 +3738,8 @@ span.organization-overview-activity-avatar {
   line-height: 1.55;
 }
 
-.project-list-panel {
+.project-list-panel,
+.workspace-list-panel {
   min-height: 0;
   display: flex;
   flex: 0 0 auto;
@@ -3747,7 +3765,8 @@ span.organization-overview-activity-avatar {
   font-size: 16px;
 }
 
-.project-opened-strip {
+.project-opened-strip,
+.workspace-opened-strip {
   flex-shrink: 0;
   display: flex;
   align-items: flex-end;
@@ -3755,7 +3774,8 @@ span.organization-overview-activity-avatar {
   padding: 0 2px;
 }
 
-.project-opened-tab {
+.project-opened-tab,
+.workspace-opened-tab {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -3770,14 +3790,16 @@ span.organization-overview-activity-avatar {
     0 8px 18px rgba(15, 23, 42, 0.028);
 }
 
-.project-opened-tab-main {
+.project-opened-tab-main,
+.workspace-opened-tab-main {
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.project-opened-tab-icon {
+.project-opened-tab-icon,
+.workspace-opened-tab-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3799,16 +3821,20 @@ span.organization-overview-activity-avatar {
   box-shadow: none;
 }
 
-.project-opened-tab-copy {
+.project-opened-tab-copy,
+.workspace-opened-tab-copy {
   min-width: 0;
 }
 
 .project-opened-tab-label,
-.project-opened-tab-copy strong {
+.workspace-opened-tab-label,
+.project-opened-tab-copy strong,
+.workspace-opened-tab-copy strong {
   display: block;
 }
 
-.project-opened-tab-label {
+.project-opened-tab-label,
+.workspace-opened-tab-label {
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
@@ -3816,7 +3842,8 @@ span.organization-overview-activity-avatar {
   text-transform: uppercase;
 }
 
-.project-opened-tab-copy strong {
+.project-opened-tab-copy strong,
+.workspace-opened-tab-copy strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3826,7 +3853,8 @@ span.organization-overview-activity-avatar {
   line-height: var(--line-tight);
 }
 
-.project-opened-tab-close {
+.project-opened-tab-close,
+.workspace-opened-tab-close {
   flex-shrink: 0;
   border: 0;
   border-radius: 999px;
@@ -3844,7 +3872,8 @@ span.organization-overview-activity-avatar {
     transform var(--transition-fast);
 }
 
-.project-opened-tab-close:hover {
+.project-opened-tab-close:hover,
+.workspace-opened-tab-close:hover {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: var(--shadow-card);
@@ -4207,7 +4236,8 @@ span.organization-overview-activity-avatar {
   margin: 0;
 }
 
-.project-card-grid {
+.project-card-grid,
+.workspace-card-grid {
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
@@ -4217,7 +4247,8 @@ span.organization-overview-activity-avatar {
   padding-right: 0;
 }
 
-.project-card {
+.project-card,
+.workspace-card {
   border: 1px solid transparent;
   border-radius: 14px;
   padding: 11px 13px;
@@ -4235,17 +4266,21 @@ span.organization-overview-activity-avatar {
 }
 
 .project-card.active,
-.project-card:hover {
+.project-card:hover,
+.workspace-card.active,
+.workspace-card:hover {
   border-color: rgba(148, 163, 184, 0.07);
   background: rgba(255, 255, 255, 0.28);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.016);
 }
 
-.project-card:hover {
+.project-card:hover,
+.workspace-card:hover {
   transform: translateY(-1px);
 }
 
-.project-card.active {
+.project-card.active,
+.workspace-card.active {
   border-color: rgba(129, 140, 248, 0.16);
   background:
     linear-gradient(90deg, rgba(238, 242, 255, 0.56), rgba(255, 255, 255, 0.42));
@@ -4254,7 +4289,8 @@ span.organization-overview-activity-avatar {
     0 8px 18px rgba(15, 23, 42, 0.018);
 }
 
-.project-card.organization-card {
+.project-card.organization-card,
+.workspace-card.organization-card {
   background: transparent;
   border: 1px solid transparent;
   transition:
@@ -4263,42 +4299,49 @@ span.organization-overview-activity-avatar {
     background-color 160ms ease;
 }
 
-.project-card.organization-card:hover {
+.project-card.organization-card:hover,
+.workspace-card.organization-card:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.28);
 }
 
-.project-card.organization-card.active {
+.project-card.organization-card.active,
+.workspace-card.organization-card.active {
   background: transparent;
   border-color: transparent;
   box-shadow:
     inset 2px 0 0 rgba(91, 44, 255, 0.58);
 }
 
-.project-card strong {
+.project-card strong,
+.workspace-card strong {
   display: block;
 }
 
-.project-card strong {
+.project-card strong,
+.workspace-card strong {
   color: var(--text-primary);
   font-size: 14px;
   line-height: var(--line-tight);
 }
 
-.project-card > span {
+.project-card > span,
+.workspace-card > span {
   margin-top: 4px;
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.45;
 }
 
-.project-count-row {
+.project-count-row,
+.workspace-count-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.project-count-row span {
+.project-count-row span,
+.workspace-count-row span {
   border-radius: 999px;
   padding: 4px 8px;
   color: var(--text-muted);
@@ -4330,14 +4373,16 @@ span.organization-overview-activity-avatar {
   white-space: nowrap;
 }
 
-.project-member-avatar-stack {
+.project-member-avatar-stack,
+.workspace-member-avatar-stack {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding-right: 2px;
 }
 
-.project-member-avatar {
+.project-member-avatar,
+.workspace-member-avatar {
   width: 28px;
   height: 28px;
   flex-shrink: 0;
@@ -4352,7 +4397,8 @@ span.organization-overview-activity-avatar {
   text-transform: uppercase;
 }
 
-.project-member-avatar:first-child {
+.project-member-avatar:first-child,
+.workspace-member-avatar:first-child {
   margin-left: 0;
 }
 
@@ -4405,7 +4451,8 @@ span.organization-overview-activity-avatar {
   background: rgba(248, 250, 252, 0.46);
 }
 
-.project-surface-description {
+.project-surface-description,
+.workspace-surface-description {
   margin: var(--space-4) 0 0;
   color: var(--text-secondary);
   font-size: var(--font-body);
@@ -4513,7 +4560,8 @@ span.organization-overview-activity-avatar {
 .workspace-overview-surface,
 .project-tasks-surface,
 .project-notes-surface,
-.project-members-surface {
+.project-members-surface,
+.workspace-members-surface {
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -4538,8 +4586,10 @@ span.organization-overview-activity-avatar {
 
 .project-overview-surface .muted-text,
 .project-overview-surface .project-surface-description,
+.project-overview-surface .workspace-surface-description,
 .workspace-overview-surface .muted-text,
 .workspace-overview-surface .project-surface-description,
+.workspace-overview-surface .workspace-surface-description,
 .workspace-overview-surface .workspace-section-description {
   max-width: 680px;
 }
@@ -4599,22 +4649,29 @@ span.organization-overview-activity-avatar {
 }
 
 .project-tasks-list-shell,
+.workspace-tasks-list-shell,
 .project-notes-list-shell,
+.workspace-notes-list-shell,
 .project-notes-workspace,
-.project-members-list-shell {
+.project-members-list-shell,
+.workspace-members-list-shell {
   min-height: 0;
 }
 
 .project-tasks-surface,
 .project-notes-surface,
 .project-notes-workspace,
-.project-members-surface {
+.project-members-surface,
+.workspace-members-surface {
   flex: 0 0 auto;
 }
 
 .project-tasks-list-shell,
+.workspace-tasks-list-shell,
 .project-notes-list-shell,
-.project-members-list-shell {
+.workspace-notes-list-shell,
+.project-members-list-shell,
+.workspace-members-list-shell {
   flex: 0 0 auto;
   overflow: visible;
   padding-right: 0;
@@ -4641,7 +4698,8 @@ span.organization-overview-activity-avatar {
     0 10px 18px rgba(15, 23, 42, 0.016);
 }
 
-.project-member-avatar-large {
+.project-member-avatar-large,
+.workspace-member-avatar-large {
   width: 38px;
   height: 38px;
   margin-left: 0;
@@ -4649,7 +4707,8 @@ span.organization-overview-activity-avatar {
   flex-shrink: 0;
 }
 
-.project-member-copy {
+.project-member-copy,
+.workspace-member-copy {
   min-width: 0;
   display: flex;
   flex: 1;
@@ -4657,13 +4716,15 @@ span.organization-overview-activity-avatar {
   gap: 3px;
 }
 
-.project-member-copy strong {
+.project-member-copy strong,
+.workspace-member-copy strong {
   color: var(--text-primary);
   font-size: 14px;
   line-height: var(--line-tight);
 }
 
-.project-member-copy span {
+.project-member-copy span,
+.workspace-member-copy span {
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.4;
@@ -4672,7 +4733,8 @@ span.organization-overview-activity-avatar {
   white-space: nowrap;
 }
 
-.project-member-role {
+.project-member-role,
+.workspace-member-role {
   flex-shrink: 0;
   border-radius: 999px;
   padding: 5px 9px;
@@ -4805,7 +4867,8 @@ span.organization-overview-activity-avatar {
   background: rgba(248, 250, 252, 0.58);
 }
 
-.project-surface-description {
+.project-surface-description,
+.workspace-surface-description {
   margin: 0;
   color: rgba(51, 65, 85, 0.96);
   font-size: 15px;
@@ -4863,11 +4926,13 @@ span.organization-overview-activity-avatar {
     padding: 18px;
   }
 
-  .project-opened-tab {
+  .project-opened-tab,
+  .workspace-opened-tab {
     max-width: 100%;
   }
 
-  .project-surface-tabs {
+  .project-surface-tabs,
+  .workspace-tabs {
     gap: 6px;
     width: 100%;
   }
@@ -4886,7 +4951,8 @@ span.organization-overview-activity-avatar {
     gap: 14px;
   }
 
-.project-panel {
+.project-panel,
+.workspace-collection-panel {
     padding: 18px;
   }
 
@@ -4898,11 +4964,13 @@ span.organization-overview-activity-avatar {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .project-surface-tabs {
+  .project-surface-tabs,
+  .workspace-tabs {
     width: 100%;
   }
 
-  .project-opened-tab {
+  .project-opened-tab,
+  .workspace-opened-tab {
     max-width: 100%;
   }
 
@@ -4915,7 +4983,8 @@ span.organization-overview-activity-avatar {
     align-items: flex-start;
   }
 
-  .project-member-avatar-stack {
+  .project-member-avatar-stack,
+  .workspace-member-avatar-stack {
     justify-content: flex-start;
   }
 }
@@ -6139,10 +6208,15 @@ span.organization-overview-activity-avatar {
   }
 
   .project-panel,
+  .workspace-collection-panel,
   .project-detail-content,
+  .workspace-detail-content,
   .project-overview-surface,
+  .workspace-overview-surface,
   .project-tasks-list-shell,
-  .project-notes-list-shell {
+  .workspace-tasks-list-shell,
+  .project-notes-list-shell,
+  .workspace-notes-list-shell {
     height: auto;
     overflow: visible;
   }

@@ -174,73 +174,37 @@ Tasks:
 
 ---
 
-## Refactor Roadmap
+## Updated Refactor Roadmap
 
-### Phase 1 — Freeze Existing Primitives
+### Completed
 
-Goal:
-Document current shared primitives.
+- [x] Phase 1 — Document and freeze shared primitives
+- [x] Phase 2 — Add neutral aliases for first shared primitives
+- [x] Phase 3 — Migrate Teams top-level workspace primitives
+- [x] Phase 4 — Migrate Projects top-level workspace primitives
+- [x] Post-migration audit — Identify remaining project-owned shared primitives
 
-Changes:
-- No code changes
-- Documentation only
+### Current
 
-Status:
-☐ Not Started
+- [ ] Phase 5 — Add neutral aliases for remaining shared primitives
 
----
+### Next
 
-### Phase 2 — Introduce workspace-* Aliases
+- [ ] Phase 6 — Migrate Teams remaining shared primitives
+- [ ] Phase 7 — Migrate Projects remaining shared primitives
+- [ ] Phase 8 — Run final workspace coupling audit
+- [ ] Phase 9 — Decide whether task surfaces need normalization now or later
 
-Goal:
-Create neutral primitive names.
+## Current Refactor Direction
 
-Changes:
-- Add workspace-* aliases
-- Keep old classes working
+The current workspace container architecture should remain.
 
-Status:
-☐ Not Started
+The next goal is not a rewrite. The next goal is to finish removing hidden `project-*` ownership from shared primitives used by Teams and Projects.
 
----
+The neutral `workspace-*` layer should become the only shared contract.
 
-### Phase 3 — Migrate Teams
-
-Goal:
-Remove Teams dependency on project-* primitives.
-
-Status:
-☐ Not Started
-
----
-
-### Phase 4 — Migrate Projects
-
-Goal:
-Move Projects onto workspace-* primitives.
-
-Status:
-☐ Not Started
-
----
-
-### Phase 5 — Normalize Task Surfaces
-
-Goal:
-Align Task Detail and Create Task with workspace primitives.
-
-Status:
-☐ Not Started
-
----
-
-### Phase 6 — Profile & Settings
-
-Goal:
-Apply shared primitives to account/system surfaces.
-
-Status:
-☐ Not Started
+Project-specific classes should only describe actual Project Workspace content.
+Organization-specific classes should only describe actual Teams Workspace content.
 
 ---
 
