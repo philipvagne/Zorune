@@ -37,7 +37,7 @@ The internal content may change per workspace, but the outer frame must remain c
 
 ## Source of Truth
 
-The existing Teams Workspace frame is the current source of truth.
+The existing Teams Workspace FRAME is the current source of truth.
 
 Do not modify the Teams Workspace frame, sizing, position, border, or shell behavior unless explicitly approved.
 
@@ -82,6 +82,76 @@ If a workspace surface has content taller than the available frame:
 The workspace frame should feel stable.
 
 Changing workspace tabs or opening task/detail/create surfaces should feel like changing the content inside the same workspace, not opening a new page or resizing the app.
+
+## Workspace Surface Types
+
+The workspace frame can host different surface types.
+
+The internal layout may vary by surface type, but all surfaces must obey the Workspace Frame Contract.
+
+### Collection Workspaces
+
+Used when the user selects from a collection and views details.
+
+Current examples:
+
+- Teams
+- Projects
+
+Expected structure:
+
+- left collection rail
+- search
+- create action
+- scrollable collection list
+- right detail area
+- optional tabs
+- scrollable tab content where needed
+
+### Form Workspaces
+
+Used when creating a focused object.
+
+Current examples:
+
+- Create Task
+
+Expected structure:
+
+- header
+- form body
+- action area
+- internal scrolling when required
+
+### Detail Workspaces
+
+Used when viewing or editing a single object.
+
+Current examples:
+
+- Active Task
+
+Expected structure:
+
+- header
+- detail content
+- related sections
+- internal scrolling when required
+
+### Account/System Workspaces
+
+Used for user or application configuration.
+
+Current examples:
+
+- Profile
+- Settings
+
+Expected structure:
+
+- header
+- grouped sections
+- internal scrolling when required
 
 ## Current Priority
 
