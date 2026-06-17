@@ -1237,7 +1237,7 @@ export default function ProjectsWorkspace({
       {error ? <div className="form-error project-error">{error}</div> : null}
 
       <section className="workspace-collection-panel project-collection-pane">
-        <div className="project-panel-header project-collection-header">
+        <div className="workspace-panel-header project-collection-header">
           <div>
             <div className="dashboard-eyebrow">Projects</div>
             <h4>Project spaces</h4>
@@ -1284,8 +1284,8 @@ export default function ProjectsWorkspace({
             ) : null}
           </div>
 
-          <div className="project-list-panel">
-            <div className="project-panel-header project-list-header">
+          <div className="workspace-list-panel">
+            <div className="workspace-panel-header project-list-header">
               <div>
                 <div className="dashboard-eyebrow">Collection</div>
                 <h4>Your projects</h4>
@@ -1303,7 +1303,7 @@ export default function ProjectsWorkspace({
                 </p>
               </div>
             ) : (
-              <div className="project-card-grid">
+              <div className="workspace-card-grid">
                 {projects.map((project) => {
                   const cardMembers = getProjectMembers(project);
 
@@ -1313,15 +1313,15 @@ export default function ProjectsWorkspace({
                     type="button"
                     className={
                       project.id === selectedProjectId
-                        ? "project-card active"
-                        : "project-card"
+                        ? "workspace-card active"
+                        : "workspace-card"
                     }
                     onClick={() => handleSelectProject(project)}
                   >
                     <strong>{project.name}</strong>
                     <span>{project.description || "No description yet"}</span>
                     <div className="project-card-footer">
-                      <div className="project-count-row">
+                      <div className="workspace-count-row">
                         <span>{project.taskCounts?.totalActive || 0} active</span>
                         <span>{project.taskCounts?.done || 0} done</span>
                         <span>{project.taskCounts?.overdue || 0} overdue</span>
@@ -1333,18 +1333,18 @@ export default function ProjectsWorkspace({
                             {cardMembers.length} member
                             {cardMembers.length === 1 ? "" : "s"}
                           </span>
-                          <div className="project-member-avatar-stack">
+                          <div className="workspace-member-avatar-stack">
                             {cardMembers.slice(0, 2).map((membership) => (
                               <span
                                 key={membership.id}
-                                className="project-member-avatar"
+                                className="workspace-member-avatar"
                                 title={getMemberName(membership)}
                               >
                                 {getMemberInitials(membership)}
                               </span>
                             ))}
                             {cardMembers.length > 2 ? (
-                              <span className="project-member-avatar project-member-avatar-more">
+                              <span className="workspace-member-avatar project-member-avatar-more">
                                 +{cardMembers.length - 2}
                               </span>
                             ) : null}
@@ -1366,21 +1366,21 @@ export default function ProjectsWorkspace({
           <div className="workspace-placeholder">Loading project surface...</div>
         ) : selectedProject ? (
           <>
-            <div className="project-opened-strip">
-              <div className="project-opened-tab" aria-label="Opened project">
-                <div className="project-opened-tab-main">
-                  <span className="project-opened-tab-icon" aria-hidden="true">
+            <div className="workspace-opened-strip">
+              <div className="workspace-opened-tab" aria-label="Opened project">
+                <div className="workspace-opened-tab-main">
+                  <span className="workspace-opened-tab-icon" aria-hidden="true">
                     P
                   </span>
-                  <div className="project-opened-tab-copy">
-                    <span className="project-opened-tab-label">Opened Project</span>
+                  <div className="workspace-opened-tab-copy">
+                    <span className="workspace-opened-tab-label">Opened Project</span>
                     <strong>{selectedProject.name}</strong>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className="project-opened-tab-close"
+                  className="workspace-opened-tab-close"
                   onClick={() => setSelectedProjectId("")}
                   aria-label={`Close ${selectedProject.name}`}
                 >
@@ -1389,7 +1389,7 @@ export default function ProjectsWorkspace({
               </div>
             </div>
 
-            <div className="project-panel-header project-detail-header">
+            <div className="workspace-panel-header project-detail-header">
               <div>
                 <div className="dashboard-eyebrow">Workspace Surface</div>
                 <h4>{selectedProject.name}</h4>
@@ -1478,7 +1478,7 @@ export default function ProjectsWorkspace({
                   </div>
 
                   {selectedProject.description ? (
-                    <p className="project-surface-description">
+                    <p className="workspace-surface-description">
                       {selectedProject.description}
                     </p>
                   ) : (
@@ -1539,7 +1539,7 @@ export default function ProjectsWorkspace({
                       This project is quiet right now.
                     </div>
                   ) : (
-                    <div className="project-tasks-list-shell">
+                    <div className="workspace-tasks-list-shell">
                       <div className="project-task-list">
                         {projectTasks.map((task) => (
                           <button
@@ -1608,7 +1608,7 @@ export default function ProjectsWorkspace({
                     </div>
                   ) : (
                     <div className="project-notes-workspace">
-                      <div className="project-notes-list-shell">
+                      <div className="workspace-notes-list-shell">
                         <div className="project-note-list">
                           {pinnedProjectNotes.length > 0 && (
                             <div className="project-note-group">
@@ -1738,7 +1738,7 @@ export default function ProjectsWorkspace({
               ) : null}
 
               {activeProjectTab === "members" ? (
-                <section className="workspace-section project-members-surface">
+                <section className="workspace-section workspace-members-surface">
                   <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Project Members</div>
@@ -1766,18 +1766,18 @@ export default function ProjectsWorkspace({
                       No members are connected to this project space yet.
                     </div>
                   ) : (
-                    <div className="project-members-list-shell">
+                    <div className="workspace-members-list-shell">
                       <div className="project-members-list">
                         {projectMembers.map((membership) => (
                           <div
                             key={membership.id}
                             className="project-member-row"
                           >
-                            <span className="project-member-avatar project-member-avatar-large">
+                            <span className="workspace-member-avatar workspace-member-avatar-large">
                               {getMemberInitials(membership)}
                             </span>
 
-                            <div className="project-member-copy">
+                            <div className="workspace-member-copy">
                               <strong>{getMemberName(membership)}</strong>
                               {getMemberEmail(membership) ? (
                                 <span>{getMemberEmail(membership)}</span>
@@ -1785,7 +1785,7 @@ export default function ProjectsWorkspace({
                             </div>
 
                             {membership.role ? (
-                              <span className="project-member-role">
+                              <span className="workspace-member-role">
                                 {membership.role}
                               </span>
                             ) : null}
@@ -2136,7 +2136,7 @@ export default function ProjectsWorkspace({
                             checked={membership.id === selectedMembershipId}
                             onChange={() => setSelectedMembershipId(membership.id)}
                           />
-                          <span className="project-member-avatar project-member-avatar-large">
+                          <span className="workspace-member-avatar workspace-member-avatar-large">
                             {getMemberInitials(membership)}
                           </span>
                           <span className="workspace-member-picker-copy">
@@ -2146,7 +2146,7 @@ export default function ProjectsWorkspace({
                             ) : null}
                           </span>
                           {membership.role ? (
-                            <span className="project-member-role">{membership.role}</span>
+                            <span className="workspace-member-role">{membership.role}</span>
                           ) : null}
                         </label>
                       ))}
