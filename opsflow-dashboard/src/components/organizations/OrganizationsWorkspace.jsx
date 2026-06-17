@@ -1056,7 +1056,7 @@ export default function OrganizationsWorkspace({
     <div className="organizations-workspace">
       {error ? <div className="form-error org-error">{error}</div> : null}
 
-      <section className="project-panel organization-collection-pane">
+      <section className="workspace-collection-panel organization-collection-pane">
         <div className="organization-collection-body">
           <div className="organization-collection-topbar">
             <label className="organization-list-search">
@@ -1149,7 +1149,7 @@ export default function OrganizationsWorkspace({
         </div>
       </section>
 
-      <section className="project-panel project-detail-panel organization-detail-panel">
+      <section className="workspace-collection-panel workspace-detail-panel organization-detail-panel">
         {selectedOrganization ? (
           <>
             <div className="organization-detail-header">
@@ -1181,7 +1181,7 @@ export default function OrganizationsWorkspace({
             </div>
 
             <div
-              className="project-surface-tabs"
+              className="workspace-tabs"
               role="tablist"
               aria-label="Team detail tabs"
             >
@@ -1189,8 +1189,8 @@ export default function OrganizationsWorkspace({
                 type="button"
                 className={
                   activeOrganizationTab === "overview"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveOrganizationTab("overview")}
               >
@@ -1200,8 +1200,8 @@ export default function OrganizationsWorkspace({
                 type="button"
                 className={
                   activeOrganizationTab === "members"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveOrganizationTab("members")}
               >
@@ -1211,8 +1211,8 @@ export default function OrganizationsWorkspace({
                 type="button"
                 className={
                   activeOrganizationTab === "projects"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveOrganizationTab("projects")}
               >
@@ -1222,8 +1222,8 @@ export default function OrganizationsWorkspace({
                 type="button"
                 className={
                   activeOrganizationTab === "settings"
-                    ? "project-surface-tab active"
-                    : "project-surface-tab"
+                    ? "workspace-tab active"
+                    : "workspace-tab"
                 }
                 onClick={() => setActiveOrganizationTab("settings")}
               >
@@ -1231,9 +1231,9 @@ export default function OrganizationsWorkspace({
               </button>
             </div>
 
-            <div className="project-detail-content organization-detail-content">
+            <div className="workspace-detail-content organization-detail-content">
               {activeOrganizationTab === "overview" ? (
-                <div className="project-overview-surface organization-overview-surface">
+                <div className="workspace-overview-surface organization-overview-surface">
                   <div className="organization-overview-task-stats">
 
                     <div className="organization-overview-task-stat">
@@ -1407,8 +1407,8 @@ export default function OrganizationsWorkspace({
               ) : null}
 
               {activeOrganizationTab === "members" ? (
-                <section className="project-surface-section project-members-surface organization-members-surface">
-                  <div className="project-surface-section-header">
+                <section className="workspace-section project-members-surface organization-members-surface">
+                  <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Team Members</div>
                     </div>
@@ -1522,8 +1522,8 @@ export default function OrganizationsWorkspace({
               ) : null}
 
               {activeOrganizationTab === "projects" ? (
-                <section className="project-surface-section organization-projects-surface">
-                  <div className="project-surface-section-header">
+                <section className="workspace-section organization-projects-surface">
+                  <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Projects</div>
                       <h5>Project spaces on this team</h5>
@@ -1688,8 +1688,8 @@ export default function OrganizationsWorkspace({
               ) : null}
 
               {activeOrganizationTab === "settings" ? (
-                <section className="project-surface-section organization-foundation-surface">
-                  <div className="project-surface-section-header">
+                <section className="workspace-section organization-foundation-surface">
+                  <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Team Settings</div>
                       <h5>General team information</h5>
@@ -1781,10 +1781,10 @@ export default function OrganizationsWorkspace({
       </section>
 
       {activeOrganizationPopup ? (
-        <div className="project-workspace-popup-layer workspace-floating-window-layer" role="presentation">
+        <div className="workspace-popup-layer workspace-floating-window-layer" role="presentation">
           <button
             type="button"
-            className="project-workspace-popup-backdrop workspace-floating-window-backdrop"
+            className="workspace-popup-backdrop workspace-floating-window-backdrop"
             onMouseDown={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -1798,7 +1798,7 @@ export default function OrganizationsWorkspace({
           />
 
           <div
-            className="project-workspace-popup-shell workspace-floating-window-shell"
+            className="workspace-popup-shell workspace-floating-window-shell"
             onMouseDown={(event) => {
               event.stopPropagation();
             }}
@@ -1808,7 +1808,7 @@ export default function OrganizationsWorkspace({
           >
             {activeOrganizationPopup === "create-organization" ? (
               <form
-                className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
+                className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window"
                 onSubmit={handleCreateOrganization}
               >
                 <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -1866,7 +1866,7 @@ export default function OrganizationsWorkspace({
 
             {activeOrganizationPopup === "add-member" ? (
               <form
-                className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
+                className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window"
                 onSubmit={handleAddMember}
               >
                 <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -1929,7 +1929,7 @@ export default function OrganizationsWorkspace({
             {activeOrganizationPopup === "edit-organization" &&
             selectedOrganization ? (
               <form
-                className="project-form contextual-create-surface workspace-action-popup workspace-floating-window"
+                className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window"
                 onSubmit={handleUpdateOrganization}
               >
                 <div className="workspace-action-popup-header workspace-floating-window-header">
@@ -1987,7 +1987,7 @@ export default function OrganizationsWorkspace({
 
             {activeOrganizationPopup === "delete-organization" &&
             selectedOrganization ? (
-              <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+              <div className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window">
                 <div className="workspace-action-popup-header workspace-floating-window-header">
                   <div className="workspace-floating-window-title">
                     <div className="dashboard-eyebrow">Delete</div>
@@ -2030,7 +2030,7 @@ export default function OrganizationsWorkspace({
             {activeOrganizationPopup === "remove-member" &&
             selectedOrganization &&
             selectedRemovalMember ? (
-              <div className="project-form contextual-create-surface workspace-action-popup workspace-floating-window">
+              <div className="workspace-form-surface contextual-create-surface workspace-action-popup workspace-floating-window">
                 <div className="workspace-action-popup-header workspace-floating-window-header">
                   <div className="workspace-floating-window-title">
                     <div className="dashboard-eyebrow">Members</div>
