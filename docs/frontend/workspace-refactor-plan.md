@@ -183,14 +183,14 @@ Tasks:
 - [x] Phase 3 — Migrate Teams top-level workspace primitives
 - [x] Phase 4 — Migrate Projects top-level workspace primitives
 - [x] Post-migration audit — Identify remaining project-owned shared primitives
+- [x] Phase 5 — Add neutral aliases for remaining shared primitives
 
 ### Current
 
-- [ ] Phase 5 — Add neutral aliases for remaining shared primitives
+- [ ] Phase 6 — Migrate Teams remaining shared primitivess
 
 ### Next
 
-- [ ] Phase 6 — Migrate Teams remaining shared primitives
 - [ ] Phase 7 — Migrate Projects remaining shared primitives
 - [ ] Phase 8 — Run final workspace coupling audit
 - [ ] Phase 9 — Decide whether task surfaces need normalization now or later

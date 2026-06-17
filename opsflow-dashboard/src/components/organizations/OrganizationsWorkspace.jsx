@@ -1078,7 +1078,7 @@ export default function OrganizationsWorkspace({
             </button>
           </div>
 
-          <div className="project-list-panel organization-list-panel">
+          <div className="workspace-list-panel organization-list-panel">
             {organizations.length === 0 ? (
               <div className="org-empty-state">
                 <h4>No teams yet</h4>
@@ -1093,7 +1093,7 @@ export default function OrganizationsWorkspace({
                 <p>Try a different team name or slug.</p>
               </div>
             ) : (
-              <div className="project-card-grid organization-card-grid">
+              <div className="workspace-card-grid organization-card-grid">
                 {filteredOrganizations.map((organization) => {
                   const memberCount =
                     organization.memberCount ??
@@ -1120,8 +1120,8 @@ export default function OrganizationsWorkspace({
                       type="button"
                       className={
                         organization.id === selectedOrgId
-                          ? "project-card organization-card active"
-                          : "project-card organization-card"
+                          ? "workspace-card organization-card active"
+                          : "workspace-card organization-card"
                       }
                       onClick={() => handleSelectOrganization(organization.id)}
                     >
@@ -1133,7 +1133,7 @@ export default function OrganizationsWorkspace({
                           <div className="organization-card-copy">
                             <strong>{organization.name}</strong>
                             {metadataCopy ? (
-                              <div className="project-count-row organization-count-row">
+                              <div className="workspace-count-row organization-count-row">
                                 <span>{metadataCopy}</span>
                               </div>
                             ) : null}
@@ -1155,7 +1155,7 @@ export default function OrganizationsWorkspace({
             <div className="organization-detail-header">
               <div className="organization-detail-identity">
                 <span
-                  className="project-opened-tab-icon organization-opened-tab-icon"
+                  className="workspace-opened-tab-icon organization-opened-tab-icon"
                   aria-hidden="true"
                 >
                   {getOrganizationInitials(selectedOrganization)}
@@ -1301,7 +1301,7 @@ export default function OrganizationsWorkspace({
                   <div className="organization-overview-grid">
                     <section className="organization-overview-block">
                       <h5>About the team</h5>
-                      <p className="project-surface-description">
+                      <p className="workspace-surface-description">
                         {selectedOrganization.description ||
                           "This team surface keeps your people, project access, and shared workspace structure in one calmer operational layer."}
                       </p>
@@ -1407,7 +1407,7 @@ export default function OrganizationsWorkspace({
               ) : null}
 
               {activeOrganizationTab === "members" ? (
-                <section className="workspace-section project-members-surface organization-members-surface">
+                <section className="workspace-section workspace-members-surface organization-members-surface">
                   <div className="workspace-section-header">
                     <div>
                       <div className="dashboard-eyebrow">Team Members</div>
@@ -1465,13 +1465,13 @@ export default function OrganizationsWorkspace({
                         {filteredMembers.map((membership) => (
                           <div key={membership.id} className="organization-member-row">
                             <div className="organization-member-primary">
-                              <span className="project-member-avatar project-member-avatar-large organization-member-avatar-large">
+                              <span className="workspace-member-avatar workspace-member-avatar-large organization-member-avatar-large">
                                 {getOrganizationInitials({
                                   name: displayUserName(membership.user),
                                 })}
                               </span>
 
-                              <div className="project-member-copy organization-member-copy">
+                              <div className="workspace-member-copy organization-member-copy">
                                 <strong>{displayUserName(membership.user)}</strong>
                                 {membership.user?.email ? (
                                   <span>{membership.user.email}</span>
@@ -1481,7 +1481,7 @@ export default function OrganizationsWorkspace({
 
                             <div className="organization-member-meta organization-member-role-cell">
                               {membership.role ? (
-                                <span className="project-member-role organization-member-role">
+                                <span className="workspace-member-role organization-member-role">
                                   {membership.role}
                                 </span>
                               ) : null}
@@ -1638,13 +1638,13 @@ export default function OrganizationsWorkspace({
                                   {memberCount > 0 ? (
                                     <div className="organization-project-members">
                                       <div
-                                        className="project-member-avatar-stack organization-project-avatar-stack"
+                                        className="workspace-member-avatar-stack organization-project-avatar-stack"
                                         aria-label={`${memberCount} members`}
                                       >
                                         {visibleMembers.map((member, index) => (
                                           <span
                                             key={`${project.id}-member-${member.id || member.email || index}`}
-                                            className="project-member-avatar organization-project-avatar"
+                                            className="workspace-member-avatar organization-project-avatar"
                                             title={displayUserName(member)}
                                           >
                                             {getOrganizationInitials({
@@ -1653,7 +1653,7 @@ export default function OrganizationsWorkspace({
                                           </span>
                                         ))}
                                         {remainingMembers > 0 ? (
-                                          <span className="project-member-avatar project-member-avatar-more organization-project-avatar">
+                                          <span className="workspace-member-avatar project-member-avatar-more organization-project-avatar">
                                             +{remainingMembers}
                                           </span>
                                         ) : null}
