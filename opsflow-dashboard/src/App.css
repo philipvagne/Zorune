@@ -3595,7 +3595,8 @@ span.organization-overview-activity-avatar {
   overflow: hidden;
 }
 
-.project-panel {
+.project-panel,
+.workspace-collection-panel {
   box-sizing: border-box;
   min-width: 0;
   height: auto;
@@ -3625,7 +3626,8 @@ span.organization-overview-activity-avatar {
 }
 
 .project-collection-pane,
-.project-detail-panel {
+.project-detail-panel,
+.workspace-detail-panel {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -3633,7 +3635,8 @@ span.organization-overview-activity-avatar {
 }
 
 .project-collection-body,
-.project-detail-content {
+.project-detail-content,
+.workspace-detail-content {
   min-width: 0;
   min-height: 0;
 }
@@ -3841,7 +3844,8 @@ span.organization-overview-activity-avatar {
   box-shadow: var(--shadow-card);
 }
 
-.project-surface-tabs {
+.project-surface-tabs,
+.workspace-tabs {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -3858,11 +3862,13 @@ span.organization-overview-activity-avatar {
   scrollbar-width: none;
 }
 
-.project-surface-tabs::-webkit-scrollbar {
+.project-surface-tabs::-webkit-scrollbar,
+.workspace-tabs::-webkit-scrollbar {
   display: none;
 }
 
-.project-surface-tab {
+.project-surface-tab,
+.workspace-tab {
   border: 0;
   border-radius: 999px;
   min-height: 32px;
@@ -3880,18 +3886,21 @@ span.organization-overview-activity-avatar {
     box-shadow var(--transition-fast);
 }
 
-.project-surface-tab:hover {
+.project-surface-tab:hover,
+.workspace-tab:hover {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.34);
 }
 
-.project-surface-tab.active {
+.project-surface-tab.active,
+.workspace-tab.active {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.68);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.035);
 }
 
-.project-form {
+.project-form,
+.workspace-form-surface {
   margin-top: var(--space-4);
 }
 
@@ -3945,6 +3954,7 @@ span.organization-overview-activity-avatar {
 }
 
 .project-workspace-popup-layer,
+.workspace-popup-layer,
 .workspace-floating-window-layer {
   position: absolute;
   inset: 0;
@@ -3952,6 +3962,7 @@ span.organization-overview-activity-avatar {
 }
 
 .project-workspace-popup-backdrop,
+.workspace-popup-backdrop,
 .workspace-floating-window-backdrop {
   position: absolute;
   inset: 0;
@@ -3961,6 +3972,7 @@ span.organization-overview-activity-avatar {
 }
 
 .project-workspace-popup-shell,
+.workspace-popup-shell,
 .workspace-floating-window-shell {
   position: absolute;
   inset: 0;
@@ -4394,7 +4406,8 @@ span.organization-overview-activity-avatar {
   line-height: var(--line-normal);
 }
 
-.project-surface-section {
+.project-surface-section,
+.workspace-section {
   flex: 1;
   margin-top: 18px;
   min-height: 0;
@@ -4402,7 +4415,8 @@ span.organization-overview-activity-avatar {
   border-top: 0;
 }
 
-.project-detail-panel {
+.project-detail-panel,
+.workspace-detail-panel {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.16)),
     rgba(255, 255, 255, 0.12);
@@ -4433,7 +4447,8 @@ span.organization-overview-activity-avatar {
   line-height: 1.5;
 }
 
-.project-detail-content {
+.project-detail-content,
+.workspace-detail-content {
   flex: 0 0 auto;
   min-height: 0;
   display: flex;
@@ -4481,6 +4496,7 @@ span.organization-overview-activity-avatar {
 }
 
 .project-overview-surface,
+.workspace-overview-surface,
 .project-tasks-surface,
 .project-notes-surface,
 .project-members-surface {
@@ -4490,20 +4506,27 @@ span.organization-overview-activity-avatar {
   min-height: 0;
 }
 
-.project-overview-surface {
+.project-overview-surface,
+.workspace-overview-surface {
   gap: 8px;
   overflow: visible;
   padding-right: 0;
 }
 
-.project-overview-surface .project-form {
+.project-overview-surface .project-form,
+.project-overview-surface .workspace-form-surface,
+.workspace-overview-surface .project-form,
+.workspace-overview-surface .workspace-form-surface {
   margin-top: 0;
   padding: 20px 0 0;
   border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .project-overview-surface .muted-text,
-.project-overview-surface .project-surface-description {
+.project-overview-surface .project-surface-description,
+.workspace-overview-surface .muted-text,
+.workspace-overview-surface .project-surface-description,
+.workspace-overview-surface .workspace-section-description {
   max-width: 680px;
 }
 
@@ -4511,7 +4534,8 @@ span.organization-overview-activity-avatar {
   gap: 14px;
 }
 
-.project-overview-actions {
+.project-overview-actions,
+.workspace-overview-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -4529,7 +4553,8 @@ span.organization-overview-activity-avatar {
     0 10px 20px rgba(15, 23, 42, 0.018);
 }
 
-.project-surface-section-header {
+.project-surface-section-header,
+.workspace-section-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -4538,7 +4563,8 @@ span.organization-overview-activity-avatar {
   overflow: visible;
 }
 
-.project-surface-section-header h5 {
+.project-surface-section-header h5,
+.workspace-section-header h5 {
   margin: 0;
   color: var(--text-primary);
   font-size: 16px;
