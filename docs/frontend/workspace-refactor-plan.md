@@ -185,15 +185,16 @@ Tasks:
 - [x] Post-migration audit — Identify remaining project-owned shared primitives
 - [x] Phase 5 — Add neutral aliases for remaining shared primitives
 - [x] Phase 6 — Migrate Teams remaining shared primitivess
+- [x] Phase 7 — Migrate Projects remaining shared primitives
+- [x] Phase 8 — Run final workspace coupling audit
+- [x] Phase 9 — Cleanup workspace compatibility debt
 
 ### Current
 
-- [ ] Phase 7 — Migrate Projects remaining shared primitives
+- [ ] Phase 9 — Cleanup workspace compatibility debt
 
 ### Next
 
-- [ ] Phase 8 — Run final workspace coupling audit
-- [ ] Phase 9 — Decide whether task surfaces need normalization now or later
 
 ## Current Refactor Direction
 

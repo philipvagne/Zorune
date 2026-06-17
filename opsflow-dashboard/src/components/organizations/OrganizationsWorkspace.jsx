@@ -1653,7 +1653,7 @@ export default function OrganizationsWorkspace({
                                           </span>
                                         ))}
                                         {remainingMembers > 0 ? (
-                                          <span className="workspace-member-avatar project-member-avatar-more organization-project-avatar">
+                                          <span className="workspace-member-avatar workspace-member-avatar-more organization-project-avatar">
                                             +{remainingMembers}
                                           </span>
                                         ) : null}
