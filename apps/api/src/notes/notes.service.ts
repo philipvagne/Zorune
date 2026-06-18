@@ -1,10 +1,10 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { NoteKind, Prisma } from '@prisma/client';
+import { OrganizationAuthorizationService } from '../auth/organization-authorization.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -14,6 +14,7 @@ import { UpdateNoteDto } from './dto/update-note.dto';
 export class NotesService {
   constructor(
     private prisma: PrismaService,
+    private organizationAuthorization: OrganizationAuthorizationService,
     private notificationsGateway: NotificationsGateway,
   ) {}
 
@@ -298,18 +299,18 @@ export class NotesService {
   }
 
   private async requireMembership(userId: string, organizationId: string) {
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId,
-      },
-    });
+    return this.organizationAuthorization.requireMembership(
+      userId,
+      organizationId,
+    );
+  }
 
-    if (!membership) {
-      throw new ForbiddenException('Not allowed in this organization');
-    }
-
-    return membership;
+  private async requireContributor(userId: string, organizationId: string) {
+    return this.organizationAuthorization.requireContributor(
+      userId,
+      organizationId,
+      'Only contributors can modify notes',
+    );
   }
 
   private async requireProjectInOrganization(
@@ -691,7 +692,7 @@ export class NotesService {
       throw new BadRequestException('Organization is required');
     }
 
-    await this.requireMembership(userId, organizationId);
+    await this.requireContributor(userId, organizationId);
 
     if (projectId) {
       await this.requireProjectInOrganization(projectId, organizationId);
@@ -776,6 +777,7 @@ export class NotesService {
 
   async updateNote(noteId: string, userId: string, body: UpdateNoteDto) {
     const note = await this.getAccessibleNote(noteId, userId);
+    await this.requireContributor(userId, note.organizationId);
     const data: Prisma.NoteUpdateInput = {};
     let nextProjectId = note.projectId;
     let nextTaskId = note.taskId;
@@ -868,7 +870,8 @@ export class NotesService {
   }
 
   async deleteNote(noteId: string, userId: string) {
-    await this.getAccessibleNote(noteId, userId);
+    const note = await this.getAccessibleNote(noteId, userId);
+    await this.requireContributor(userId, note.organizationId);
 
     const deletedNote = await this.prisma.note.delete({
       where: {
@@ -956,6 +959,7 @@ export class NotesService {
       linkedNoteId,
       userId,
     );
+    await this.requireContributor(userId, sourceNote.organizationId);
 
     if (sourceNote.organizationId !== targetNote.organizationId) {
       throw new BadRequestException(
@@ -1006,8 +1010,12 @@ export class NotesService {
     linkedNoteId: string,
     userId: string,
   ) {
-    await this.requireAccessibleNoteWithOrg(noteId, userId);
-    await this.requireAccessibleNoteWithOrg(linkedNoteId, userId);
+    const sourceNote = await this.requireAccessibleNoteWithOrg(noteId, userId);
+    await this.requireAccessibleNoteWithOrg(
+      linkedNoteId,
+      userId,
+    );
+    await this.requireContributor(userId, sourceNote.organizationId);
 
     await this.prisma.noteLink.deleteMany({
       where: {

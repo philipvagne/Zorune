@@ -4,6 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Prisma, TaskStatus } from '@prisma/client';
+import { OrganizationAuthorizationService } from '../auth/organization-authorization.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -12,6 +13,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 export class TasksService {
   constructor(
     private prisma: PrismaService,
+    private organizationAuthorization: OrganizationAuthorizationService,
     private notificationsGateway: NotificationsGateway,
   ) {}
 
@@ -94,18 +96,12 @@ export class TasksService {
       throw new ForbiddenException('Task not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: task.project.organizationId,
-      },
-    });
+    const membership = await this.organizationAuthorization.requireMembership(
+      userId,
+      task.project.organizationId,
+    );
 
-    if (!membership) {
-      throw new ForbiddenException('Not allowed');
-    }
-
-    return task;
+    return { task, membership };
   }
 
   private async buildTaskPayloadForUser(taskId: string, userId: string) {
@@ -313,16 +309,11 @@ export class TasksService {
       throw new ForbiddenException('Project not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed in this project');
-    }
+    await this.organizationAuthorization.requireContributor(
+      userId,
+      project.organizationId,
+      'Only contributors can create tasks',
+    );
 
     return this.prisma.task.create({
       data: {
@@ -345,16 +336,10 @@ export class TasksService {
       throw new ForbiddenException('Project not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed in this project');
-    }
+    await this.organizationAuthorization.requireMembership(
+      userId,
+      project.organizationId,
+    );
 
     const tasks = await this.prisma.task.findMany({
       where: { projectId },
@@ -429,16 +414,11 @@ export class TasksService {
       throw new ForbiddenException('Task not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: task.project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed to update this task');
-    }
+    await this.organizationAuthorization.requireContributor(
+      userId,
+      task.project.organizationId,
+      'Only contributors can update tasks',
+    );
 
     const updateData: Prisma.TaskUpdateInput = {
       ...data,
@@ -546,16 +526,11 @@ export class TasksService {
       throw new ForbiddenException('Task not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: task.project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed to delete this task');
-    }
+    await this.organizationAuthorization.requireContributor(
+      userId,
+      task.project.organizationId,
+      'Only contributors can delete tasks',
+    );
 
     await this.prisma.task.delete({
       where: { id: taskId },
@@ -578,16 +553,11 @@ export class TasksService {
       throw new ForbiddenException('Task has no project attached');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: task.project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed');
-    }
+    await this.organizationAuthorization.requireContributor(
+      userId,
+      task.project.organizationId,
+      'Only contributors can assign tasks',
+    );
 
     const assigneeMembership = await this.prisma.membership.findFirst({
       where: {
@@ -652,16 +622,11 @@ export class TasksService {
       throw new ForbiddenException('Task not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: task.project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed');
-    }
+    await this.organizationAuthorization.requireContributor(
+      userId,
+      task.project.organizationId,
+      'Only contributors can change task assignments',
+    );
 
     const notification = await this.prisma.$transaction(async (tx) => {
       await tx.taskAssignment.deleteMany({
@@ -795,7 +760,11 @@ export class TasksService {
   }
 
   async archiveTask(userId: string, taskId: string) {
-    const task = await this.getTaskWithMembership(taskId, userId);
+    const { task, membership } = await this.getTaskWithMembership(taskId, userId);
+    this.organizationAuthorization.assertContributorRole(
+      membership.role,
+      'Only contributors can archive tasks',
+    );
 
     if (task.status !== TaskStatus.DONE) {
       throw new BadRequestException('Only completed tasks can be archived');
@@ -839,7 +808,11 @@ export class TasksService {
   }
 
   async restoreTask(userId: string, taskId: string) {
-    const task = await this.getTaskWithMembership(taskId, userId);
+    const { task, membership } = await this.getTaskWithMembership(taskId, userId);
+    this.organizationAuthorization.assertContributorRole(
+      membership.role,
+      'Only contributors can restore tasks',
+    );
 
     if (!task.archivedAt) {
       const { task: restoredTask } = await this.getTaskUpdatePayload(taskId);
@@ -958,16 +931,10 @@ export class TasksService {
       throw new ForbiddenException('Task not found');
     }
 
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        organizationId: task.project.organizationId,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Not allowed');
-    }
+    await this.organizationAuthorization.requireMembership(
+      userId,
+      task.project.organizationId,
+    );
 
     const skip = (page - 1) * limit;
     const total = await this.prisma.activityLog.count({
@@ -1035,7 +1002,11 @@ export class TasksService {
       throw new BadRequestException('Update message is required');
     }
 
-    const task = await this.getTaskWithMembership(taskId, userId);
+    const { task, membership } = await this.getTaskWithMembership(taskId, userId);
+    this.organizationAuthorization.assertContributorRole(
+      membership.role,
+      'Only contributors can post task updates',
+    );
 
     const update = await this.prisma.taskUpdate.create({
       data: {
